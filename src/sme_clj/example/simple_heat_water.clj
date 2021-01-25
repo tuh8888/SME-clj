@@ -62,7 +62,19 @@
                          [:flat-top :Water]
                          [:liquid :Water]))
 
+(def kg (merge-with
+          (fn [v1 v2]
+            {:help (vector v1 v2)})
+          entity-map
+          predicate-map
+          (:graph simple-heat-flow)
+          (:graph simple-water-flow)))
+
 (comment
+
+  (sme/create-match-hypotheses kg simple-water-flow simple-heat-flow rules/literal-similarity)
+  (count mhs)
+
   ;; Water flow is the base, heat flow the target
   (def result (sme/match simple-water-flow simple-heat-flow))
   (def gmaps (:gmaps result))

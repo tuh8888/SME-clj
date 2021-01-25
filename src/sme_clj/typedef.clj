@@ -14,15 +14,15 @@
 (defn make-entity [name & slots]
   (merge (->Concept name :entity) {:slots slots}))
 
-(defn entity? [{:keys [type]}] (= :entity type))
+#_(defn entity? [{:keys [type]}] (= :entity type))
 
 (defn make-predicate [name & {:keys [type arity ordered?]
                               :or   {type :relation, arity 2, ordered? true}}]
   (merge (->Concept name type) {:arity    (if (= type :relation) 1 arity)
                                 :ordered? ordered?}))
 
-(defn function? [{:keys [type]}] (= :function type))
-(defn attribute? [{:keys [type]}] (= :attribute type))
+#_(defn function? [{:keys [type]}] (= :function type))
+#_(defn attribute? [{:keys [type]}] (= :attribute type))
 
 (defn predicate? [{:keys [type]}] (#{:function :attribute :relation} type))
 
@@ -42,20 +42,23 @@
   (merge (->Concept id :expression) {:functor functor
                                      :args    args}))
 
-(defn expression? [{:keys [type]}] (= type :expression))
+(defn lookup [kg k & props]
+  (reduce (fn [k prop]
+            (get-in kg [k prop]))
+    k props))
 
 (defn ancestor?
   "Returns true if a given expression is an ancestor of one of the expressions
   in the base set."
-  [base-set expr]
-  (and (expression? expr)
+  [kg base-set expr]
+  (and (= :expression (lookup kg expr :type))
     (or (contains? base-set expr)
-      (some #(ancestor? base-set %) (:args expr)))))
+      (some #(ancestor? kg base-set %) (lookup kg expr :args)))))
 
 (defn get-descendants
   "Returns the seq of descendants of the given expression."
-  [expr]
-  (tree-seq expression? :args expr))
+  [kg expr]
+  (tree-seq #(= :expression (lookup kg % :type)) #(lookup kg % :args) expr))
 
 
 (comment
@@ -65,9 +68,9 @@
 
 ;;; CONCEPT GRAPH
 
+(def id-idx (atom -1))
 (defn make-concept-graph [name & expressions]
-  (let [id-idx (atom -1)
-        e-map  (atom {})]
+  (let [e-map (atom {})]
     (letfn [(id []
               (swap! id-idx inc)
               (keyword (str "e" @id-idx)))
@@ -89,9 +92,11 @@
   (is-expression? [mh] "Is this MH an expression?")
   (is-emap?       [mh] "Is this MH an emap?"))
 
+(defn make-match-hypothesis [base target])
+
 (defrecord MatchHypothesis
-  [base target]
-  
+    [base target]
+
   AMatchHypothesis
   (is-expression? [_] (expression? base))
   (is-emap?       [_] (and (entity? base) (entity? target))))
@@ -105,17 +110,17 @@
 (defrecord GMap
   [mhs structure])
 
-(defmake GMap [m s])
-
 (defn matched-goal
   [gmap]
-  (:base (:mapping gmap)))
+  (get-in gmap [:mapping :base]))
 
 (defn matched-goals
   "Returns the set of distinct goals that are mapped in the given collection of
   gmaps."
   [gmaps]
-  (set (map matched-goal gmaps)))
+  (->> gmaps
+    (map matched-goal)
+    set))
 
 (defn filter-predicates
   "Returns a seq of relations for which the root predicate matches the given
