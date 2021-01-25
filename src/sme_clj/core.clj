@@ -1,4 +1,3 @@
-
 (ns sme-clj.core
   "Structure mapping engine core functionality.
 
@@ -33,11 +32,10 @@
 
     [1] Falkenhainer, B., Forbus, K. & Gentner, D. (1989). The structure-mapping
           engine: algorithm and examples. Artificial Intelligence, 41, 1-62."
-  (:require [clojure.set :as set]
-            [clojure.contrib.set :as c.set]
-            [clojure.contrib.combinatorics :as comb])
-  (:use sme-clj.typedef
-        sme-clj.ruledef))
+  (:require [clojure.math.combinatorics :as comb]
+            [clojure.set :as set]
+            [sme-clj.ruledef :refer :all]
+            [sme-clj.typedef :refer :all]))
 
 ;;;;
 ;;;; GENERATING MATCH HYPOTHESES
@@ -111,7 +109,7 @@
 
                  ;; nogood is every mh mapping same target or base
                  :nogood
-                 (-> (set/union 
+                 (-> (set/union
                       (get bmap (:base mh) #{})
                       (get tmap (:target mh)) #{})
                      (disj mh))         ; not nogood of ourselves
@@ -194,7 +192,7 @@
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
   map with the :mh-structure and the :gmaps set."
   [mh-structure]
-  (->> 
+  (->>
    (find-roots mh-structure)
    (reduce (fn form-gmap [gmaps root]
              (if (consistent? (get mh-structure root))
@@ -239,18 +237,18 @@
   [data]
   (let [consistent-sets
         (->>
-         (comb/subsets (:gmaps data))
-         (remove empty?)
-         (filter gmap-set-internally-consistent?)
-         (map set))]
+          (comb/subsets (vec (:gmaps data)))
+          (remove empty?)
+          (filter gmap-set-internally-consistent?)
+          (map set))]
     (->>
-     (remove (fn [gms-a]
-               (some (fn [gms-b]
-                       (and (not= gms-a gms-b)
-                            (c.set/subset? gms-a gms-b)))
-                     consistent-sets))
-             consistent-sets)
-     (assoc data :gmaps))))
+      (remove (fn [gms-a]
+                (some (fn [gms-b]
+                        (and (not= gms-a gms-b)
+                          (set/subset? gms-a gms-b)))
+                  consistent-sets))
+        consistent-sets)
+      (assoc data :gmaps))))
 
 (defn merge-gmaps
   "Given a collection of sets of gmaps, merges the gmaps in each set into a
@@ -384,7 +382,7 @@
   "Computes additional information about the gmaps we have found and stores it
   in the gmaps."
   [data base target]
-  (->> 
+  (->>
    (:gmaps data)
 
    (map #(score-gmap data %))                            ; scores
