@@ -5,3 +5,5 @@ classes
 *.class
 *~
 *#
+/.cpcache/
+/.nrepl-port
