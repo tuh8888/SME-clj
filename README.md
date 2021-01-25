@@ -1,3 +1,13 @@
+# SME-clj
+
+tuh8888: I have are several goals for this fork
+
+1. To use the code here to help understand the algorithm described in [1]
+2. If this code seems to be a sufficient replacement for the Common Lisp used in [1], use this as well
+3. Bring this code up to date with clojure 1.10
+4. Make this code compatible with my other analogy work
+
+...
 
 SME-clj is an implementation of the Structure-Mapping Engine [1] in Clojure [3].
 It was developed as part of my MSc thesis research [2]. To my knowledge it is
@@ -29,7 +39,7 @@ References
 
    1. Falkenhainer, B., Forbus, K. & Gentner, D. (1989). The structure-mapping
       engine: algorithm and examples. *Artificial Intelligence, 41*, 1-62.
-          
+
    2. van der Meer, S.A. (2010). *Making meaningful movements*. Unpublished
       master's thesis, Radboud University Nijmegen, The Netherlands.
       (Available on request, see author section)
