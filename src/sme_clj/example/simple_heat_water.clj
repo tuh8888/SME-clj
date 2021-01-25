@@ -71,25 +71,21 @@
 (def simple-water-flow
   (make-concept-graph "simple water flow" e
 
-                      (e cause
-                         (e greater (e pressure Beaker) (e pressure Vial))
-                         (e flow Beaker Vial Water Pipe))
-                      (e greater (e diameter Beaker) (e diameter Vial))
-                      (e clear Beaker)
-                      (e flat-top Water)
-                      (e liquid Water)))
+    (e cause
+      (e greater (e pressure Beaker) (e pressure Vial))
+      (e flow Beaker Vial Water Pipe))
+    (e greater (e diameter Beaker) (e diameter Vial))
+    (e clear Beaker)
+    (e flat-top Water)
+    (e liquid Water)))
 
 ;; Commented out example
-#_(do
-    ;; Water flow is the base, heat flow the target
-    (def result (sme/match simple-water-flow simple-heat-flow))
-    (def gmaps (:gmaps result))
+(comment
+  ;; Water flow is the base, heat flow the target
+  (def result (sme/match simple-water-flow simple-heat-flow))
+  (def gmaps (:gmaps result))
 
-    ;; Should show the cause relation between the greater temperature
-    ;; relation and the heat flow relation. This relation has been inferred
-    ;; based on the analogical cause relation in the water flow graph.
-    (pp/write (:transferred (first gmaps)) :suppress-namespaces true)
-
-    ;; For other keys like :transferred that are stored in a gmap and might be
-    ;; interesting to examine, see the docstring for 'sme-clj.core/match
-    )
+  ;; Should show the cause relation between the greater temperature
+  ;; relation and the heat flow relation. This relation has been inferred
+  ;; based on the analogical cause relation in the water flow graph.
+  (pp/write (:transferred (first gmaps)) :suppress-namespaces true))
