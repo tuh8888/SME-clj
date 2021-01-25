@@ -1,4 +1,3 @@
-
 (ns sme-clj.example.simple-heat-water
   "Example adapted from SME literature [1], of an analogy between the flow of
   water from a large beaker through a pipe to a small vial, and the flow of
@@ -10,76 +9,59 @@
     [1] Falkenhainer, Forbus & Gentner (1989). The structure-mapping engine:
           algorithm and examples. Artificial Intelligence, 41, 1-62.
   "
-  (:use sme-clj.typedef)
-  (:require [sme-clj.core   :as sme]
-            [clojure.pprint :as pp]))
+  (:require [clojure.data :as data]
+            [clojure.pprint :as pp]
+            [clojure.test :as test]
+            [clojure.walk :as walk]
+            [sme-clj.core :as sme]
+            [sme-clj.ruledef :as rules]
+            [sme-clj.typedef :refer :all]))
 
 ;; Predicate definitions
 
-(defpredicate flow
-  :type :relation
-  :arity 4)
 
-(defpredicate greater
-  :type :relation
-  :arity 2)
+(defn vals-as-keys [k m]
+  (zipmap (map k m)
+    m))
 
-(defpredicate cause
-  :type :relation
-  :arity 2)
+(def predicate-map (vals-as-keys :name [(make-predicate :flow :type :relation :arity 4)
+                                        (make-predicate :greater :type :relation :arity 2)
+                                        (make-predicate :cause :type :relation :arity 2)
+                                        (make-predicate :temperature :type :function)
+                                        (make-predicate :flat-top :type :function)
+                                        (make-predicate :pressure :type :function)
+                                        (make-predicate :diameter :type :function)
+                                        (make-predicate :liquid :type :attribute)
+                                        (make-predicate :clear :type :attribute)]))
 
-(defpredicate temperature
-  :type :function)
-
-(defpredicate flat-top
-  :type :function)
-
-(defpredicate pressure
-  :type :function)
-
-(defpredicate diameter
-  :type :function)
-
-(defpredicate liquid
-  :type :attribute)
-
-(defpredicate clear
-  :type :attribute)
 
 ;; Entities
-(defentity Coffee []) ; [] -> no value slots in entity
-(defentity Icecube [])
-(defentity Bar [])
-(defentity Heat [])
+(def entity-map (vals-as-keys :name [(make-entity :Coffee)
+                                     (make-entity :Icecube)
+                                     (make-entity :Bar)
+                                     (make-entity :Heat)
 
-(defentity Water [])
-(defentity Beaker [])
-(defentity Vial [])
-(defentity Pipe [])
-
+                                     (make-entity :Water)
+                                     (make-entity :Beaker)
+                                     (make-entity :Vial)
+                                     (make-entity :Pipe)]))
 
 ;; Concept graph definitions
+(def simple-heat-flow (make-concept-graph (keyword "simple-heat-flow")
+                        [:flow :Coffee :Icecube :Heat :Bar]
+                        [:greater [:temperature :Coffee] [:temperature :Icecube]]
+                        [:flat-top :Coffee]
+                        [:liquid :Coffee]))
 
-(def simple-heat-flow
-  (make-concept-graph "simple heat flow" e
+(def simple-water-flow (make-concept-graph (keyword "simple water flow")
+                         [:cause
+                          [:greater [:pressure :Beaker] [:pressure :Vial]]
+                          [:flow :Beaker :Vial :Water :Pipe]]
+                         [:greater [:diameter :Beaker] [:diameter :Vial]]
+                         [:clear :Beaker]
+                         [:flat-top :Water]
+                         [:liquid :Water]))
 
-                      (e flow Coffee Icecube Heat Bar)
-                      (e greater (e temperature Coffee) (e temperature Icecube))
-                      (e flat-top Coffee)
-                      (e liquid Coffee)))
-
-(def simple-water-flow
-  (make-concept-graph "simple water flow" e
-
-    (e cause
-      (e greater (e pressure Beaker) (e pressure Vial))
-      (e flow Beaker Vial Water Pipe))
-    (e greater (e diameter Beaker) (e diameter Vial))
-    (e clear Beaker)
-    (e flat-top Water)
-    (e liquid Water)))
-
-;; Commented out example
 (comment
   ;; Water flow is the base, heat flow the target
   (def result (sme/match simple-water-flow simple-heat-flow))

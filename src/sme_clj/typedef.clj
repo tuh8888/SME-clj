@@ -1,49 +1,30 @@
-
 (ns sme-clj.typedef
   "Data type definitions and protocols for SME, as well as facilities to create
    instances of types and manipulate them."
-  (:use [sme-clj.util :only [defmake is-type?]]))
+  (:require [clojure.walk :as walk]
+            [sme-clj.util :refer :all]))
 
 ;;; ENTITY AND PREDICATE
 
-;; Only used to identify Entities defined with defentity, ie. a marker interface
-(defprotocol AEntity
-  (entity? [_]))
-
-(extend-protocol AEntity
-  Object
-  (entity? [_] false))
-
-;; Concept graph node that can be shown as prettier string, for display
-(defprotocol ADisplayableNode
-  (title-for-node [this] "Returns pretty string for this node."))
+(defrecord Concept [name type])
 
 ;; This base Entity is primarily here for testing mapping mechanics. Real
 ;; concept graphs will have specialised data types with value slots.
-(defrecord Entity
-  [name]
-  AEntity
-  (entity? [_] true))
 
-(defprotocol APredicate
-  (predicate-type? [this t] "Is this a Predicate of a given type?")
-  (function? [this] "Is this a :function Predicate?")
-  (attribute? [this] "Is this an :attribute Predicate?"))
+(defn make-entity [name & slots]
+  (merge (->Concept name :entity) {:slots slots}))
 
-(defrecord Predicate
-  [name ptype arity ordered?]
+(defn entity? [{:keys [type]}] (= :entity type))
 
-  APredicate
-  (predicate-type? [this t] (= t ptype))
-  (function?  [this] (predicate-type? this :function))
-  (attribute? [this] (predicate-type? this :attribute))
+(defn make-predicate [name & {:keys [type arity ordered?]
+                              :or   {type :relation, arity 2, ordered? true}}]
+  (merge (->Concept name type) {:arity    (if (= type :relation) 1 arity)
+                                :ordered? ordered?}))
 
-  ADisplayableNode
-  (title-for-node [this]
-    (clojure.core/name name)))
+(defn function? [{:keys [type]}] (= :function type))
+(defn attribute? [{:keys [type]}] (= :attribute type))
 
-(defn predicate? [x] (is-type? x Predicate))
-
+(defn predicate? [{:keys [type]}] (#{:function :attribute :relation} type))
 
 ;;; EXPRESSION
 
@@ -57,38 +38,24 @@
 ;; of the expressions within a graph, but in practice often is.
 
 
-(defprotocol AExpression
-  (expression-functor [this] "Returns this expression's functor.")
-  (expression-args    [this] "Returns this expression's arguments."))
+(defn make-expression [id functor & args]
+  (merge (->Concept id :expression) {:functor functor
+                                     :args    args}))
 
-(defrecord Expression
-  [id functor args]
-
-  AExpression
-  (expression-functor [_] functor)
-  (expression-args    [_] args)
-
-  AEntity
-  (entity? [_] false))
-
-(defn expression? [x] (is-type? x Expression))
-
-(defmake Expression [id f a])
-
-(def make-expr make-Expression)
+(defn expression? [{:keys [type]}] (= type :expression))
 
 (defn ancestor?
   "Returns true if a given expression is an ancestor of one of the expressions
   in the base set."
   [base-set expr]
   (and (expression? expr)
-       (or (contains? base-set expr)
-           (some #(ancestor? base-set %) (expression-args expr)))))
+    (or (contains? base-set expr)
+      (some #(ancestor? base-set %) (:args expr)))))
 
 (defn get-descendants
   "Returns the seq of descendants of the given expression."
   [expr]
-  (tree-seq expression? expression-args expr))
+  (tree-seq expression? :args expr))
 
 
 (comment
@@ -98,45 +65,23 @@
 
 ;;; CONCEPT GRAPH
 
-(defrecord ConceptGraph
-  [name graph spec id-counter])
-
-(defn wrap-graph
-  [exprs id-state]
-  (ConceptGraph. nil exprs nil id-state))
-
-(defmake ConceptGraph [name graph spec id])
-
-(defn concept-graph? [x] (is-type? x ConceptGraph))
-
-(defn unfold-expression
-  "Given an expression, 'unfolds' it into a seq of the expression and all
-  subexpressions (ie. predicates).
-
-  This is necessary to fulfil the SM requirement that all predicate clauses
-  exist separately in the concept graph's list of clauses. Useful when adding
-  clauses to a graph."
-  [expr]
-  (filter expression? (tree-seq expression? expression-args expr)))
-
-(defmacro make-concept-graph
-  "Helper macro for defining a concept graph. The symbol given as 'expsym will
-  be let-bound to a function that creates an Expression out of a given functor +
-  arguments. It is followed by one or more forms that define expressions using
-  that function.
-
-  Ex.:
-    (make-concept-graph \"example\" expr
-      (expr predicate-foo entity-a entity-b)
-      (expr predicate-bar (expr predicate-baz entity-c) entity-d))"
-  [name expsym & spec]
-  `(let [id-state# (atom -1)
-         id# (fn [] (swap! id-state# inc))
-         ~expsym  (fn [f# & a#] (make-expr (id#) f# (vec a#)))]
-     (make-ConceptGraph ~name
-                        (doall (mapcat unfold-expression [~@spec]))
-                        (quote ~spec)
-                        (deref id-state#))))
+(defn make-concept-graph [name & expressions]
+  (let [id-idx (atom -1)
+        e-map  (atom {})]
+    (letfn [(id []
+              (swap! id-idx inc)
+              (keyword (str "e" @id-idx)))
+            (add-expr! [x]
+              (let [new-x (id)]
+                (swap! e-map assoc new-x x)
+                new-x))]
+      ;; Doseq is used here instead of passing all expressions to postwalk to prevent the
+      ;; entire set of expressions for the concept graph being counted as an expression.
+      (doseq [expression expressions]
+        (walk/postwalk #(cond->> % (coll? %) add-expr!) expression))
+      {:name  name
+       :graph @e-map
+       :spec  expressions})))
 
 ;;; MATCH HYPOTHESIS
 
@@ -176,36 +121,12 @@
   "Returns a seq of relations for which the root predicate matches the given
   predicate."
   [predicate coll]
-  (filter #(= predicate (expression-functor %)) coll))
+  (filter #(= predicate (:functor %)) coll))
 
 (defn some-predicate
   "Returns the first relation for which the root predicate matches the given
   predicate, or nil if none is found."
   [predicate coll]
-  (some #{predicate} (map expression-functor coll)))
-
-;;; Def'ing
-
-(defmacro defpredicate
-  "Defines a named Predicate."
-  [pname & kwargs]
-  (let [{:keys [type arity ordered?]
-         :or {type :relation, arity 2, ordered? true}} (apply hash-map kwargs)]
-    `(def ~pname
-          (Predicate. ~(keyword pname)
-                      ~type ~(if (not= type :relation) 1 arity) ~ordered?))))
-
-
-(defmacro defentity
-  "Defines a named entity (implements the AEntity protocol)."
-  [ename slots & impls]
-  `(do
-     (defrecord ~ename
-       ~slots
-       ~@impls)
-
-     (extend ~ename
-             AEntity
-             {:entity? (fn [_#] true)})
-     
-     (defmake ~ename ~slots)))
+  (->> coll
+    (map :functor)
+    (some #{predicate})))
