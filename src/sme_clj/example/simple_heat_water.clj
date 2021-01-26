@@ -15,15 +15,10 @@
             [clojure.walk :as walk]
             [sme-clj.core :as sme]
             [sme-clj.ruledef :as rules]
-            [sme-clj.typedef :refer :all]))
+            [sme-clj.typedef :refer :all]
+            [sme-clj.util :refer [vals-as-keys]]))
 
 ;; Predicate definitions
-
-
-(defn vals-as-keys [k m]
-  (zipmap (map k m)
-    m))
-
 (def predicate-map (vals-as-keys :name [(make-predicate :flow :type :relation :arity 4)
                                         (make-predicate :greater :type :relation :arity 2)
                                         (make-predicate :cause :type :relation :arity 2)
@@ -71,8 +66,7 @@
           (:graph simple-water-flow)))
 
 (comment
-
-  (sme/create-match-hypotheses kg simple-water-flow simple-heat-flow rules/literal-similarity)
+  (def mhs (sme/create-match-hypotheses kg simple-water-flow simple-heat-flow rules/literal-similarity))
   (count mhs)
 
   ;; Water flow is the base, heat flow the target

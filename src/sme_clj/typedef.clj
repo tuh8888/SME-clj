@@ -88,22 +88,9 @@
 
 ;;; MATCH HYPOTHESIS
 
-(defprotocol AMatchHypothesis
-  (is-expression? [mh] "Is this MH an expression?")
-  (is-emap?       [mh] "Is this MH an emap?"))
-
 (defn make-match-hypothesis [base target])
 
-(defrecord MatchHypothesis
-    [base target]
-
-  AMatchHypothesis
-  (is-expression? [_] (expression? base))
-  (is-emap?       [_] (and (entity? base) (entity? target))))
-
-(defmake MatchHypothesis [base target])
-
-(def make-MH make-MatchHypothesis)
+(defrecord MatchHypothesis [base target])
 
 ;;; GMAP
 

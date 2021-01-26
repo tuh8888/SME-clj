@@ -1,12 +1,12 @@
 (ns sme-clj.ruledef
   "Structure mapping matching rule definitions. Contains both basic literal
    similarity rules and macros for defining new rulesets."
-  (:require [sme-clj.typedef :refer :all]))
+  (:require [sme-clj.typedef :refer :all]
+            [sme-clj.util :refer [vals-as-keys]]))
 
 ;;; Rule definition helpers
 (defn apply-rule
   ([kg rule base target parent]
-   (println rule)
    ((:body rule) kg base target parent))
   ([kg rule base target]
    (apply-rule kg rule base target nil))
@@ -15,59 +15,58 @@
 
 (def rule-types #{:intern :filter})
 
-(defn add-rule [rules name type body]
-  (assoc-in rules [name] {:type type
-                          :body body}))
+(defn make-rule [name type body]
+  {:name name
+   :type type
+   :body body})
 
+(defn expression? [kg k]
+  ((comp (partial = :expression) #(lookup kg % :type)) k))
 
 ;; As in SME, basic analogical matching rules, direct port
-(def literal-similarity (-> {}
-                          (add-rule :same-functor :filter
-                            (fn [kg base target _]
-                              (when (= (lookup kg base :functor) (lookup kg target :functor))
-                                (make-MH base target))))
+(def literal-similarity (vals-as-keys :name
+                          [(make-rule :same-functor :filter
+                             (fn [kg base target _]
+                               [(when (= (lookup kg base :functor) (lookup kg target :functor))
+                                  (->MatchHypothesis base target))]))
 
-                          (add-rule :compatible-args :intern
-                            (fn [kg base target _]
-                              (when (and
-                                      (= :expression (lookup kg base :type))
-                                      (= :expression (lookup kg target :type))
-                                      (lookup kg base :functor :ordered?)
-                                      (lookup kg target :functor :ordered?))
-                                (map (fn [bchild tchild]
-                                       (when (or
-                                               (not (or
-                                                      (= :expression (lookup kg bchild :type))
-                                                      (= :expression (lookup kg tchild :type))))
-                                               (and
-                                                 (= :expression (lookup kg bchild :type))
-                                                 (= :expression (lookup kg tchild :type))
-                                                 (= :function (lookup kg bchild :functor :type))
-                                                 (= :function (lookup kg tchild :functor :type))))
-                                         (make-MH bchild tchild)))
-                                  (lookup kg base :args)
-                                  (lookup kg target :args)))))
+                           (make-rule :compatible-args :intern
+                             (fn [kg base target _]
+                               (when (and
+                                       (lookup kg base :functor :ordered?)
+                                       (lookup kg target :functor :ordered?))
+                                 (map (fn [bchild tchild]
+                                        (when (or
+                                                (not (or
+                                                       (expression? kg bchild)
+                                                       (expression? kg tchild)))
+                                                (and
+                                                  (= :function (lookup kg bchild :functor :type))
+                                                  (= :function (lookup kg tchild :functor :type))))
+                                          (->MatchHypothesis bchild tchild)))
+                                   (lookup kg base :args)
+                                   (lookup kg target :args)))))
 
-                          ;; this rule not tested much yet
-                          (add-rule :commutative-args :intern
-                            (fn [kg base target _]
-                              (when (and
-                                      (= :expression (lookup kg base :type))
-                                      (= :expression (lookup kg target :type))
-                                      (not (lookup kg base :functor :ordered?))
-                                      (not (lookup kg target :functor :ordered?)))
-                                (for [bchild (lookup kg base :args)
-                                      tchild (lookup kg target :args)]
-                                  (when (or
-                                          (not (or
-                                                 (= :expression (lookup kg bchild :type))
-                                                 (= :expression (lookup kg tchild :type))))
-                                          (and
-                                            (= :expression (lookup kg bchild :type))
-                                            (= :expression (lookup kg tchild :type))
-                                            (= :function (lookup kg bchild :functor :type))
-                                            (= :function (lookup kg tchild :functor :type))))
-                                    (make-MH bchild tchild))))))))
+                           ;; this rule not tested much yet
+                           (make-rule :commutative-args :intern
+                             (fn [kg base target _]
+                               (when (and
+                                       (expression? kg base)
+                                       (expression? kg target)
+                                       (not (lookup kg base :functor :ordered?))
+                                       (not (lookup kg target :functor :ordered?)))
+                                 (for [bchild (lookup kg base :args)
+                                       tchild (lookup kg target :args)]
+                                   (when (or
+                                           (not (or
+                                                  (expression? kg bchild)
+                                                  (expression? kg tchild)))
+                                           (and
+                                             (expression? kg bchild)
+                                             (expression? kg tchild)
+                                             (= :function (lookup kg bchild :functor :type))
+                                             (= :function (lookup kg tchild :functor :type))))
+                                     (->MatchHypothesis bchild tchild))))))]))
 
 #_(defrules literal-similarity
     (rule same-functor :filter
