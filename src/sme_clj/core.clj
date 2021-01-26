@@ -64,17 +64,24 @@
   and see if new MHs are created. For every new MH, also apply the :intern rules
   to it. Return the resulting set of MHs."
   [kg rules mhs]
-  (let [rules (->> rules vals (filter (comp (partial = :intern) type)))]
-    (loop [todo   (seq mhs) ; treat todo as seq stack
-           result (set mhs)]            ; result as final mh set
-      (if-let [mh (first todo)]
-        ;; test this MH on all intern rules, adding new matches to todo list
-        (let [matches (->> (map #(% mh) rules)
-                        flatten (remove nil?) set)]
-          (recur (concat (next todo) matches)
-            (set/union result matches)))
-        ;; set of all MHs tested on intern rules
-        result))))
+  (let [rules (->> rules vals (filter (comp (partial = :intern) :type)))]
+    (loop [mhs    mhs
+           result (hash-set)]
+      (let [[mh & rest-mhs] mhs]
+        (if mh
+          ;; test this MH on all intern rules, adding new matches to todo list
+          (let [result  (conj result mh)
+                new-mhs (->> rules
+                          (mapcat #(apply-rule kg % mh))
+                          (remove nil?)
+                          set
+                          (#(set/difference % result)))]
+            (println (count new-mhs))
+            (recur
+              (lazy-cat rest-mhs new-mhs)
+              result))
+          ;; set of all MHs tested on intern rules
+          result)))))
 
 (defn create-match-hypotheses
   "Apply rules from a ruleset to base and target to generate match hypotheses
