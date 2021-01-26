@@ -26,11 +26,12 @@
 ;; As in SME, basic analogical matching rules, direct port
 (def literal-similarity (vals-as-keys :name
                           [(make-rule :same-functor :filter
-                             (fn [kg {:keys [base target]}]
-                               (let [bf (lookup kg base :functor)
-                                     tf (lookup kg target :functor)]
-                                 [(when (and bf (= bf tf))
-                                    (->MatchHypothesis base target))])))
+                             (fn [kg {:keys [base target] :as mh}]
+                               [(when ((every-pred
+                                         (partial every? (partial expression? kg)) ; Both expressions
+                                         (comp (partial apply =) (partial map #(lookup kg % :functor)))) ; Same functors
+                                       [base target])
+                                  mh)]))
 
                            (make-rule :compatible-args :intern
                              (fn [kg {:keys [base target]}]
