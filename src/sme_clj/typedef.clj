@@ -70,20 +70,20 @@
 
 (def id-idx (atom -1))
 (defn make-concept-graph [name & expressions]
-  (let [e-map (atom {})]
+  (let [e-map (atom [])]
     (letfn [(id []
               (swap! id-idx inc)
               (keyword (str "e" @id-idx)))
             (add-expr! [x]
               (let [new-x (id)]
-                (swap! e-map assoc new-x x)
+                (swap! e-map conj (apply make-expression new-x x) )
                 new-x))]
       ;; Doseq is used here instead of passing all expressions to postwalk to prevent the
       ;; entire set of expressions for the concept graph being counted as an expression.
       (doseq [expression expressions]
         (walk/postwalk #(cond->> % (coll? %) add-expr!) expression))
       {:name  name
-       :graph @e-map
+       :graph (vals-as-keys :name @e-map)
        :spec  expressions})))
 
 ;;; MATCH HYPOTHESIS

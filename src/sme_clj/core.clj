@@ -47,6 +47,7 @@
   "Apply :filter rules from a ruleset to the base and target expressions. Return
   distinct match hypotheses."
   [kg rules [base-expr target-expr]]
+  (println "Filter rules")
   (->> rules
     vals
     (filter (comp (partial = :filter) :type))
@@ -55,7 +56,7 @@
               (->> (for [bx base-expr
                          tx target-expr]
                      [bx tx])
-                (keep (partial apply apply-rule kg rule)))))
+                (mapcat (partial apply apply-rule kg rule)))))
     (remove nil?)
     distinct))
 
@@ -64,6 +65,7 @@
   and see if new MHs are created. For every new MH, also apply the :intern rules
   to it. Return the resulting set of MHs."
   [kg rules mhs]
+  (println "Intern rules")
   (let [rules (->> rules vals (filter (comp (partial = :intern) :type)))]
     (loop [mhs    mhs
            result (hash-set)]
@@ -76,7 +78,6 @@
                           (remove nil?)
                           set
                           (#(set/difference % result)))]
-            (println (count new-mhs))
             (recur
               (lazy-cat rest-mhs new-mhs)
               result))
@@ -89,6 +90,7 @@
   [kg base target rules]
   (->> [base target]
     (map :graph)
+    (map keys)
     (apply-filter-rules kg rules)
     (apply-intern-rules kg rules)))
 

@@ -27,8 +27,10 @@
 (def literal-similarity (vals-as-keys :name
                           [(make-rule :same-functor :filter
                              (fn [kg base target _]
-                               [(when (= (lookup kg base :functor) (lookup kg target :functor))
-                                  (->MatchHypothesis base target))]))
+                               (let [bf (lookup kg base :functor)
+                                     tf (lookup kg target :functor)]
+                                 [(when (and bf (= bf tf))
+                                        (->MatchHypothesis base target))])))
 
                            (make-rule :compatible-args :intern
                              (fn [kg base target _]
