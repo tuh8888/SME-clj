@@ -46,17 +46,14 @@
 (defn apply-filter-rules
   "Apply :filter rules from a ruleset to the base and target expressions. Return
   distinct match hypotheses."
-  [kg rules [base-expr target-expr]]
+  [kg rules mhs]
   (println "Filter rules")
   (->> rules
     vals
     (filter (comp (partial = :filter) :type))
     (mapcat (fn [rule]
               ;; map rule over every possible expression pairing
-              (->> (for [bx base-expr
-                         tx target-expr]
-                     [bx tx])
-                (mapcat (partial apply apply-rule kg rule)))))
+              (mapcat (partial apply-rule kg rule) mhs)))
     (remove nil?)
     distinct))
 
@@ -88,11 +85,15 @@
   "Apply rules from a ruleset to base and target to generate match hypotheses
   for the graphs."
   [kg base target rules]
-  (->> [base target]
-    (map :graph)
-    (map keys)
-    (apply-filter-rules kg rules)
-    (apply-intern-rules kg rules)))
+  (let [[base target] (->> [base target]
+                        (map :graph)
+                        (map keys))]
+    (->> (for [b base
+               t target]
+           [b t])
+      (map (partial apply ->MatchHypothesis))
+      (apply-filter-rules kg rules)
+      (apply-intern-rules kg rules))))
 
 ;;;;
 ;;;; FORMING GMAPS

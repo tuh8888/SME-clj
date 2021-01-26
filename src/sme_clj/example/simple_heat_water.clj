@@ -67,7 +67,6 @@
 
 (comment
   (count (sme/create-match-hypotheses kg simple-water-flow simple-heat-flow rules/literal-similarity))
-  (count mhs)
 
   ;; Water flow is the base, heat flow the target
   (def result (sme/match simple-water-flow simple-heat-flow))

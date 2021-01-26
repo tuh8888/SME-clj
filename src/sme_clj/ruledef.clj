@@ -6,12 +6,12 @@
 
 ;;; Rule definition helpers
 (defn apply-rule
-  ([kg rule base target parent]
-   ((:body rule) kg base target parent))
-  ([kg rule base target]
-   (apply-rule kg rule base target nil))
-  ([kg rule {:keys [base target]}]
-   (apply-rule kg rule base target)))
+  #_([kg rule base target parent]
+     ((:body rule) kg base target parent))
+  #_([kg rule base target]
+     (apply-rule kg rule base target nil))
+  ([kg rule mh]
+   ((:body rule) kg mh)))
 
 (def rule-types #{:intern :filter})
 
@@ -26,14 +26,14 @@
 ;; As in SME, basic analogical matching rules, direct port
 (def literal-similarity (vals-as-keys :name
                           [(make-rule :same-functor :filter
-                             (fn [kg base target _]
+                             (fn [kg {:keys [base target]}]
                                (let [bf (lookup kg base :functor)
                                      tf (lookup kg target :functor)]
                                  [(when (and bf (= bf tf))
-                                        (->MatchHypothesis base target))])))
+                                    (->MatchHypothesis base target))])))
 
                            (make-rule :compatible-args :intern
-                             (fn [kg base target _]
+                             (fn [kg {:keys [base target]}]
                                (when (and
                                        (lookup kg base :functor :ordered?)
                                        (lookup kg target :functor :ordered?))
@@ -51,7 +51,7 @@
 
                            ;; this rule not tested much yet
                            (make-rule :commutative-args :intern
-                             (fn [kg base target _]
+                             (fn [kg {:keys [base target]}]
                                (when (and
                                        (expression? kg base)
                                        (expression? kg target)
