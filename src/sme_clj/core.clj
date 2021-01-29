@@ -91,7 +91,7 @@
     (->> (for [b base
                t target]
            [b t])
-      (map (partial apply ->MatchHypothesis))
+      (map (partial apply make-match-hypothesis))
       (apply-filter-rules kg rules)
       (apply-intern-rules kg rules))))
 

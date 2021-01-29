@@ -46,7 +46,7 @@
                                                 (and
                                                   (= :function (lookup kg bchild :functor :type))
                                                   (= :function (lookup kg tchild :functor :type))))
-                                          (->MatchHypothesis bchild tchild)))
+                                          (make-match-hypothesis bchild tchild)))
                                    (lookup kg base :args)
                                    (lookup kg target :args)))))
 
@@ -69,7 +69,7 @@
                                              (expression? kg tchild)
                                              (= :function (lookup kg bchild :functor :type))
                                              (= :function (lookup kg tchild :functor :type))))
-                                     (->MatchHypothesis bchild tchild))))))]))
+                                     (make-match-hypothesis bchild tchild))))))]))
 
 #_(defrules literal-similarity
     (rule same-functor :filter

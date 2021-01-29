@@ -942,16 +942,8 @@
   (is (=
         expected-finalized-gmaps
         (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-merged-gmaps)
+
         ))
-  (->> [expected-finalized-gmaps
-        (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-merged-gmaps)]
-    (map (comp first :gmaps))
-    #_(apply =)
-    (apply map vector)
-    (remove (fn [[a b]] (.equals a b)))
-    first
-    #_((fn [[a b]] (.equals a b))))
-  (-> expected-finalized-gmaps :gmaps first count)
 
 
   (def expected-generated-inferences ::fail)

@@ -6,20 +6,22 @@
 
 ;;; ENTITY AND PREDICATE
 
-(defrecord Concept [name type])
-
 ;; This base Entity is primarily here for testing mapping mechanics. Real
 ;; concept graphs will have specialised data types with value slots.
 
 (defn make-entity [name & slots]
-  (merge (->Concept name :entity) {:slots slots}))
+  {:name  name
+   :type  :entity
+   :slots slots})
 
 #_(defn entity? [{:keys [type]}] (= :entity type))
 
 (defn make-predicate [name & {:keys [type arity ordered?]
                               :or   {type :relation, arity 2, ordered? true}}]
-  (merge (->Concept name type) {:arity    (if (= type :relation) 1 arity)
-                                :ordered? ordered?}))
+  {:name     name
+   :type     type
+   :arity    (if (= type :relation) 1 arity)
+   :ordered? ordered?})
 
 #_(defn function? [{:keys [type]}] (= :function type))
 #_(defn attribute? [{:keys [type]}] (= :attribute type))
@@ -39,8 +41,10 @@
 
 
 (defn make-expression [id functor & args]
-  (merge (->Concept id :expression) {:functor functor
-                                     :args    args}))
+  {:name    id
+   :type    :expression
+   :functor functor
+   :args    args})
 
 (defn lookup [kg k & props]
   (reduce (fn [k prop]
@@ -88,14 +92,11 @@
 
 ;;; MATCH HYPOTHESIS
 
-(defn make-match-hypothesis [base target])
-
-(defrecord MatchHypothesis [base target])
+(defn make-match-hypothesis [base target]
+  {:base   base
+   :target target})
 
 ;;; GMAP
-
-#_(defrecord GMap
-      [mhs structure])
 
 (defn matched-goal
   [gmap]
