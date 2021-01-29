@@ -337,21 +337,21 @@
 
 (defn gmap-inferences
   "Generates maximal inferences for a given gmap, based on SME algorithm."
-  [gmap {base :graph}]
+  [kg gmap {base :graph}]
   (let [mh-bases  (set (map :base (:mhs gmap)))
         unmatched (set/difference (set base) mh-bases)
-        ancestors (set/select #(ancestor? mh-bases %) unmatched)]
+        ancestors (set/select #(ancestor? kg mh-bases %) unmatched)]
     (set/difference (set (mapcat get-descendants ancestors))
-                    mh-bases)))
+      mh-bases)))
 
 (defn generate-inferences
   "Appends :inferences to gmaps in given data, for a given base graph."
-  [base data]
+  [kg base data]
   (->>
-   (map #(assoc %
-           :inferences (gmap-inferences % base))
-        (:gmaps data))
-   (assoc data :gmaps)))
+    (map #(assoc %
+            :inferences (gmap-inferences kg % base))
+      (:gmaps data))
+    (assoc data :gmaps)))
 
 ;; On inference integration, recursive method:
 ;;
@@ -396,10 +396,10 @@
       gmap)))
 
 (defn transfer-inferences
-  [data]
+  [kg data]
   (->>
-   (map transfer-gmap-inferences (:gmaps data))
-   (assoc data :gmaps)))
+    (map transfer-gmap-inferences kg (:gmaps data))
+    (assoc data :gmaps)))
 
 (defn finalize-gmaps
   "Computes additional information about the gmaps we have found and stores it
@@ -445,7 +445,7 @@
      combine-gmaps
      merge-gmaps
      (finalize-gmaps kg base target)
-     (generate-inferences base)
-     transfer-inferences))
+     (generate-inferences kg base)
+     (transfer-inferences kg)))
   ([kg base target]
    (match kg literal-similarity base target)))
