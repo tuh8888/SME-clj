@@ -732,8 +732,142 @@
                                  :nogood   #{{:base :e7, :target :e2}},
                                  :children #{{:base :Vial, :target :Icecube}}}}})
 
+
+(def expected-generated-inferences {:gmaps
+                                    '({:mhs
+                                       #{{:base :e11, :target :e1}
+                                         {:base :Water, :target :Heat}
+                                         {:base :Beaker, :target :Coffee}
+                                         {:base :e9, :target :e0}
+                                         {:base :Pipe, :target :Bar}
+                                         {:base :Vial, :target :Icecube}
+                                         {:base :e13, :target :e3}
+                                         {:base :e12, :target :e2}},
+                                       :structure
+                                       {:roots #{{:base :e9, :target :e0} {:base :e13, :target :e3}},
+                                        :nogood
+                                        #{{:base :e7, :target :e2}
+                                          {:base :e8, :target :e3}
+                                          {:base :Water, :target :Coffee}
+                                          {:base :e6, :target :e1}},
+                                        :emaps
+                                        #{{:base :Water, :target :Heat}
+                                          {:base :Beaker, :target :Coffee}
+                                          {:base :Pipe, :target :Bar}
+                                          {:base :Vial, :target :Icecube}}},
+                                       :score        18,
+                                       :emap-matches 0,
+                                       :inferences   #{}}
+                                      {:mhs
+                                       #{{:base :Water, :target :Heat}
+                                         {:base :e7, :target :e2}
+                                         {:base :e8, :target :e3}
+                                         {:base :Beaker, :target :Coffee}
+                                         {:base :e9, :target :e0}
+                                         {:base :e6, :target :e1}
+                                         {:base :Pipe, :target :Bar}
+                                         {:base :Vial, :target :Icecube}},
+                                       :structure
+                                       {:roots #{{:base :e8, :target :e3} {:base :e9, :target :e0}},
+                                        :nogood
+                                        #{{:base :e11, :target :e1}
+                                          {:base :Water, :target :Coffee}
+                                          {:base :e13, :target :e3}
+                                          {:base :e12, :target :e2}},
+                                        :emaps
+                                        #{{:base :Water, :target :Heat}
+                                          {:base :Beaker, :target :Coffee}
+                                          {:base :Pipe, :target :Bar}
+                                          {:base :Vial, :target :Icecube}}},
+                                       :score        18,
+                                       :emap-matches 0,
+                                       :inferences   #{}}
+                                      {:mhs
+                                       #{{:base :e15, :target :e4}
+                                         {:base :Water, :target :Coffee}
+                                         {:base :e16, :target :e5}},
+                                       :structure
+                                       {:roots  #{{:base :e15, :target :e4} {:base :e16, :target :e5}},
+                                        :nogood #{{:base :Water, :target :Heat} {:base :Beaker, :target :Coffee}},
+                                        :emaps  #{{:base :Water, :target :Coffee}}},
+                                       :score        5,
+                                       :emap-matches 0,
+                                       :inferences   #{}}),
+                                    :mh-structure
+                                    {{:base :e11, :target :e1}
+                                     {:emaps    #{{:base :Beaker, :target :Coffee}},
+                                      :nogood   #{{:base :Water, :target :Coffee} {:base :e6, :target :e1}},
+                                      :children #{{:base :Beaker, :target :Coffee}}},
+                                     {:base :e15, :target :e4}
+                                     {:emaps    #{{:base :Water, :target :Coffee}},
+                                      :nogood   #{{:base :Water, :target :Heat} {:base :Beaker, :target :Coffee}},
+                                      :children #{{:base :Water, :target :Coffee}}},
+                                     {:base :Water, :target :Heat}
+                                     {:emaps    #{{:base :Water, :target :Heat}},
+                                      :nogood   #{{:base :Water, :target :Coffee}},
+                                      :children #{}},
+                                     {:base :e7, :target :e2}
+                                     {:emaps    #{{:base :Vial, :target :Icecube}},
+                                      :nogood   #{{:base :e12, :target :e2}},
+                                      :children #{{:base :Vial, :target :Icecube}}},
+                                     {:base :e8, :target :e3}
+                                     {:emaps    #{{:base :Beaker, :target :Coffee} {:base :Vial, :target :Icecube}},
+                                      :nogood
+                                      #{{:base :e11, :target :e1}
+                                        {:base :Water, :target :Coffee}
+                                        {:base :e13, :target :e3}
+                                        {:base :e12, :target :e2}},
+                                      :children #{{:base :e7, :target :e2} {:base :e6, :target :e1}}},
+                                     {:base :Beaker, :target :Coffee}
+                                     {:emaps    #{{:base :Beaker, :target :Coffee}},
+                                      :nogood   #{{:base :Water, :target :Coffee}},
+                                      :children #{}},
+                                     {:base :Water, :target :Coffee}
+                                     {:emaps    #{{:base :Water, :target :Coffee}},
+                                      :nogood   #{{:base :Water, :target :Heat} {:base :Beaker, :target :Coffee}},
+                                      :children #{}},
+                                     {:base :e9, :target :e0}
+                                     {:emaps
+                                      #{{:base :Water, :target :Heat}
+                                        {:base :Beaker, :target :Coffee}
+                                        {:base :Pipe, :target :Bar}
+                                        {:base :Vial, :target :Icecube}},
+                                      :nogood #{{:base :Water, :target :Coffee}},
+                                      :children
+                                      #{{:base :Water, :target :Heat}
+                                        {:base :Beaker, :target :Coffee}
+                                        {:base :Pipe, :target :Bar}
+                                        {:base :Vial, :target :Icecube}}},
+                                     {:base :e6, :target :e1}
+                                     {:emaps    #{{:base :Beaker, :target :Coffee}},
+                                      :nogood   #{{:base :e11, :target :e1} {:base :Water, :target :Coffee}},
+                                      :children #{{:base :Beaker, :target :Coffee}}},
+                                     {:base :Pipe, :target :Bar}
+                                     {:emaps #{{:base :Pipe, :target :Bar}}, :nogood #{}, :children #{}},
+                                     {:base :e16, :target :e5}
+                                     {:emaps    #{{:base :Water, :target :Coffee}},
+                                      :nogood   #{{:base :Water, :target :Heat} {:base :Beaker, :target :Coffee}},
+                                      :children #{{:base :Water, :target :Coffee}}},
+                                     {:base :Vial, :target :Icecube}
+                                     {:emaps #{{:base :Vial, :target :Icecube}}, :nogood #{}, :children #{}},
+                                     {:base :e13, :target :e3}
+                                     {:emaps    #{{:base :Beaker, :target :Coffee} {:base :Vial, :target :Icecube}},
+                                      :nogood
+                                      #{{:base :e7, :target :e2}
+                                        {:base :e8, :target :e3}
+                                        {:base :Water, :target :Coffee}
+                                        {:base :e6, :target :e1}},
+                                      :children #{{:base :e11, :target :e1} {:base :e12, :target :e2}}},
+                                     {:base :e12, :target :e2}
+                                     {:emaps    #{{:base :Vial, :target :Icecube}},
+                                      :nogood   #{{:base :e7, :target :e2}},
+                                      :children #{{:base :Vial, :target :Icecube}}}}})
+
 (def expected-transferred ::fail)
 (def expected-matches ::fail)
+
+(defn remove-mapping [result]
+  (update result :gmaps (partial map #(dissoc % :mapping))))
 
 (deftest heat-water-test
   ;; Water flow is the base, heat flow the target
@@ -794,14 +928,13 @@
 
   (is (=
         expected-finalized-gmaps
-        (update (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-merged-gmaps)
-          :gmaps (partial map #(dissoc % :mapping)))))
+        (-> (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-merged-gmaps)
+          remove-mapping)))
 
-
-  (def expected-generated-inferences ::fail)
   (is (=
         expected-generated-inferences
-        (SUT/generate-inferences simple-water-flow expected-finalized-gmaps)))
+        (SUT/generate-inferences kg simple-water-flow expected-finalized-gmaps)))
+
   (def expected-transferred-inferences ::fail)
   (is (=
         expected-transferred-inferences
