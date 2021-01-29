@@ -396,10 +396,10 @@
       gmap)))
 
 (defn transfer-inferences
-  [data]
+  [kg data]
   (->>
-   (map transfer-gmap-inferences (:gmaps data))
-   (assoc data :gmaps)))
+    (map transfer-gmap-inferences kg (:gmaps data))
+    (assoc data :gmaps)))
 
 (defn finalize-gmaps
   "Computes additional information about the gmaps we have found and stores it
@@ -446,6 +446,6 @@
      merge-gmaps
      (finalize-gmaps kg base target)
      (generate-inferences kg base)
-     transfer-inferences))
+     (transfer-inferences kg)))
   ([kg base target]
    (match kg literal-similarity base target)))
