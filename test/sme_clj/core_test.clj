@@ -628,56 +628,7 @@
                                      {:base :Pipe, :target :Bar}
                                      {:base :Vial, :target :Icecube}}},
                                   :score        18,
-                                  :emap-matches 0,
-                                  :mapping
-                                  {:base
-                                   {:name :simple-water-flow,
-                                    :graph
-                                    {:e16 {:name :e16, :type :expression, :functor :liquid, :args (:Water)},
-                                     :e10 {:name :e10, :type :expression, :functor :cause, :args (:e8 :e9)},
-                                     :e8  {:name :e8, :type :expression, :functor :greater, :args (:e6 :e7)},
-                                     :e6  {:name :e6, :type :expression, :functor :pressure, :args (:Beaker)},
-                                     :e12 {:name :e12, :type :expression, :functor :diameter, :args (:Vial)},
-                                     :e9
-                                     {:name    :e9,
-                                      :type    :expression,
-                                      :functor :flow,
-                                      :args    (:Beaker :Vial :Water :Pipe)},
-                                     :e14 {:name :e14, :type :expression, :functor :clear, :args (:Beaker)},
-                                     :e11
-                                     {:name :e11, :type :expression, :functor :diameter, :args (:Beaker)},
-                                     :e13
-                                     {:name :e13, :type :expression, :functor :greater, :args (:e11 :e12)},
-                                     :e15 {:name :e15, :type :expression, :functor :flat-top, :args (:Water)},
-                                     :e7  {:name :e7, :type :expression, :functor :pressure, :args (:Vial)}},
-                                    :spec
-                                    ([:cause
-                                      [:greater [:pressure :Beaker] [:pressure :Vial]]
-                                      [:flow :Beaker :Vial :Water :Pipe]]
-                                     [:greater [:diameter :Beaker] [:diameter :Vial]]
-                                     [:clear :Beaker]
-                                     [:flat-top :Water]
-                                     [:liquid :Water])},
-                                   :target
-                                   {:name :simple-heat-flow,
-                                    :graph
-                                    {:e0
-                                     {:name    :e0,
-                                      :type    :expression,
-                                      :functor :flow,
-                                      :args    (:Coffee :Icecube :Heat :Bar)},
-                                     :e1
-                                     {:name :e1, :type :expression, :functor :temperature, :args (:Coffee)},
-                                     :e2
-                                     {:name :e2, :type :expression, :functor :temperature, :args (:Icecube)},
-                                     :e3 {:name :e3, :type :expression, :functor :greater, :args (:e1 :e2)},
-                                     :e4 {:name :e4, :type :expression, :functor :flat-top, :args (:Coffee)},
-                                     :e5 {:name :e5, :type :expression, :functor :liquid, :args (:Coffee)}},
-                                    :spec
-                                    ([:flow :Coffee :Icecube :Heat :Bar]
-                                     [:greater [:temperature :Coffee] [:temperature :Icecube]]
-                                     [:flat-top :Coffee]
-                                     [:liquid :Coffee])}}}
+                                  :emap-matches 0}
                                  {:mhs
                                   #{{:base :Water, :target :Heat}
                                     {:base :e7, :target :e2}
@@ -700,56 +651,7 @@
                                      {:base :Pipe, :target :Bar}
                                      {:base :Vial, :target :Icecube}}},
                                   :score        18,
-                                  :emap-matches 0,
-                                  :mapping
-                                  {:base
-                                   {:name :simple-water-flow,
-                                    :graph
-                                    {:e16 {:name :e16, :type :expression, :functor :liquid, :args (:Water)},
-                                     :e10 {:name :e10, :type :expression, :functor :cause, :args (:e8 :e9)},
-                                     :e8  {:name :e8, :type :expression, :functor :greater, :args (:e6 :e7)},
-                                     :e6  {:name :e6, :type :expression, :functor :pressure, :args (:Beaker)},
-                                     :e12 {:name :e12, :type :expression, :functor :diameter, :args (:Vial)},
-                                     :e9
-                                     {:name    :e9,
-                                      :type    :expression,
-                                      :functor :flow,
-                                      :args    (:Beaker :Vial :Water :Pipe)},
-                                     :e14 {:name :e14, :type :expression, :functor :clear, :args (:Beaker)},
-                                     :e11
-                                     {:name :e11, :type :expression, :functor :diameter, :args (:Beaker)},
-                                     :e13
-                                     {:name :e13, :type :expression, :functor :greater, :args (:e11 :e12)},
-                                     :e15 {:name :e15, :type :expression, :functor :flat-top, :args (:Water)},
-                                     :e7  {:name :e7, :type :expression, :functor :pressure, :args (:Vial)}},
-                                    :spec
-                                    ([:cause
-                                      [:greater [:pressure :Beaker] [:pressure :Vial]]
-                                      [:flow :Beaker :Vial :Water :Pipe]]
-                                     [:greater [:diameter :Beaker] [:diameter :Vial]]
-                                     [:clear :Beaker]
-                                     [:flat-top :Water]
-                                     [:liquid :Water])},
-                                   :target
-                                   {:name :simple-heat-flow,
-                                    :graph
-                                    {:e0
-                                     {:name    :e0,
-                                      :type    :expression,
-                                      :functor :flow,
-                                      :args    (:Coffee :Icecube :Heat :Bar)},
-                                     :e1
-                                     {:name :e1, :type :expression, :functor :temperature, :args (:Coffee)},
-                                     :e2
-                                     {:name :e2, :type :expression, :functor :temperature, :args (:Icecube)},
-                                     :e3 {:name :e3, :type :expression, :functor :greater, :args (:e1 :e2)},
-                                     :e4 {:name :e4, :type :expression, :functor :flat-top, :args (:Coffee)},
-                                     :e5 {:name :e5, :type :expression, :functor :liquid, :args (:Coffee)}},
-                                    :spec
-                                    ([:flow :Coffee :Icecube :Heat :Bar]
-                                     [:greater [:temperature :Coffee] [:temperature :Icecube]]
-                                     [:flat-top :Coffee]
-                                     [:liquid :Coffee])}}}
+                                  :emap-matches 0}
                                  {:mhs
                                   #{{:base :e15, :target :e4}
                                     {:base :Water, :target :Coffee}
@@ -759,56 +661,7 @@
                                    :nogood #{{:base :Water, :target :Heat} {:base :Beaker, :target :Coffee}},
                                    :emaps  #{{:base :Water, :target :Coffee}}},
                                   :score        5,
-                                  :emap-matches 0,
-                                  :mapping
-                                  {:base
-                                   {:name :simple-water-flow,
-                                    :graph
-                                    {:e16 {:name :e16, :type :expression, :functor :liquid, :args (:Water)},
-                                     :e10 {:name :e10, :type :expression, :functor :cause, :args (:e8 :e9)},
-                                     :e8  {:name :e8, :type :expression, :functor :greater, :args (:e6 :e7)},
-                                     :e6  {:name :e6, :type :expression, :functor :pressure, :args (:Beaker)},
-                                     :e12 {:name :e12, :type :expression, :functor :diameter, :args (:Vial)},
-                                     :e9
-                                     {:name    :e9,
-                                      :type    :expression,
-                                      :functor :flow,
-                                      :args    (:Beaker :Vial :Water :Pipe)},
-                                     :e14 {:name :e14, :type :expression, :functor :clear, :args (:Beaker)},
-                                     :e11
-                                     {:name :e11, :type :expression, :functor :diameter, :args (:Beaker)},
-                                     :e13
-                                     {:name :e13, :type :expression, :functor :greater, :args (:e11 :e12)},
-                                     :e15 {:name :e15, :type :expression, :functor :flat-top, :args (:Water)},
-                                     :e7  {:name :e7, :type :expression, :functor :pressure, :args (:Vial)}},
-                                    :spec
-                                    ([:cause
-                                      [:greater [:pressure :Beaker] [:pressure :Vial]]
-                                      [:flow :Beaker :Vial :Water :Pipe]]
-                                     [:greater [:diameter :Beaker] [:diameter :Vial]]
-                                     [:clear :Beaker]
-                                     [:flat-top :Water]
-                                     [:liquid :Water])},
-                                   :target
-                                   {:name :simple-heat-flow,
-                                    :graph
-                                    {:e0
-                                     {:name    :e0,
-                                      :type    :expression,
-                                      :functor :flow,
-                                      :args    (:Coffee :Icecube :Heat :Bar)},
-                                     :e1
-                                     {:name :e1, :type :expression, :functor :temperature, :args (:Coffee)},
-                                     :e2
-                                     {:name :e2, :type :expression, :functor :temperature, :args (:Icecube)},
-                                     :e3 {:name :e3, :type :expression, :functor :greater, :args (:e1 :e2)},
-                                     :e4 {:name :e4, :type :expression, :functor :flat-top, :args (:Coffee)},
-                                     :e5 {:name :e5, :type :expression, :functor :liquid, :args (:Coffee)}},
-                                    :spec
-                                    ([:flow :Coffee :Icecube :Heat :Bar]
-                                     [:greater [:temperature :Coffee] [:temperature :Icecube]]
-                                     [:flat-top :Coffee]
-                                     [:liquid :Coffee])}}}),
+                                  :emap-matches 0}),
                                :mh-structure
                                {{:base :e11, :target :e1}
                                 {:emaps    #{{:base :Beaker, :target :Coffee}},
@@ -941,17 +794,8 @@
 
   (is (=
         expected-finalized-gmaps
-        (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-merged-gmaps)
-        ))
-  (->> [expected-finalized-gmaps
-        (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-merged-gmaps)]
-    (map (comp first :gmaps))
-    #_(apply =)
-    (apply map vector)
-    (remove (fn [[a b]] (.equals a b)))
-    first
-    #_((fn [[a b]] (.equals a b))))
-  (-> expected-finalized-gmaps :gmaps first count)
+        (update (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-merged-gmaps)
+          :gmaps (partial map #(dissoc % :mapping)))))
 
 
   (def expected-generated-inferences ::fail)
