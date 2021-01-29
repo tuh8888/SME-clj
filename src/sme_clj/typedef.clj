@@ -94,8 +94,8 @@
 
 ;;; GMAP
 
-(defrecord GMap
-  [mhs structure])
+#_(defrecord GMap
+      [mhs structure])
 
 (defn matched-goal
   [gmap]

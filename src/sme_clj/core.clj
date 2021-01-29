@@ -202,28 +202,28 @@
 
 (defn make-gmap
   "Returns a gmap with the root and all of its descendants."
-  [root mh-structure]
-  (->GMap (collect-children root mh-structure)
-    (merge {:roots #{root}}
-      ;; gmap's nogoods/emaps are those of its root(s)
-      (select-keys (get mh-structure root) [:nogood :emaps]))))
+  [kg root mh-structure]
+  {:mhs       (collect-children kg root mh-structure)
+   :structure (merge {:roots #{root}}
+                 ;; gmap's nogoods/emaps are those of its root(s)
+                 (select-keys (get mh-structure root) [:nogood :emaps]))})
 
 (defn compute-initial-gmaps
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
   map with the :mh-structure and the :gmaps set."
-  [mh-structure]
+  [kg mh-structure]
   (->>
-   (find-roots mh-structure)
-   (reduce (fn form-gmap [gmaps root]
-             (if (consistent? (get mh-structure root))
-               (conj gmaps (make-gmap root mh-structure))
-               (if-let [kids (seq (:children (get mh-structure root)))]
-                 (set/union gmaps
-                            (set (mapcat #(form-gmap #{} %) kids)))
-                 gmaps)))
-           #{})
-   (hash-map :mh-structure mh-structure
-             :gmaps)))
+    (find-roots mh-structure)
+    (reduce (fn form-gmap [gmaps root]
+              (if (consistent? (get mh-structure root))
+                (conj gmaps (make-gmap kg root mh-structure))
+                (if-let [kids (seq (:children (get mh-structure root)))]
+                  (set/union gmaps
+                    (set (mapcat #(form-gmap #{} %) kids)))
+                  gmaps)))
+      #{})
+    (hash-map :mh-structure mh-structure
+      :gmaps)))
 
 (defn gmaps-consistent?
   "Two gmaps are consistent if none of their elements are in the NoGood set of
@@ -281,7 +281,8 @@
 
           (reduce-to-gm [gm-set]
             (let [args (reduce gather-gm {:mhs #{} :structure {}} gm-set)]
-              (->GMap (:mhs args) (:structure args))))]
+              {:mhs       (:mhs args)
+               :structure (:structure args)}))]
     (->>
       (map reduce-to-gm (:gmaps data))
       (assoc data :gmaps))))
@@ -289,19 +290,20 @@
 
 (letfn [(round [n]
           (.setScale (bigdec n) 2 BigDecimal/ROUND_HALF_UP))]
- (defn emaps-equal?
-   "Special equals function for entities that rounds floating point numbers to
+
+  (defn emaps-equal?
+    "Special equals function for entities that rounds floating point numbers to
    two decimals before comparing them, to avoid rounding errors affecting
    equality."
-   [a b]
-   (and (= (keys a) (keys b))
-        (every? true?
-                (map (fn [x y]
-                       (if (and (number? x) (number? y))
-                         (== (round x) (round y))
-                         (= x y)))
-                     (vals a)
-                     (vals b))))))
+    [a b]
+    (and (= (keys a) (keys b))
+      (every? true?
+        (map (fn [x y]
+               (if (and (number? x) (number? y))
+                 (== (round x) (round y))
+                 (= x y)))
+          (vals a)
+          (vals b))))))
 
 ;; Entities may have keys that are implementation details. Bind this var to a
 ;; seq of those keys to ignore them in emap matching.
@@ -313,14 +315,14 @@
   [kg {:as   gmap,
        :keys [mhs]}]
   (filter #(and (is-emap? kg %)
-             (emaps-equal? (apply dissoc (:base %) unmatched-keys)
-               (apply dissoc (:target %) unmatched-keys)))
+             (emaps-equal? (apply dissoc (get kg (:base %)) unmatched-keys)
+               (apply dissoc (get kg (:target %)) unmatched-keys)))
     mhs))
 
 (defn score-gmap
   "Computes SES and emap scores for a gmap. The emap score is not in the
   original SME. It simply counts how many entities match in their content."
-  [{:keys [mh-structure] :as data} gm]
+  [kg {:keys [mh-structure] :as data} gm]
   (letfn [(score-mh [mh depth]
             ;; simplified trickle-down SES
             (if-let [kids (seq (:children (get mh-structure mh)))]
@@ -328,8 +330,8 @@
               depth))]
     (assoc gm
       :score (reduce + (count (:mhs gm))
-                     (map #(score-mh % 0) (:roots (:structure gm))))
-      :emap-matches (count (matching-emaps gm)))))
+               (map #(score-mh % 0) (:roots (:structure gm))))
+      :emap-matches (count (matching-emaps kg gm)))))
 
 ;;; Inference generation below. Not used in TCG model.
 
@@ -344,7 +346,7 @@
 
 (defn generate-inferences
   "Appends :inferences to gmaps in given data, for a given base graph."
-  [data base]
+  [base data]
   (->>
    (map #(assoc %
            :inferences (gmap-inferences % base))
@@ -402,14 +404,14 @@
 (defn finalize-gmaps
   "Computes additional information about the gmaps we have found and stores it
   in the gmaps."
-  [data base target]
+  [kg base target data]
   (->>
-   (:gmaps data)
+    (:gmaps data)
 
-   (map #(score-gmap data %))                            ; scores
-   (map #(assoc % :mapping {:base base :target target})) ; what we mappped
+    (map #(score-gmap kg data %))                            ; scores
+    (map #(assoc % :mapping {:base base :target target})) ; what we mappped
 
-   (assoc data :gmaps)))
+    (assoc data :gmaps)))
 
 (defn match
   "Attempts to find a structure mapping between base and target using an
@@ -435,16 +437,15 @@
                   target's concept graph.
 
   For example: (map :score (match b t)) -> seq of gmap scores."
-  ([base target rules]
-     (-> (create-match-hypotheses base target rules)
-         build-hypothesis-structure
-         propagate-from-emaps
-         compute-initial-gmaps
-         combine-gmaps
-         merge-gmaps
-         (finalize-gmaps base target)
-         (generate-inferences base)
-         transfer-inferences
-         ))
-  ([base target]
-     (match base target literal-similarity)))
+  ([kg rules base target]
+   (->> (create-match-hypotheses kg base target rules)
+     (build-hypothesis-structure kg)
+     propagate-from-emaps
+     (compute-initial-gmaps kg)
+     combine-gmaps
+     merge-gmaps
+     (finalize-gmaps kg base target)
+     (generate-inferences base)
+     transfer-inferences))
+  ([kg base target]
+   (match kg literal-similarity base target)))
