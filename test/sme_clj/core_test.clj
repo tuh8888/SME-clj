@@ -1090,18 +1090,13 @@
                                  :score        18,
                                  :emap-matches 0}))
 
-(def expected-generated-inferences #_::fail (undiff expected-finalized-gmaps
-                                              {:gmaps [{:inferences #{}} {:inferences #{}} {:inferences #{}}]}
-                                              nil))
+(def expected-generated-inferences #_::fail (undiff expected-finalized-gmaps {:gmaps [{:inferences #{}} {:inferences #{}} {:inferences #{}}]} nil))
 
 (def expected-transferred-inferences #_::fail (undiff expected-generated-inferences
                                                 {:gmaps [{:transferred ()} {:transferred ()} {:transferred ()}]}
                                                 nil))
 
-;; TODO determine why these are different
-;; TODO determine where the inferences are
-#_(data/diff expected-transferred-inferences
-    (SUT/match kg rules/literal-similarity simple-water-flow simple-heat-flow))
+#_(data/diff expected-transferred-inferences (SUT/match kg rules/literal-similarity simple-water-flow simple-heat-flow))
 
 (def expected-transferred ::fail)
 (def expected-matches ::fail)
