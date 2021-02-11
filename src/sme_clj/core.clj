@@ -118,28 +118,25 @@
 
                 ;; initial emaps is just ourselves if we are one, for the rest
                 ;; this will be filled later
-                {:emaps
-                 (if (= :expression (lookup kg (:base mh) :type)) #{} #{mh})
+                {:emaps (if (= :expression (lookup kg (:base mh) :type)) #{} #{mh})
 
                  ;; nogood is every mh mapping same target or base
-                 :nogood
-                 (-> (set/union
-                       (get bmap (:base mh) #{})
-                       (get tmap (:target mh)) #{})
-                   (disj mh)) ; not nogood of ourselves
+                 :nogood (-> (set/union
+                               (get bmap (:base mh) #{})
+                               (get tmap (:target mh)) #{})
+                           ;; not nogood of ourselves
+                           (disj mh))
 
                  ;; our children are mhs that map our arguments (so children
                  ;; does not equal our entire set of descendants)
-                 :children
-                 (if (= :expression (lookup kg (:base mh) :type))
-                   (set
-                     (mapcat (fn [b t]
-                               (set/intersection (get bmap b #{})
-                                 (get tmap t #{})))
-                       (lookup kg (:base mh) :args)
-                       (lookup kg (:target mh) :args)))
-                   #{})
-                 }))
+                 :children (if (= :expression (lookup kg (:base mh) :type))
+                             (->> (lookup kg (:target mh) :args)
+                               (mapcat (fn [b t]
+                                         (set/intersection (get bmap b #{})
+                                           (get tmap t #{})))
+                                 (lookup kg (:base mh) :args))
+                               set)
+                             #{})}))
       {}
       mhs)))
 

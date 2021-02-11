@@ -100,92 +100,78 @@
                                  {:base :e13, :target :e3}
                                  {:base :Vial, :target :Icecube}})
 
-(def expected-hypothesis-structure {{:base :e11, :target :e1}
-                                    {:emaps    #{},
-                                     :nogood   #{{:base :e6, :target :e1}},
-                                     :children #{{:base :Beaker, :target :Coffee}}},
-                                    {:base :e15, :target :e4}
-                                    {:emaps #{}, :nogood #{}, :children #{{:base :Water, :target :Coffee}}},
-                                    {:base :Water, :target :Heat}
-                                    {:emaps    #{{:base :Water, :target :Heat}},
-                                     :nogood   #{{:base :Water, :target :Coffee}},
-                                     :children #{}},
-                                    {:base :e7, :target :e2}
-                                    {:emaps    #{},
-                                     :nogood   #{{:base :e12, :target :e2}},
-                                     :children #{{:base :Vial, :target :Icecube}}},
-                                    {:base :e8, :target :e3}
-                                    {:emaps    #{},
-                                     :nogood   #{{:base :e13, :target :e3}},
-                                     :children #{{:base :e7, :target :e2} {:base :e6, :target :e1}}},
-                                    {:base :Beaker, :target :Coffee}
-                                    {:emaps    #{{:base :Beaker, :target :Coffee}},
-                                     :nogood   #{{:base :Water, :target :Coffee}},
-                                     :children #{}},
-                                    {:base :Water, :target :Coffee}
-                                    {:emaps    #{{:base :Water, :target :Coffee}},
-                                     :nogood   #{{:base :Water, :target :Heat} {:base :Beaker, :target :Coffee}},
-                                     :children #{}},
-                                    {:base :e9, :target :e0}
-                                    {:emaps  #{},
-                                     :nogood #{},
-                                     :children
-                                     #{{:base :Water, :target :Heat}
-                                       {:base :Beaker, :target :Coffee}
-                                       {:base :Pipe, :target :Bar}
-                                       {:base :Vial, :target :Icecube}}},
-                                    {:base :e6, :target :e1}
-                                    {:emaps    #{},
-                                     :nogood   #{{:base :e11, :target :e1}},
-                                     :children #{{:base :Beaker, :target :Coffee}}},
-                                    {:base :Pipe, :target :Bar}
-                                    {:emaps #{{:base :Pipe, :target :Bar}}, :nogood #{}, :children #{}},
-                                    {:base :e16, :target :e5}
-                                    {:emaps #{}, :nogood #{}, :children #{{:base :Water, :target :Coffee}}},
-                                    {:base :Vial, :target :Icecube}
-                                    {:emaps #{{:base :Vial, :target :Icecube}}, :nogood #{}, :children #{}},
-                                    {:base :e13, :target :e3}
-                                    {:emaps    #{},
-                                     :nogood   #{{:base :e8, :target :e3}},
-                                     :children #{{:base :e11, :target :e1} {:base :e12, :target :e2}}},
-                                    {:base :e12, :target :e2}
-                                    {:emaps    #{},
-                                     :nogood   #{{:base :e7, :target :e2}},
-                                     :children #{{:base :Vial, :target :Icecube}}}})
+(def expected-hypothesis-structure {{:base :e11, :target :e1}        {:emaps    #{},
+                                                                      :nogood   #{{:base :e6, :target :e1}},
+                                                                      :children #{{:base :Beaker, :target :Coffee}}},
+                                    {:base :e15, :target :e4}        {:emaps    #{},
+                                                                      :nogood   #{},
+                                                                      :children #{{:base :Water, :target :Coffee}}},
+                                    {:base :Water, :target :Heat}    {:emaps    #{{:base :Water, :target :Heat}},
+                                                                      :nogood   #{{:base :Water, :target :Coffee}},
+                                                                      :children #{}},
+                                    {:base :e7, :target :e2}         {:emaps    #{},
+                                                                      :nogood   #{{:base :e12, :target :e2}},
+                                                                      :children #{{:base :Vial, :target :Icecube}}},
+                                    {:base :e8, :target :e3}         {:emaps    #{},
+                                                                      :nogood   #{{:base :e13, :target :e3}},
+                                                                      :children #{{:base :e7, :target :e2} {:base :e6, :target :e1}}},
+                                    {:base :Beaker, :target :Coffee} {:emaps    #{{:base :Beaker, :target :Coffee}},
+                                                                      :nogood   #{{:base :Water, :target :Coffee}},
+                                                                      :children #{}},
+                                    {:base :Water, :target :Coffee}  {:emaps    #{{:base :Water, :target :Coffee}},
+                                                                      :nogood   #{{:base :Water, :target :Heat} {:base :Beaker, :target :Coffee}},
+                                                                      :children #{}},
+                                    {:base :e9, :target :e0}         {:emaps    #{},
+                                                                      :nogood   #{},
+                                                                      :children #{{:base :Water, :target :Heat}
+                                                                                  {:base :Beaker, :target :Coffee}
+                                                                                  {:base :Pipe, :target :Bar}
+                                                                                  {:base :Vial, :target :Icecube}}},
+                                    {:base :e6, :target :e1}         {:emaps    #{},
+                                                                      :nogood   #{{:base :e11, :target :e1}},
+                                                                      :children #{{:base :Beaker, :target :Coffee}}},
+                                    {:base :Pipe, :target :Bar}      {:emaps    #{{:base :Pipe, :target :Bar}},
+                                                                      :nogood   #{},
+                                                                      :children #{}},
+                                    {:base :e16, :target :e5}        {:emaps    #{},
+                                                                      :nogood   #{},
+                                                                      :children #{{:base :Water, :target :Coffee}}},
+                                    {:base :Vial, :target :Icecube}  {:emaps    #{{:base :Vial, :target :Icecube}},
+                                                                      :nogood   #{},
+                                                                      :children #{}},
+                                    {:base :e13, :target :e3}        {:emaps    #{},
+                                                                      :nogood   #{{:base :e8, :target :e3}},
+                                                                      :children #{{:base :e11, :target :e1} {:base :e12, :target :e2}}},
+                                    {:base :e12, :target :e2}        {:emaps    #{},
+                                                                      :nogood   #{{:base :e7, :target :e2}},
+                                                                      :children #{{:base :Vial, :target :Icecube}}}})
 
 (def expected-propagated-from-emaps (undiff expected-hypothesis-structure
-                                      {{:base :e11, :target :e1}
-                                       {:nogood #{{:base :Water, :target :Coffee}},
-                                        :emaps  #{{:base :Beaker, :target :Coffee}}},
-                                       {:base :e15, :target :e4}
-                                       {:nogood #{{:base :Water, :target :Heat} {:base :Beaker, :target :Coffee}},
-                                        :emaps  #{{:base :Water, :target :Coffee}}},
+                                      {{:base :e11, :target :e1} {:nogood #{{:base :Water, :target :Coffee}},
+                                                                  :emaps  #{{:base :Beaker, :target :Coffee}}},
+                                       {:base :e15, :target :e4} {:nogood #{{:base :Water, :target :Heat} {:base :Beaker, :target :Coffee}},
+                                                                  :emaps  #{{:base :Water, :target :Coffee}}},
                                        {:base :e7, :target :e2}  {:emaps #{{:base :Vial, :target :Icecube}}},
-                                       {:base :e8, :target :e3}
-                                       {:nogood
-                                        #{{:base :e11, :target :e1}
-                                          {:base :Water, :target :Coffee}
-                                          {:base :e12, :target :e2}},
-                                        :emaps #{{:base :Beaker, :target :Coffee} {:base :Vial, :target :Icecube}}},
-                                       {:base :e9, :target :e0}
-                                       {:nogood #{{:base :Water, :target :Coffee}},
-                                        :emaps
-                                        #{{:base :Water, :target :Heat}
-                                          {:base :Beaker, :target :Coffee}
-                                          {:base :Pipe, :target :Bar}
-                                          {:base :Vial, :target :Icecube}}},
-                                       {:base :e6, :target :e1}
-                                       {:nogood #{{:base :Water, :target :Coffee}},
-                                        :emaps  #{{:base :Beaker, :target :Coffee}}},
-                                       {:base :e16, :target :e5}
-                                       {:nogood #{{:base :Water, :target :Heat} {:base :Beaker, :target :Coffee}},
-                                        :emaps  #{{:base :Water, :target :Coffee}}},
-                                       {:base :e13, :target :e3}
-                                       {:nogood
-                                        #{{:base :e7, :target :e2}
-                                          {:base :Water, :target :Coffee}
-                                          {:base :e6, :target :e1}},
-                                        :emaps #{{:base :Beaker, :target :Coffee} {:base :Vial, :target :Icecube}}},
+                                       {:base :e8, :target :e3}  {:nogood
+                                                                  #{{:base :e11, :target :e1}
+                                                                    {:base :Water, :target :Coffee}
+                                                                    {:base :e12, :target :e2}},
+                                                                  :emaps #{{:base :Beaker, :target :Coffee} {:base :Vial, :target :Icecube}}},
+                                       {:base :e9, :target :e0}  {:nogood #{{:base :Water, :target :Coffee}},
+                                                                  :emaps
+                                                                  #{{:base :Water, :target :Heat}
+                                                                    {:base :Beaker, :target :Coffee}
+                                                                    {:base :Pipe, :target :Bar}
+                                                                    {:base :Vial, :target :Icecube}}},
+                                       {:base :e6, :target :e1}  {:nogood #{{:base :Water, :target :Coffee}},
+                                                                  :emaps  #{{:base :Beaker, :target :Coffee}}},
+                                       {:base :e16, :target :e5} {:nogood #{{:base :Water, :target :Heat} {:base :Beaker, :target :Coffee}},
+                                                                  :emaps  #{{:base :Water, :target :Coffee}}},
+                                       {:base :e13, :target :e3} {:nogood
+                                                                  #{{:base :e7, :target :e2}
+                                                                    {:base :Water, :target :Coffee}
+                                                                    {:base :e6, :target :e1}},
+                                                                  :emaps #{{:base :Beaker, :target :Coffee} {:base :Vial, :target :Icecube}}},
                                        {:base :e12, :target :e2} {:emaps #{{:base :Vial, :target :Icecube}}}}
                                       {{:base :e11, :target :e1} {:emaps nil},
                                        {:base :e15, :target :e4} {:nogood nil, :emaps nil},
