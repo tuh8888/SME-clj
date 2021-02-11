@@ -107,12 +107,11 @@
   [kg mhs]
   (let [add-as                     (fn [m k mh] (update-in m [k (k mh)] set/union #{mh}))
         ;; cache of base/target expressions mapped to their mh
-        smap                       (reduce (fn [s mh] (-> s
+        {bmap :base, tmap :target} (reduce (fn [s mh] (-> s
                                                        (add-as :base mh)
                                                        (add-as :target mh)))
                                      {:base {}, :target {}}
-                                     mhs)
-        {bmap :base, tmap :target} smap]
+                                     mhs)]
     (reduce (fn build-mh-structure [structure mh]
               (assoc structure
                 mh
