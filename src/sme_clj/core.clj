@@ -118,14 +118,21 @@
             (set (get tmap target)))
       mh)))
 
+(defn find-emaps
+  [kg [base :as mh]]
+  (when-not (= :expression (types/lookup kg base :type))
+    #{mh}))
+
+(defn all-emaps
+  [kg mhs]
+  (->> mhs
+    (map (partial find-emaps kg))
+    (reduce set/union)))
+
 (defn build-mh-structure
   [kg mhs structure [base target :as mh]]
   (let [nogood (find-nogood mhs mh)]
-    (cond-> (assoc structure mh nil)
-      ;; initial emaps is just ourselves if we are one, for the rest
-      ;; this will be filled later
-      (not= :expression (types/lookup kg base :type)) (assoc-in [mh :emaps] #{mh})
-      )))
+    (assoc structure mh nil)))
 
 ;; The below proves useful when checking consistency and such.
 (defn build-hypothesis-structure
@@ -150,17 +157,16 @@
               (let [kids        (find-children kg (keys mh-structure) mh)
                     mstr-kids   (reduce propagate mstr kids)
                     kids-struct (vals (select-keys mstr-kids kids))]
-                (-> mstr-kids
-                  (update-in [mh :emaps] (partial apply set/union) (map :emaps kids-struct))))))]
+                mstr-kids)))]
     (reduce propagate
       mh-structure
       (keys mh-structure))))
 
 (defn consistent?
   "True if an MH is consistent, meaning none of its emaps are in its nogoods."
-  ([mh-structure mh]
+  ([kg mh-structure mh]
    (empty? (set/intersection
-             (get-in mh-structure [mh :emaps])
+             (find-emaps kg mh)
              (find-nogood (keys mh-structure) mh)))))
 
 (defn find-roots
@@ -191,9 +197,7 @@
 (defn make-gmap
   "Returns a gmap with the root and all of its descendants."
   [kg root mh-structure]
-  {:mhs       (collect-children kg root mh-structure)
-   ;; gmap's nogoods/emaps are those of its root(s)
-   :structure (select-keys (get mh-structure root) [:emaps])})
+  {:mhs       (collect-children kg root mh-structure)})
 
 (defn compute-initial-gmaps
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
@@ -203,7 +207,7 @@
    :gmaps        (->>
                    (find-roots kg mh-structure)
                    (reduce (fn form-gmap [gmaps root]
-                             (if (consistent? mh-structure root)
+                             (if (consistent? kg mh-structure root)
                                (->> mh-structure
                                  (make-gmap kg root)
                                  (conj gmaps))
@@ -271,15 +275,13 @@
   "Given a collection of sets of gmaps, merges the gmaps in each set into a
   single gmap."
   [data]
-  (letfn [(gather-gm [{:keys [mhs structure] :as total} gm]
+  (letfn [(gather-gm [{:keys [mhs] :as total} gm]
             (assoc total
-              :mhs (set/union mhs (:mhs gm))
-              :structure (merge-with set/union structure (:structure gm))))
+              :mhs (set/union mhs (:mhs gm))))
 
           (reduce-to-gm [gm-set]
-            (let [args (reduce gather-gm {:mhs #{} :structure {}} gm-set)]
-              {:mhs       (:mhs args)
-               :structure (:structure args)}))]
+            (let [args (reduce gather-gm {:mhs #{}} gm-set)]
+              {:mhs (:mhs args)}))]
     (update data :gmaps (partial map reduce-to-gm))))
 
 
