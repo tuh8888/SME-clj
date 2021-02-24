@@ -229,21 +229,20 @@
   "Two gmaps are consistent if none of their elements are in the NoGood set of
   the other."
   [gm-a gm-b]
-  (and (empty? (set/intersection (:mhs gm-a) (:nogood (:structure gm-b))))
-       (empty? (set/intersection (:mhs gm-b) (:nogood (:structure gm-a))))))
-
-(defn gmap-sets-consistent?
-  "True if both collections of gmaps are fully consistent with each other."
-  [coll-a coll-b]
-  (every? true?
-          (map (fn [gm-b]
-                 (every? true? (map #(gmaps-consistent? gm-b %) coll-a)))
-               coll-b)))
+  (and
+    (empty? (set/intersection (:mhs gm-a) (get-in gm-b [:structure :nogood])))
+    (empty? (set/intersection (:mhs gm-b) (get-in gm-a [:structure :nogood])))))
 
 (defn gmap-set-internally-consistent?
   "True if the given set of gmaps is internally consistent."
   [gmap-set]
-  (gmap-sets-consistent? gmap-set gmap-set))
+  (every? (fn [gm-b]
+            (every? #(gmaps-consistent? gm-b %) gmap-set))
+    gmap-set))
+
+(defn strict-subset? [set1 set2]
+  (and (not= set1 set2)
+    (set/subset? set1 set2)))
 
 ;; NOTE: SME's second merge step seems rather complex compared to its benefits.
 ;; Its results will already be generated in a third step we will be performing
@@ -252,23 +251,22 @@
 
 
 ;; The below is a very naive implementation, performance-wise.
+
 (defn combine-gmaps
   "Combine all gmaps in all maximal, consistent ways."
   [data]
-  (let [consistent-sets
-        (->>
-          (comb/subsets (vec (:gmaps data)))
-          (remove empty?)
-          (filter gmap-set-internally-consistent?)
-          (map set))]
-    (->>
-      (remove (fn [gms-a]
-                (some (fn [gms-b]
-                        (and (not= gms-a gms-b)
-                          (set/subset? gms-a gms-b)))
-                  consistent-sets))
-        consistent-sets)
-      (assoc data :gmaps))))
+  (update data :gmaps (fn [gmaps]
+                        (let [consistent-sets (->> gmaps
+                                                vec
+                                                comb/subsets
+                                                (remove empty?)
+                                                (filter gmap-set-internally-consistent?)
+                                                (map set))]
+                          (->> consistent-sets
+                            (remove (fn [gms-a]
+                                      (some (partial strict-subset? gms-a)
+                                        consistent-sets)))
+                            (map vec))))))
 
 (defn merge-gmaps
   "Given a collection of sets of gmaps, merges the gmaps in each set into a
