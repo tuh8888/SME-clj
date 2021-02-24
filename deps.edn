@@ -2,6 +2,6 @@
            org.clojure/math.combinatorics {:mvn/version "0.1.6"}
            github-tuh8888/mops            {:git/url "git@github.com:tuh8888/mops"
                                            :sha     "6dd2071d8f8ed3134f9e47c11e0af3925afae877"}
-           ubergraph                      {:mvn/version "0.8.1"}}
+           ubergraph/ubergraph            {:mvn/version "0.8.1"}}
  :paths   ["src"]
  :aliases {:dev {:extra-paths ["test"]}}}

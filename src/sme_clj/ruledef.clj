@@ -1,7 +1,7 @@
 (ns sme-clj.ruledef
   "Structure mapping matching rule definitions. Contains both basic literal
    similarity rules and macros for defining new rulesets."
-  (:require [sme-clj.typedef :refer :all]
+  (:require [sme-clj.typedef :as types]
             [sme-clj.util :refer [vals-as-keys]]))
 
 ;;; Rule definition helpers
@@ -21,7 +21,7 @@
    :body body})
 
 (defn expression? [kg k]
-  ((comp (partial = :expression) #(lookup kg % :type)) k))
+  ((comp (partial = :expression) #(types/lookup kg % :type)) k))
 
 ;; As in SME, basic analogical matching rules, direct port
 (def literal-similarity (vals-as-keys :name
@@ -29,26 +29,26 @@
                              (fn [kg [base target :as mh]]
                                [(when ((every-pred
                                          (partial every? (partial expression? kg)) ; Both expressions
-                                         (comp (partial apply =) (partial map #(lookup kg % :functor)))) ; Same functors
+                                         (comp (partial apply =) (partial map #(types/lookup kg % :functor)))) ; Same functors
                                        [base target])
                                   mh)]))
 
                            (make-rule :compatible-args :intern
                              (fn [kg [base target]]
                                (when (and
-                                       (lookup kg base :functor :ordered?)
-                                       (lookup kg target :functor :ordered?))
+                                       (types/lookup kg base :functor :ordered?)
+                                       (types/lookup kg target :functor :ordered?))
                                  (map (fn [bchild tchild]
                                         (when (or
                                                 (not (or
                                                        (expression? kg bchild)
                                                        (expression? kg tchild)))
                                                 (and
-                                                  (= :function (lookup kg bchild :functor :type))
-                                                  (= :function (lookup kg tchild :functor :type))))
-                                          (make-match-hypothesis bchild tchild)))
-                                   (lookup kg base :args)
-                                   (lookup kg target :args)))))
+                                                  (= :function (types/lookup kg bchild :functor :type))
+                                                  (= :function (types/lookup kg tchild :functor :type))))
+                                          (types/make-match-hypothesis bchild tchild)))
+                                   (types/lookup kg base :args)
+                                   (types/lookup kg target :args)))))
 
                            ;; this rule not tested much yet
                            (make-rule :commutative-args :intern
@@ -56,10 +56,10 @@
                                (when (and
                                        (expression? kg base)
                                        (expression? kg target)
-                                       (not (lookup kg base :functor :ordered?))
-                                       (not (lookup kg target :functor :ordered?)))
-                                 (for [bchild (lookup kg base :args)
-                                       tchild (lookup kg target :args)]
+                                       (not (types/lookup kg base :functor :ordered?))
+                                       (not (types/lookup kg target :functor :ordered?)))
+                                 (for [bchild (types/lookup kg base :args)
+                                       tchild (types/lookup kg target :args)]
                                    (when (or
                                            (not (or
                                                   (expression? kg bchild)
@@ -67,9 +67,9 @@
                                            (and
                                              (expression? kg bchild)
                                              (expression? kg tchild)
-                                             (= :function (lookup kg bchild :functor :type))
-                                             (= :function (lookup kg tchild :functor :type))))
-                                     (make-match-hypothesis bchild tchild))))))]))
+                                             (= :function (types/lookup kg bchild :functor :type))
+                                             (= :function (types/lookup kg tchild :functor :type))))
+                                     (types/make-match-hypothesis bchild tchild))))))]))
 
 #_(defrules literal-similarity
     (rule same-functor :filter

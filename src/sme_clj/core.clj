@@ -164,7 +164,7 @@
 
 (defn consistent?
   "True if an MH is consistent, meaning none of its emaps are in its nogoods."
-  ([{:keys [emaps nogood] :as mstr-entry}]
+  ([{:keys [emaps nogood]}]
      (empty? (set/intersection emaps nogood)))
   ([mh mstr]
      (consistent? (get mstr mh))))
@@ -382,7 +382,7 @@
                            (doall (map transfer (types/lookup kg expr :args)))))))]
       (assoc gmap
         :transferred (set (doall (map transfer inferences)))))
-    (catch RuntimeException e
+    (catch RuntimeException _
       gmap)))
 
 (defn transfer-inferences

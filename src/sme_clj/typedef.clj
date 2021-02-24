@@ -66,12 +66,6 @@
   [kg expr]
   (tree-seq #(= :expression (lookup kg % :type)) #(lookup kg % :args) expr))
 
-
-(comment
-  (defn predicate-type? [t x] (and (predicate? x) (= t (:ptype x))))
-  (defn function? [x] (predicate-type? :function x))
-  (defn attribute? [x] (predicate-type? :attribute x)))
-
 ;;; CONCEPT GRAPH
 
 (defn- pretty-demunge
