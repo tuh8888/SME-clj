@@ -1,6 +1,6 @@
 (ns sme-clj.core-test
   (:require [sme-clj.test-util :refer [undiff]]
-            [clojure.test :refer [deftest is]]
+            [clojure.test :refer [deftest testing is]]
             [mop-records :as mr]
             [mops :as mops]
             [sme-clj.core :as SUT]
@@ -234,46 +234,57 @@
 (deftest heat-water-test
   ;; Water flow is the base heat flow the target
 
-  (is (= expected-match-hypotheses
-        (SUT/create-match-hypotheses kg simple-water-flow simple-heat-flow rules/literal-similarity)))
+  (testing "Creating match hypotheses"
+    (is (= expected-match-hypotheses
+          (SUT/create-match-hypotheses kg simple-water-flow simple-heat-flow rules/literal-similarity))))
 
-  (is (= expected-hypothesis-structure
-        (SUT/build-hypothesis-structure kg expected-match-hypotheses)))
+  (testing "Building hypothesis structure"
+    (is (= expected-hypothesis-structure
+          (SUT/build-hypothesis-structure kg expected-match-hypotheses))))
 
-  (is (= expected-propagated-from-emaps
-        (SUT/propagate-from-emaps expected-hypothesis-structure)))
+  (testing "Propagating emaps"
+    (is (= expected-propagated-from-emaps
+          (SUT/propagate-from-emaps expected-hypothesis-structure))))
 
-  (is (= [{:base :flow-Beaker-Vial-Water, :target :flow-Coffee-Icecube-Heat}
-          {:base :greater-pressure-Beaker-pressure-Vial, :target :greater-temperature-Coffee-temperature-Icecube}]
-        (SUT/find-roots expected-propagated-from-emaps)))
+  (testing "Computing initial gmaps"
+    (is (= [{:base :flow-Beaker-Vial-Water-Pipe, :target :flow-Coffee-Icecube-Heat-Bar}
+            {:base :greater-pressure-Beaker-pressure-Vial, :target :greater-temperature-Coffee-temperature-Icecube}]
+          (SUT/find-roots expected-propagated-from-emaps)))
 
-  (is (= expected-computed-initial-gmaps
-        (SUT/compute-initial-gmaps kg expected-propagated-from-emaps)))
+    (is (= expected-computed-initial-gmaps
+          (SUT/compute-initial-gmaps kg expected-propagated-from-emaps))))
 
-  (is (= expected-combined-gmaps
-        (SUT/combine-gmaps expected-computed-initial-gmaps)))
+  (testing "Combining gmaps"
+    (is (= expected-combined-gmaps
+          (SUT/combine-gmaps expected-computed-initial-gmaps))))
 
-  (is (= expected-merged-gmaps
-        (SUT/merge-gmaps expected-combined-gmaps)))
+  (testing "Merging gmaps"
+    (is (= expected-merged-gmaps
+          (SUT/merge-gmaps expected-combined-gmaps))))
 
-  (is (= expected-finalized-gmaps
-        (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-merged-gmaps)))
+  (testing "Finalizing gmaps"
+    (is (= expected-finalized-gmaps
+          (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-merged-gmaps))))
 
-  (is (= expected-generated-inferences
-        (SUT/generate-inferences kg simple-water-flow expected-finalized-gmaps)))
+  (testing "Generating inferences"
+    (is (= expected-generated-inferences
+          (SUT/generate-inferences kg simple-water-flow expected-finalized-gmaps))))
 
-  (is (= expected-transferred-inferences
-        (SUT/transfer-inferences kg expected-generated-inferences)))
+  (testing "Transferring inferences"
+    (is (= expected-transferred-inferences
+          (SUT/transfer-inferences kg expected-generated-inferences))))
 
-  (is (= expected-transferred-inferences
-        (SUT/match kg rules/literal-similarity simple-water-flow simple-heat-flow)))
+  (testing "Full match pipeline"
+    (let [result (SUT/match kg rules/literal-similarity simple-water-flow simple-heat-flow)]
+      ;; Should show the cause relation between the greater temperature
+      ;; relation and the heat flow relation. This relation has been inferred
+      ;; based on the analogical cause relation in the water flow graph.
+      (is (= expected-transferred
+            (-> result
+              :gmaps
+              first
+              :transferred)))
 
-  ;; Should show the cause relation between the greater temperature
-  ;; relation and the heat flow relation. This relation has been inferred
-  ;; based on the analogical cause relation in the water flow graph.
-  (is (= expected-transferred (-> (SUT/match kg rules/literal-similarity simple-water-flow simple-heat-flow)
-                                :gmaps
-                                first
-                                :transferred))))
+      (is (= expected-transferred-inferences result)))))
 
 ; LocalWords:  gmaps
