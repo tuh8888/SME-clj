@@ -393,9 +393,11 @@
 
 (defn transfer-inferences
   [kg data]
-  (->>
-    (map transfer-gmap-inferences kg (:gmaps data))
-    (assoc data :gmaps)))
+  (update data :gmaps (partial map (partial transfer-gmap-inferences kg)))
+  #_(->>
+      (map transfer-gmap-inferences kg (:gmaps data))
+      set
+      (assoc data :gmaps)))
 
 (defn finalize-gmaps
   "Computes additional information about the gmaps we have found and stores it
