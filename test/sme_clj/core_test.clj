@@ -161,56 +161,56 @@
 
 (def expected-propagated-from-emaps
   (undiff expected-hypothesis-structure
-    {{:base :greater-pressure-Beaker-pressure-Vial, :target :greater-temperature-Coffee-temperature-Icecube}
-     {:emaps #{{:base :Beaker, :target :Coffee} {:base :Vial, :target :Icecube}}},
-     {:base :pressure-Beaker, :target :temperature-Coffee}                       {:emaps #{{:base :Beaker, :target :Coffee}}},
-     {:base :pressure-Vial, :target :temperature-Icecube}                        {:emaps #{{:base :Vial, :target :Icecube}}},
-     {:base :flow-Beaker-Vial-Water-Pipe, :target :flow-Coffee-Icecube-Heat-Bar} {:emaps #{{:base :Water, :target :Heat}
-                                                                                           {:base :Beaker, :target :Coffee}
+    {{:base :greater-pressure-Beaker-pressure-Vial :target :greater-temperature-Coffee-temperature-Icecube}
+     {:emaps #{{:base :Beaker :target :Coffee} {:base :Vial :target :Icecube}}}
+     {:base :pressure-Beaker :target :temperature-Coffee}                       {:emaps #{{:base :Beaker :target :Coffee}}}
+     {:base :pressure-Vial :target :temperature-Icecube}                        {:emaps #{{:base :Vial :target :Icecube}}}
+     {:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar} {:emaps #{{:base :Water :target :Heat}
+                                                                                           {:base :Beaker :target :Coffee}
                                                                                            {:base :Pipe :target :Bar}
-                                                                                           {:base :Vial, :target :Icecube}}}}
-    {{:base :greater-pressure-Beaker-pressure-Vial, :target :greater-temperature-Coffee-temperature-Icecube}
-     {:emaps nil},
-     {:base :pressure-Beaker, :target :temperature-Coffee}                       {:emaps nil},
-     {:base :flow-Beaker-Vial-Water-Pipe, :target :flow-Coffee-Icecube-Heat-Bar} {:emaps nil}}))
+                                                                                           {:base :Vial :target :Icecube}}}}
+    {{:base :greater-pressure-Beaker-pressure-Vial :target :greater-temperature-Coffee-temperature-Icecube}
+     {:emaps nil}
+     {:base :pressure-Beaker :target :temperature-Coffee}                       {:emaps nil}
+     {:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar} {:emaps nil}}))
 
 
 (def expected-computed-initial-gmaps
   {:mh-structure expected-propagated-from-emaps
-   :gmaps        [{:mhs       #{{:base   :greater-pressure-Beaker-pressure-Vial,
+   :gmaps        [{:mhs       #{{:base   :greater-pressure-Beaker-pressure-Vial
                                  :target :greater-temperature-Coffee-temperature-Icecube}
-                                {:base :Beaker, :target :Coffee}
+                                {:base :Beaker :target :Coffee}
                                 {:base :Vial :target :Icecube}
-                                {:base :pressure-Beaker, :target :temperature-Coffee}
-                                {:base :pressure-Vial, :target :temperature-Icecube}},
-                   :structure {:roots  #{{:base   :greater-pressure-Beaker-pressure-Vial,
-                                          :target :greater-temperature-Coffee-temperature-Icecube}},
-                               :nogood #{},
-                               :emaps  #{{:base :Beaker, :target :Coffee}
-                                         {:base :Vial, :target :Icecube}}}}
-                  {:mhs       #{{:base :Water, :target :Heat}
-                                {:base :Beaker, :target :Coffee}
+                                {:base :pressure-Beaker :target :temperature-Coffee}
+                                {:base :pressure-Vial :target :temperature-Icecube}}
+                   :structure {:roots  #{{:base   :greater-pressure-Beaker-pressure-Vial
+                                          :target :greater-temperature-Coffee-temperature-Icecube}}
+                               :nogood #{}
+                               :emaps  #{{:base :Beaker :target :Coffee}
+                                         {:base :Vial :target :Icecube}}}}
+                  {:mhs       #{{:base :Water :target :Heat}
+                                {:base :Beaker :target :Coffee}
                                 {:base :Pipe :target :Bar}
-                                {:base :flow-Beaker-Vial-Water-Pipe, :target :flow-Coffee-Icecube-Heat-Bar}
-                                {:base :Vial, :target :Icecube}},
-                   :structure {:roots  #{{:base :flow-Beaker-Vial-Water-Pipe, :target :flow-Coffee-Icecube-Heat-Bar}},
-                               :nogood #{},
-                               :emaps  #{{:base :Water, :target :Heat}
-                                         {:base :Pipe, :target :Bar}
-                                         {:base :Beaker, :target :Coffee}
-                                         {:base :Vial, :target :Icecube}}}}]})
+                                {:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar}
+                                {:base :Vial :target :Icecube}}
+                   :structure {:roots  #{{:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar}}
+                               :nogood #{}
+                               :emaps  #{{:base :Water :target :Heat}
+                                         {:base :Pipe :target :Bar}
+                                         {:base :Beaker :target :Coffee}
+                                         {:base :Vial :target :Icecube}}}}]})
 
 (def expected-combined-gmaps
   (update expected-computed-initial-gmaps :gmaps vector))
 
-(def expected-merged-gmaps #_(undiff expected-merged-gmaps)
+(def expected-merged-gmaps
   {:gmaps        [{:mhs       #{{:base :Beaker :target :Coffee}
                                 {:base :Vial :target :Icecube}
                                 {:base :Water :target :Heat}
                                 {:base :Pipe :target :Bar}
                                 {:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar}
                                 {:base :pressure-Beaker :target :temperature-Coffee}
-                                {:base :pressure-Vial, :target :temperature-Icecube}
+                                {:base :pressure-Vial :target :temperature-Icecube}
                                 {:base :greater-pressure-Beaker-pressure-Vial :target :greater-temperature-Coffee-temperature-Icecube}}
                    :structure {:roots  #{{:base   :flow-Beaker-Vial-Water-Pipe
                                           :target :flow-Coffee-Icecube-Heat-Bar}
@@ -224,9 +224,9 @@
    :mh-structure expected-propagated-from-emaps})
 
 (def expected-finalized-gmaps (undiff expected-merged-gmaps
-                                {:gmaps [{:score        18,
-                                          :emap-matches 0,
-                                          :mapping      {:base :simple-water-flow, :target :simple-heat-flow}}]}
+                                {:gmaps [{:score        18
+                                          :emap-matches 0
+                                          :mapping      {:base :simple-water-flow :target :simple-heat-flow}}]}
                                 nil))
 
 (def expected-generated-inferences (undiff expected-finalized-gmaps
@@ -255,8 +255,8 @@
           (SUT/propagate-from-emaps expected-hypothesis-structure))))
 
   (testing "Computing initial gmaps"
-    (is (= [{:base :flow-Beaker-Vial-Water-Pipe, :target :flow-Coffee-Icecube-Heat-Bar}
-            {:base :greater-pressure-Beaker-pressure-Vial, :target :greater-temperature-Coffee-temperature-Icecube}]
+    (is (= [{:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar}
+            {:base :greater-pressure-Beaker-pressure-Vial :target :greater-temperature-Coffee-temperature-Icecube}]
           (SUT/find-roots expected-propagated-from-emaps)))
 
     (is (= expected-computed-initial-gmaps
