@@ -129,20 +129,7 @@
     (map (partial find-emaps kg))
     (reduce set/union)))
 
-(defn build-mh-structure
-  [kg mhs structure [base target :as mh]]
-  (let [nogood (find-nogood mhs mh)]
-    (assoc structure mh nil)))
-
 ;; The below proves useful when checking consistency and such.
-(defn build-hypothesis-structure
-  "Creates a map from MHs to their structural information. So retrieving the
-  match hypotheses is done with 'keys, while the structural info can be accessed
-  with 'vals or 'get."
-  [kg mhs]
-  ;; cache of base/target expressions mapped to their mh
-  (reduce (partial build-mh-structure kg mhs)
-    {} mhs))
 
 ;; For each expression without emaps, recursively add the union of its
 ;; children's emaps and nogoods.
@@ -150,15 +137,15 @@
   "Extends structural MH information of each expression without emaps by
   recursively adding the union of its children's emaps and nogoods to
   it. Essentially flows up the structural information."
-  [kg mhs mh-structure]
+  [kg mhs]
   (letfn [(propagate [mstr mh]
             (if (seq (find-emaps kg mh))
               mstr
-              (let [kids        (find-children kg mhs mh)
-                    mstr-kids   (reduce propagate mstr kids)]
+              (let [kids      (find-children kg mhs mh)
+                    mstr-kids (reduce propagate mstr kids)]
                 mstr-kids)))]
     (reduce propagate
-      mh-structure
+      mhs
       mhs)))
 
 (defn consistent?
@@ -200,9 +187,8 @@
 (defn compute-initial-gmaps
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
   map with the :mh-structure and the :gmaps set."
-  [kg mhs mh-structure]
-  {:mh-structure mh-structure
-   :gmaps        (->>
+  [kg mhs]
+  {:gmaps        (->>
                    (find-roots kg mhs)
                    (reduce (fn form-gmap [gmaps root]
                              (if (consistent? kg mhs root)
@@ -428,13 +414,11 @@
 
   For example: (map :score (match b t)) -> seq of gmap scores."
   ([kg rules base target]
-   (let [mh-structure (->> (create-match-hypotheses kg base target rules)
-                        (build-hypothesis-structure kg))
-         mhs          (keys mh-structure)
-         data         (->> mh-structure
-                        (propagate-from-emaps kg mhs)
-                        (compute-initial-gmaps kg mhs))]
-     (->> data
+   (let [mhs (->> (create-match-hypotheses kg base target rules)
+               (build-hypothesis-structure kg)
+               (propagate-from-emaps kg))]
+     (->> mhs
+       (compute-initial-gmaps kg)
        (combine-gmaps mhs)
        merge-gmaps
        (finalize-gmaps kg base target mhs)
