@@ -2,7 +2,9 @@
   "Data type definitions and protocols for SME, as well as facilities to create
    instances of types and manipulate them."
   (:require [clojure.walk :as walk]
-            [sme-clj.util :refer :all]))
+            [sme-clj.util :as util]
+            [clojure.repl :refer [demunge]]
+            [clojure.test :refer [function?]]))
 
 ;;; ENTITY AND PREDICATE
 
@@ -72,14 +74,30 @@
 
 ;;; CONCEPT GRAPH
 
-(def id-idx (atom -1))
+(defn- pretty-demunge
+  [fn-object]
+  (if (function? fn-object)
+    (let [dem-fn (demunge (str fn-object))
+          pretty (last (re-find #"(.*?\/(.*?))[\-\-|@].*" dem-fn))]
+      (if pretty pretty dem-fn))
+    fn-object))
+
+(defn combine-ids [ids]
+  (->> ids
+    (map (fn [id]
+           (cond-> id
+             (coll? id)          ((comp #(str "[" % "]") #(subs % 1) str combine-ids (partial mapv (comp keyword pretty-demunge))))
+             (not (keyword? id)) ((comp keyword str)))))
+    (map str)
+    (map #(subs % 1))
+    (interpose "-")
+    (apply str)
+    keyword))
+
 (defn make-concept-graph [name & expressions]
   (let [e-map (atom [])]
-    (letfn [(id []
-              (swap! id-idx inc)
-              (keyword (str "e" @id-idx)))
-            (add-expr! [x]
-              (let [new-x (id)]
+    (letfn [(add-expr! [x]
+              (let [new-x (combine-ids x)]
                 (swap! e-map conj (apply make-expression new-x x) )
                 new-x))]
       ;; Doseq is used here instead of passing all expressions to postwalk to prevent the
@@ -87,7 +105,7 @@
       (doseq [expression expressions]
         (walk/postwalk #(cond->> % (coll? %) add-expr!) expression))
       {:name  name
-       :graph (vals-as-keys :name @e-map)
+       :graph (util/vals-as-keys :name @e-map)
        :spec  expressions})))
 
 ;;; MATCH HYPOTHESIS
