@@ -211,15 +211,12 @@
                                       :greater-pressure-Beaker-pressure-Vial}
                                     #{}])
 
-(def expected-transferred2 #{[:greater [:pressure :Coffee] [:pressure :Icecube]]
-                             [:pressure :Icecube]
-                             [:pressure :Coffee]
-                             [:cause [:greater [:pressure :Coffee] [:pressure :Icecube]]
-                              :flow-Coffee-Icecube-Heat-Bar]})
-(def expected-transferred1 #{[:cause :greater-temperature-Coffee-temperature-Icecube :flow-Coffee-Icecube-Heat-Bar]})
-
-(def expected-transferred-inferences [expected-transferred1
-                                      expected-transferred2
+(def expected-transferred-inferences [#{[:cause :greater-temperature-Coffee-temperature-Icecube :flow-Coffee-Icecube-Heat-Bar]}
+                                      #{[:greater [:pressure :Coffee] [:pressure :Icecube]]
+                                        [:pressure :Icecube]
+                                        [:pressure :Coffee]
+                                        [:cause [:greater [:pressure :Coffee] [:pressure :Icecube]]
+                                         :flow-Coffee-Icecube-Heat-Bar]}
                                       #{}])
 
 (deftest heat-water-test
