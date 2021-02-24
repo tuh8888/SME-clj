@@ -165,7 +165,7 @@
 (defn make-gmap
   "Returns a gmap with the root and all of its descendants."
   [kg root mhs]
-  {:mhs (collect-children kg root mhs)})
+  (collect-children kg root mhs))
 
 (defn compute-initial-gmaps
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
@@ -200,8 +200,8 @@
   the other."
   [mhs gm-a gm-b]
   (and
-    (empty? (set/intersection (:mhs gm-a) (all-nogood mhs (:mhs gm-b))))
-    (empty? (set/intersection (:mhs gm-b) (all-nogood mhs (:mhs gm-a))))))
+    (empty? (set/intersection gm-a (all-nogood mhs gm-b)))
+    (empty? (set/intersection gm-b (all-nogood mhs gm-a)))))
 
 (defn gmap-set-internally-consistent?
   "True if the given set of gmaps is internally consistent."
@@ -241,13 +241,12 @@
   "Given a collection of sets of gmaps, merges the gmaps in each set into a
   single gmap."
   [gmap-sets]
-  (letfn [(gather-gm [{:keys [mhs] :as total} gm]
-            (assoc total
-              :mhs (set/union mhs (:mhs gm))))
+  (letfn [(gather-gm [mhs gm]
+            (set/union mhs gm))
 
           (reduce-to-gm [gm-set]
-            (let [args (reduce gather-gm {:mhs #{}} gm-set)]
-              {:mhs (:mhs args)}))]
+            (let [args (reduce gather-gm #{} gm-set)]
+              args))]
     (map reduce-to-gm gmap-sets)))
 
 
@@ -291,20 +290,19 @@
             (if-let [kids (seq (find-children kg mhs mh))]
               (reduce + depth (map #(score-mh % (inc depth)) kids))
               depth))]
-    (assoc gm
-      :score (->> gm
-               :mhs
-               (find-roots kg)
-               (map #(score-mh % 0))
-               (reduce + (count (:mhs gm))))
-      :emap-matches (count (matching-emaps kg gm)))))
+    {:mhs          gm
+     :score        (->> gm
+                     (find-roots kg)
+                     (map #(score-mh % 0))
+                     (reduce + (count gm)))
+     :emap-matches (count (matching-emaps kg gm))}))
 
 ;;; Inference generation below. Not used in TCG model.
 
 (defn gmap-inferences
   "Generates maximal inferences for a given gmap, based on SME algorithm."
   [kg {base :graph} gmap]
-  (let [mh-bases  (set (map first (:mhs gmap)))
+  (let [mh-bases  (set (map first gmap))
         unmatched (set/difference (set (keys base)) mh-bases)
         ancestors (set/select #(types/ancestor? kg mh-bases %) unmatched)]
     (set/difference (set (mapcat (partial types/get-descendants kg) ancestors))
@@ -313,7 +311,8 @@
 (defn generate-inferences
   "Appends :inferences to gmaps in given data, for a given base graph."
   [kg base gmaps]
-  (map #(assoc % :inferences (gmap-inferences kg base %)) gmaps))
+  (->> gmaps
+    (map #(assoc % :inferences (gmap-inferences kg base (:mhs %))))))
 
 ;; On inference integration, recursive method:
 ;;
