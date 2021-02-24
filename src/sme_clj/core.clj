@@ -99,38 +99,41 @@
 ;;;; FORMING GMAPS
 ;;;;
 
+(defn build-mh-structure
+  [kg bmap tmap structure [base target :as mh]]
+  (let [nogood (-> (set/union
+                     (get bmap base #{})
+                     (get tmap target) #{})
+                 ;; not nogood of ourselves
+                 (disj mh))]
+    (-> structure
+      ;; initial emaps is just ourselves if we are one, for the rest
+      ;; this will be filled later
+      (cond-> (not= :expression (types/lookup kg base :type)) (assoc-in [mh :emaps] #{mh}))
+      ;; nogood is every mh mapping same target or base
+      (cond-> (seq nogood) (assoc-in [mh :nogood] nogood))
+
+      ;; our children are mhs that map our arguments (so children
+      ;; does not equal our entire set of descendants)
+      (cond-> (= :expression (types/lookup kg base :type)) (assoc-in [mh :children] (->> (types/lookup kg target :args)
+                                                                                      (mapcat (fn [b t]
+                                                                                                (set/intersection (get bmap b #{})
+                                                                                                  (get tmap t #{})))
+                                                                                        (types/lookup kg base :args))
+                                                                                      set))))))
+
 ;; The below proves useful when checking consistency and such.
 (defn build-hypothesis-structure
   "Creates a map from MHs to their structural information. So retrieving the
   match hypotheses is done with 'keys, while the structural info can be accessed
   with 'vals or 'get."
   [kg mhs]
-  (let [;; cache of base/target expressions mapped to their mh
-        [bmap tmap] (reduce (fn [[bases targets] [base target :as mh]]
+  ;; cache of base/target expressions mapped to their mh
+  (let [[bmap tmap] (reduce (fn [[bases targets] [base target :as mh]]
                               [(update bases base set/union #{mh})
                                (update targets target set/union #{mh})])
-                      [{} {}] mhs)]
-    (reduce (fn build-mh-structure [structure [base target :as mh]]
-              (let [nogood (-> (set/union
-                                 (get bmap base #{})
-                                 (get tmap target) #{})
-                             ;; not nogood of ourselves
-                             (disj mh))]
-                (-> structure
-                  ;; initial emaps is just ourselves if we are one, for the rest
-                  ;; this will be filled later
-                  (cond-> (not= :expression (types/lookup kg base :type)) (assoc-in [mh :emaps] #{mh}))
-                  ;; nogood is every mh mapping same target or base
-                  (cond-> (seq nogood) (assoc-in [mh :nogood] nogood))
-
-                  ;; our children are mhs that map our arguments (so children
-                  ;; does not equal our entire set of descendants)
-                  (cond-> (= :expression (types/lookup kg base :type)) (assoc-in [mh :children] (->> (types/lookup kg target :args)
-                                                                                                  (mapcat (fn [b t]
-                                                                                                            (set/intersection (get bmap b #{})
-                                                                                                              (get tmap t #{})))
-                                                                                                    (types/lookup kg base :args))
-                                                                                                  set))))))
+                      nil mhs)]
+    (reduce (partial build-mh-structure kg bmap tmap)
       {} mhs)))
 
 ;; For each expression without emaps, recursively add the union of its
