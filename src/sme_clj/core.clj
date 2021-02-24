@@ -162,32 +162,30 @@
                          (find-children kg mhs mh)))))]
     (set (collect root))))
 
-(defn make-gmap
+(defn make-mhs-set
   "Returns a gmap with the root and all of its descendants."
-  [kg root mhs]
-  (collect-children kg root mhs))
+  [kg root all-mhs]
+  (collect-children kg root all-mhs))
 
-(defn compute-initial-gmaps
+(defn split-into-mhs-sets
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
   map with the and the :gmaps set."
-  [kg mhs]
-  (->> mhs
+  [kg all-mhs]
+  (->> all-mhs
     (find-roots kg)
-    (reduce (fn form-gmap [gmaps root]
-              (if (consistent? kg mhs root)
-                (->> mhs
-
-                  (make-gmap kg root)
-                  (conj gmaps))
-                (if-let [kids (seq (find-children kg mhs root))]
+    (reduce (fn form-mhs-set [mhs-sets root]
+              (if (consistent? kg all-mhs root)
+                (->> all-mhs
+                  (make-mhs-set kg root)
+                  (conj mhs-sets))
+                (if-let [kids (seq (find-children kg all-mhs root))]
                   (->> kids
-                    (mapcat #(form-gmap #{} %))
+                    (mapcat #(form-mhs-set #{} %))
                     set
-                    (set/union gmaps))
-                  gmaps)))
+                    (set/union mhs-sets))
+                  mhs-sets)))
       #{})
     vec))
-
 
 (defn all-nogood
   [mhs1 mhs]
@@ -195,20 +193,20 @@
     (map (partial find-nogood mhs1))
     (reduce set/union)))
 
-(defn gmaps-consistent?
+(defn mhs-sets-consistent?
   "Two gmaps are consistent if none of their elements are in the NoGood set of
   the other."
-  [mhs gm-a gm-b]
+  [all-mhs mhs-a mhs-b]
   (and
-    (empty? (set/intersection gm-a (all-nogood mhs gm-b)))
-    (empty? (set/intersection gm-b (all-nogood mhs gm-a)))))
+    (empty? (set/intersection mhs-a (all-nogood all-mhs mhs-b)))
+    (empty? (set/intersection mhs-b (all-nogood all-mhs mhs-a)))))
 
-(defn gmap-set-internally-consistent?
+(defn mhs-sets-internally-consistent?
   "True if the given set of gmaps is internally consistent."
-  [mhs gmap-set]
-  (every? (fn [gm-a]
-            (every? #(gmaps-consistent? mhs gm-a %) gmap-set))
-    gmap-set))
+  [all-mhs mhs-set]
+  (every? (fn [mhs-a]
+            (every? #(mhs-sets-consistent? all-mhs mhs-a %) mhs-set))
+    mhs-set))
 
 (defn strict-subset? [set1 set2]
   (and (not= set1 set2)
@@ -222,22 +220,22 @@
 
 ;; The below is a very naive implementation, performance-wise.
 
-(defn combine-gmaps
+(defn consistent-combs-of-mhs-sets
   "Combine all gmaps in all maximal, consistent ways."
-  [mhs gmaps]
-  (let [consistent-sets (->> gmaps
+  [all-mhs mhs]
+  (let [consistent-sets (->> mhs
                           vec
                           comb/subsets
                           (remove empty?)
-                          (filter (partial gmap-set-internally-consistent? mhs))
+                          (filter (partial mhs-sets-internally-consistent? all-mhs))
                           (map set))]
     (->> consistent-sets
-      (remove (fn [gms-a]
-                (some (partial strict-subset? gms-a)
+      (remove (fn [mhs-a]
+                (some (partial strict-subset? mhs-a)
                   consistent-sets)))
       (map vec))))
 
-(defn merge-gmaps
+(defn merge-mhs-sets
   "Given a collection of sets of gmaps, merges the gmaps in each set into a
   single gmap."
   [gmap-sets]
@@ -249,10 +247,8 @@
               args))]
     (map reduce-to-gm gmap-sets)))
 
-
 (letfn [(round [n]
           (.setScale (bigdec n) 2 BigDecimal/ROUND_HALF_UP))]
-
   (defn emaps-equal?
     "Special equals function for entities that rounds floating point numbers to
    two decimals before comparing them, to avoid rounding errors affecting
@@ -395,11 +391,11 @@
 
   For example: (map :score (match b t)) -> seq of gmap scores."
   ([kg rules base target]
-   (let [mhs (create-match-hypotheses kg base target rules)]
-     (->> mhs
-       (compute-initial-gmaps kg)
-       (combine-gmaps mhs)
-       merge-gmaps
-       (finalize-gmaps kg base target mhs))))
+   (let [all-mhs (create-match-hypotheses kg base target rules)]
+     (->> all-mhs
+       (split-into-mhs-sets kg)
+       (consistent-combs-of-mhs-sets all-mhs)
+       merge-mhs-sets
+       (finalize-gmaps kg base target all-mhs))))
   ([kg base target]
    (match kg rules/literal-similarity base target)))

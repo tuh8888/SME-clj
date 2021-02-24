@@ -238,15 +238,15 @@
           (set (SUT/find-roots kg expected-match-hypotheses))))
 
     (is (= expected-computed-initial-gmaps
-          (SUT/compute-initial-gmaps kg expected-match-hypotheses))))
+          (SUT/split-into-mhs-sets kg expected-match-hypotheses))))
 
   (testing "Combining gmaps"
     (is (= expected-combined-gmaps
-          (SUT/combine-gmaps expected-match-hypotheses expected-computed-initial-gmaps))))
+          (SUT/consistent-combs-of-mhs-sets expected-match-hypotheses expected-computed-initial-gmaps))))
 
   (testing "Merging gmaps"
     (is (= expected-merged-gmaps
-          (SUT/merge-gmaps expected-combined-gmaps))))
+          (SUT/merge-mhs-sets expected-combined-gmaps))))
 
   (testing "Finalizing gmaps"
     (is (= expected-finalized-gmaps
