@@ -218,17 +218,17 @@
                                                      [:e1    :Expression]
                                                      [:e2    :Expression]])
                                  (make-mop :flow [:Expression
-                                                  [:e1    :Entity]
-                                                  [:e2      :Entity]
+                                                  [:e1 :Entity]
+                                                  [:e2 :Entity]
                                                   [:e3 :Entity]
-                                                  [:e4     :Entity]])
+                                                  [:e4 :Entity]])
                                  (make-mop :Function [:Expression])
-                                 (make-mop :pressure    [:Function [:e1 :Entity]])
+                                 (make-mop :pressure [:Function [:e1 :Entity]])
                                  (make-mop :diameter [:Function [:e1 :Entity]])
                                  (make-mop :clear [:Expression [:e1 :Entity]])
                                  (make-mop :temperature [:Function [:e1 :Entity]])
                                  (make-mop :flat-top [:Function [:e1 :Entity]])
-                                 (make-mop :liquid [:Expression [:e1  :Entity]])
+                                 (make-mop :liquid [:Expression [:e1 :Entity]])
                                  (make-mop :Coffee [:Entity])
                                  (make-mop :Water [:Entity])
                                  (make-mop :Heat [:Entity])
@@ -239,7 +239,7 @@
                                  (make-mop :Beaker [:Entity]))
         mops-simple-water-flow (-> (mr/make-mop-map)
                                  (make-mop [:flat-top [:e1 :Water]])
-                                 (make-mop [:liquid [:e1  :Water]])
+                                 (make-mop [:liquid [:e1 :Water]])
                                  (make-mop [:cause
                                             [:e1 :greater-pressure-Beaker-pressure-Vial]
                                             [:e2 :flow-Beaker-Vial-Water-Pipe]])
