@@ -188,9 +188,8 @@
   "Returns a gmap with the root and all of its descendants."
   [kg root mh-structure]
   {:mhs       (collect-children kg root mh-structure)
-   :structure (merge {:roots #{root}}
-                 ;; gmap's nogoods/emaps are those of its root(s)
-                 (select-keys (get mh-structure root) [:nogood :emaps]))})
+   ;; gmap's nogoods/emaps are those of its root(s)
+   :structure (select-keys (get mh-structure root) [:nogood :emaps])})
 
 (defn compute-initial-gmaps
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
@@ -314,8 +313,12 @@
               (reduce + depth (map #(score-mh % (inc depth)) kids))
               depth))]
     (assoc gm
-      :score (reduce + (count (:mhs gm))
-               (map #(score-mh % 0) (:roots (:structure gm))))
+      :score (->> gm
+               :mhs
+               (select-keys mh-structure)
+               find-roots
+               (map #(score-mh % 0))
+               (reduce + (count (:mhs gm))))
       :emap-matches (count (matching-emaps kg gm)))))
 
 ;;; Inference generation below. Not used in TCG model.
