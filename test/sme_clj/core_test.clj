@@ -223,7 +223,6 @@
 
 (def expected-computed-initial-gmaps ::fail #_(undiff expected-propagated-from-emaps))
 
-
 (def expected-combined-gmaps #_(undiff expected-computed-initial-gmaps)
   {:gmaps        [{:mhs       [{:base :Beaker :target :Coffee}
                                {:base :Vial :target :Icecube}
@@ -371,28 +370,22 @@
 (deftest heat-water-test
   ;; Water flow is the base heat flow the target
 
-  (is (=
-        expected-match-hypotheses
+  (is (= expected-match-hypotheses
         (SUT/create-match-hypotheses kg simple-water-flow simple-heat-flow rules/literal-similarity)))
 
-  (is (=
-        expected-hypothesis-structure
+  (is (= expected-hypothesis-structure
         (SUT/build-hypothesis-structure kg expected-match-hypotheses)))
 
-  (is (=
-        expected-propagated-from-emaps
+  (is (= expected-propagated-from-emaps
         (SUT/propagate-from-emaps expected-hypothesis-structure)))
 
-  #_(is (=
-          expected-computed-initial-gmaps
+  #_(is (= expected-computed-initial-gmaps
           (SUT/compute-initial-gmaps kg expected-propagated-from-emaps)))
 
-  #_(is (=
-          expected-combined-gmaps
+  #_(is (= expected-combined-gmaps
           (SUT/combine-gmaps expected-computed-initial-gmaps)))
 
-  (is (=
-        expected-merged-gmaps
+  (is (= expected-merged-gmaps
         (SUT/merge-gmaps expected-combined-gmaps)))
 
 
