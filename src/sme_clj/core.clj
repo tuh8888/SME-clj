@@ -333,21 +333,17 @@
 
 (defn gmap-inferences
   "Generates maximal inferences for a given gmap, based on SME algorithm."
-  [kg gmap {base :graph}]
+  [kg {base :graph} gmap]
   (let [mh-bases  (set (map :base (:mhs gmap)))
-        unmatched (set/difference (set base) mh-bases)
+        unmatched (set/difference (set (keys base)) mh-bases)
         ancestors (set/select #(types/ancestor? kg mh-bases %) unmatched)]
-    (set/difference (set (mapcat types/get-descendants ancestors))
+    (set/difference (set (mapcat (partial types/get-descendants kg) ancestors))
       mh-bases)))
 
 (defn generate-inferences
   "Appends :inferences to gmaps in given data, for a given base graph."
   [kg base data]
-  (->>
-    (map #(assoc %
-            :inferences (gmap-inferences kg % base))
-      (:gmaps data))
-    (assoc data :gmaps)))
+  (update data :gmaps (partial map #(assoc % :inferences (gmap-inferences kg base %)))))
 
 ;; On inference integration, recursive method:
 ;;
