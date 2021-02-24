@@ -279,9 +279,7 @@
             (let [args (reduce gather-gm {:mhs #{} :structure {}} gm-set)]
               {:mhs       (:mhs args)
                :structure (:structure args)}))]
-    (->>
-      (map reduce-to-gm (:gmaps data))
-      (assoc data :gmaps))))
+    (update data :gmaps (partial map reduce-to-gm))))
 
 
 (letfn [(round [n]
