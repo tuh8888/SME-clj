@@ -111,14 +111,13 @@
 ;;; MATCH HYPOTHESIS
 
 (defn make-match-hypothesis [base target]
-  {:base   base
-   :target target})
+  [base target])
 
 ;;; GMAP
 
 (defn matched-goal
   [gmap]
-  (get-in gmap [:mapping :base]))
+  (get-in gmap [:mapping 0]))
 
 (defn matched-goals
   "Returns the set of distinct goals that are mapped in the given collection of

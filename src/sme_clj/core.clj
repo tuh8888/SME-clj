@@ -105,36 +105,33 @@
   match hypotheses is done with 'keys, while the structural info can be accessed
   with 'vals or 'get."
   [kg mhs]
-  (let [add-as                     (fn [m k mh] (update-in m [k (k mh)] set/union #{mh}))
-        ;; cache of base/target expressions mapped to their mh
-        {bmap :base, tmap :target} (reduce (fn [s mh] (-> s
-                                                       (add-as :base mh)
-                                                       (add-as :target mh)))
-                                     {:base {}, :target {}}
-                                     mhs)]
-    (reduce (fn build-mh-structure [structure mh]
-              (assoc structure
-                mh
+  (let [;; cache of base/target expressions mapped to their mh
+        [bmap tmap] (reduce (fn [[bases targets] [base target :as mh]]
+                              [(update bases base set/union #{mh})
+                               (update targets target set/union #{mh})])
+                      [{} {}] mhs)]
+    (reduce (fn build-mh-structure [structure [base target :as mh]]
+              (assoc structure mh
 
                 ;; initial emaps is just ourselves if we are one, for the rest
                 ;; this will be filled later
-                {:emaps (if (= :expression (types/lookup kg (:base mh) :type)) #{} #{mh})
+                {:emaps (if (= :expression (types/lookup kg base :type)) #{} #{mh})
 
                  ;; nogood is every mh mapping same target or base
                  :nogood (-> (set/union
-                               (get bmap (:base mh) #{})
-                               (get tmap (:target mh)) #{})
+                               (get bmap base #{})
+                               (get tmap target) #{})
                            ;; not nogood of ourselves
                            (disj mh))
 
                  ;; our children are mhs that map our arguments (so children
                  ;; does not equal our entire set of descendants)
-                 :children (if (= :expression (types/lookup kg (:base mh) :type))
-                             (->> (types/lookup kg (:target mh) :args)
+                 :children (if (= :expression (types/lookup kg base :type))
+                             (->> (types/lookup kg target :args)
                                (mapcat (fn [b t]
                                          (set/intersection (get bmap b #{})
                                            (get tmap t #{})))
-                                 (types/lookup kg (:base mh) :args))
+                                 (types/lookup kg base :args))
                                set)
                              #{})}))
       {}
@@ -308,17 +305,18 @@
 
 (defn matching-emaps
   "Returns seq of MHs that are emaps of which the entities are equal."
-  [kg {:as   gmap,
-       :keys [mhs]}]
-  (filter #(and (is-emap? kg %)
-             (emaps-equal? (apply dissoc (get kg (:base %)) unmatched-keys)
-               (apply dissoc (get kg (:target %)) unmatched-keys)))
+  [kg {:keys [mhs]}]
+  (filter (fn [[base target :as mh]]
+            (and (is-emap? kg mh)
+              (emaps-equal?
+                (apply dissoc (get kg base) unmatched-keys)
+                (apply dissoc (get kg target) unmatched-keys))))
     mhs))
 
 (defn score-gmap
   "Computes SES and emap scores for a gmap. The emap score is not in the
   original SME. It simply counts how many entities match in their content."
-  [kg {:keys [mh-structure] :as data} gm]
+  [kg {:keys [mh-structure]} gm]
   (letfn [(score-mh [mh depth]
             ;; simplified trickle-down SES
             (if-let [kids (seq (:children (get mh-structure mh)))]
@@ -334,7 +332,7 @@
 (defn gmap-inferences
   "Generates maximal inferences for a given gmap, based on SME algorithm."
   [kg {base :graph} gmap]
-  (let [mh-bases  (set (map :base (:mhs gmap)))
+  (let [mh-bases  (set (map first (:mhs gmap)))
         unmatched (set/difference (set (keys base)) mh-bases)
         ancestors (set/select #(types/ancestor? kg mh-bases %) unmatched)]
     (set/difference (set (mapcat (partial types/get-descendants kg) ancestors))
@@ -373,7 +371,7 @@
   ;; the whole inference transferring process for this gmap. Monads would
   ;; perhaps work as well (or CPS).
   (try
-    (let [pairs    (zipmap (map :base mhs) (map :target mhs))
+    (let [pairs    (zipmap (map first mhs) (map second mhs))
           transfer (fn transfer [expr]
                      (if-let [t (get pairs expr)]
                        t
