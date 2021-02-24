@@ -34,8 +34,8 @@
           engine: algorithm and examples. Artificial Intelligence, 41, 1-62."
   (:require [clojure.math.combinatorics :as comb]
             [clojure.set :as set]
-            [sme-clj.ruledef :refer :all]
-            [sme-clj.typedef :refer :all]))
+            [sme-clj.ruledef :as rules]
+            [sme-clj.typedef :as types]))
 
 ;;;;
 ;;;; GENERATING MATCH HYPOTHESES
@@ -53,7 +53,7 @@
     (filter (comp (partial = :filter) :type))
     (mapcat (fn [rule]
               ;; map rule over every possible expression pairing
-              (mapcat (partial apply-rule kg rule) mhs)))
+              (mapcat (partial rules/apply-rule kg rule) mhs)))
     (remove nil?)
     distinct))
 
@@ -71,7 +71,7 @@
           ;; test this MH on all intern rules, adding new matches to todo list
           (let [result  (conj result mh)
                 new-mhs (->> rules
-                          (mapcat #(apply-rule kg % mh))
+                          (mapcat #(rules/apply-rule kg % mh))
                           (remove nil?)
                           set
                           (#(set/difference % result)))]
@@ -91,7 +91,7 @@
     (->> (for [b base
                t target]
            [b t])
-      (map (partial apply make-match-hypothesis))
+      (map (partial apply types/make-match-hypothesis))
       (apply-filter-rules kg rules)
       (apply-intern-rules kg rules))))
 
@@ -118,7 +118,7 @@
 
                 ;; initial emaps is just ourselves if we are one, for the rest
                 ;; this will be filled later
-                {:emaps (if (= :expression (lookup kg (:base mh) :type)) #{} #{mh})
+                {:emaps (if (= :expression (types/lookup kg (:base mh) :type)) #{} #{mh})
 
                  ;; nogood is every mh mapping same target or base
                  :nogood (-> (set/union
@@ -129,12 +129,12 @@
 
                  ;; our children are mhs that map our arguments (so children
                  ;; does not equal our entire set of descendants)
-                 :children (if (= :expression (lookup kg (:base mh) :type))
-                             (->> (lookup kg (:target mh) :args)
+                 :children (if (= :expression (types/lookup kg (:base mh) :type))
+                             (->> (types/lookup kg (:target mh) :args)
                                (mapcat (fn [b t]
                                          (set/intersection (get bmap b #{})
                                            (get tmap t #{})))
-                                 (lookup kg (:base mh) :args))
+                                 (types/lookup kg (:base mh) :args))
                                set)
                              #{})}))
       {}
@@ -183,8 +183,8 @@
 
 (defn is-emap? [kg {:keys [base target]}]
   (and
-    (= :entity (lookup kg base :type))
-    (= :entity (lookup kg target :type))))
+    (= :entity (types/lookup kg base :type))
+    (= :entity (types/lookup kg target :type))))
 
 (defn collect-children
   "Returns a set of all descendants of a root."
@@ -336,8 +336,8 @@
   [kg gmap {base :graph}]
   (let [mh-bases  (set (map :base (:mhs gmap)))
         unmatched (set/difference (set base) mh-bases)
-        ancestors (set/select #(ancestor? kg mh-bases %) unmatched)]
-    (set/difference (set (mapcat get-descendants ancestors))
+        ancestors (set/select #(types/ancestor? kg mh-bases %) unmatched)]
+    (set/difference (set (mapcat types/get-descendants ancestors))
       mh-bases)))
 
 (defn generate-inferences
@@ -381,11 +381,11 @@
           transfer (fn transfer [expr]
                      (if-let [t (get pairs expr)]
                        t
-                       (if (= :entity (lookup kg expr :type))
+                       (if (= :entity (types/lookup kg expr :type))
                          (throw (RuntimeException.
                                   "cannot infer entities"))
-                         (cons (lookup kg expr :functor)
-                           (doall (map transfer (lookup kg expr :args)))))))]
+                         (cons (types/lookup kg expr :functor)
+                           (doall (map transfer (types/lookup kg expr :args)))))))]
       (assoc gmap
         :transferred (doall (map transfer inferences))))
     (catch RuntimeException e
@@ -444,4 +444,4 @@
      (generate-inferences kg base)
      (transfer-inferences kg)))
   ([kg base target]
-   (match kg literal-similarity base target)))
+   (match kg rules/literal-similarity base target)))
