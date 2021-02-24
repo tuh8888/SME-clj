@@ -131,23 +131,6 @@
 
 ;; The below proves useful when checking consistency and such.
 
-;; For each expression without emaps, recursively add the union of its
-;; children's emaps and nogoods.
-(defn propagate-from-emaps
-  "Extends structural MH information of each expression without emaps by
-  recursively adding the union of its children's emaps and nogoods to
-  it. Essentially flows up the structural information."
-  [kg mhs]
-  (letfn [(propagate [mstr mh]
-            (if (seq (find-emaps kg mh))
-              mstr
-              (let [kids      (find-children kg mhs mh)
-                    mstr-kids (reduce propagate mstr kids)]
-                mstr-kids)))]
-    (reduce propagate
-      mhs
-      mhs)))
-
 (defn consistent?
   "True if an MH is consistent, meaning none of its emaps are in its nogoods."
   ([kg mhs mh]
@@ -186,7 +169,7 @@
 
 (defn compute-initial-gmaps
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
-  map with the :mh-structure and the :gmaps set."
+  map with the and the :gmaps set."
   [kg mhs]
   {:gmaps        (->>
                    (find-roots kg mhs)
@@ -290,7 +273,6 @@
 ;; seq of those keys to ignore them in emap matching.
 (def unmatched-keys nil)
 
-
 (defn matching-emaps
   "Returns seq of MHs that are emaps of which the entities are equal."
   [kg {:keys [mhs]}]
@@ -393,17 +375,11 @@
   "Attempts to find a structure mapping between base and target using an
   implementation of the SME algorithm. Returns a map with the following:
 
-    :mh-structure All MHs created for the mapping.
-
     :gmaps        Collection of GMaps, which represent analogical mappings.
 
   Keys available in the returned GMaps:
     :mhs          Collection of match hypotheses that form the GMap.
 
-    :structure    Map from each MH to a map with structural information.
-                  Keys: :emaps, :nogoods, :children.
-
-    :mapping      Original structures that were mapped, :base and :target.
 
     :score        Structural evaluation score (SES), simple implementation.
 
@@ -414,9 +390,7 @@
 
   For example: (map :score (match b t)) -> seq of gmap scores."
   ([kg rules base target]
-   (let [mhs (->> (create-match-hypotheses kg base target rules)
-               (build-hypothesis-structure kg)
-               (propagate-from-emaps kg))]
+   (let [mhs (create-match-hypotheses kg base target rules)]
      (->> mhs
        (compute-initial-gmaps kg)
        (combine-gmaps mhs)

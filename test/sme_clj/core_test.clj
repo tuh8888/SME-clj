@@ -131,55 +131,24 @@
                                  [:pressure-Vial :temperature-Icecube]
                                  [:Vial :Icecube]})
 
-(def expected-hypothesis-structure
-  #{[:Beaker :Coffee]
-    [:Vial :Icecube]
-    [:Water :Heat]
-    [:Pipe :Bar]
-    [:Water :Coffee]
-    [:flat-top-Water :flat-top-Coffee]
-    [:liquid-Water :liquid-Coffee]
-    [:pressure-Vial :temperature-Icecube]
-    [:pressure-Beaker :temperature-Coffee]
-    [:diameter-Beaker :temperature-Coffee]
-    [:diameter-Vial :temperature-Icecube]
-    [:greater-diameter-Beaker-diameter-Vial :greater-temperature-Coffee-temperature-Icecube]
-    [:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
-    [:greater-pressure-Beaker-pressure-Vial :greater-temperature-Coffee-temperature-Icecube]})
-
-
-(def expected-propagated-from-emaps
-  (undiff expected-hypothesis-structure
-    #{[:greater-pressure-Beaker-pressure-Vial :greater-temperature-Coffee-temperature-Icecube]
-      [:diameter-Vial :temperature-Icecube]
-      [:diameter-Beaker :temperature-Coffee]
-      [:pressure-Beaker :temperature-Coffee]
-      [:flat-top-Water :flat-top-Coffee]
-      [:liquid-Water :liquid-Coffee]
-      [:pressure-Vial :temperature-Icecube]
-      [:greater-diameter-Beaker-diameter-Vial :greater-temperature-Coffee-temperature-Icecube]
-      [:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]}
-    nil))
-
-
 (def diameter-gmap {:mhs #{[:greater-diameter-Beaker-diameter-Vial
-                                  :greater-temperature-Coffee-temperature-Icecube]
-                                 [:diameter-Beaker :temperature-Coffee]
-                                 [:diameter-Vial :temperature-Icecube]
-                                 [:Beaker :Coffee]
-                                 [:Vial :Icecube]}})
+                            :greater-temperature-Coffee-temperature-Icecube]
+                           [:diameter-Beaker :temperature-Coffee]
+                           [:diameter-Vial :temperature-Icecube]
+                           [:Beaker :Coffee]
+                           [:Vial :Icecube]}})
 (def flow-gmap {:mhs #{[:Water :Heat]
-                             [:Beaker :Coffee]
-                             [:Pipe :Bar]
-                             [:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
-                             [:Vial :Icecube]}})
+                       [:Beaker :Coffee]
+                       [:Pipe :Bar]
+                       [:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
+                       [:Vial :Icecube]}})
 
 (def pressure-gmap {:mhs #{[:Beaker :Coffee]
-                                 [:greater-pressure-Beaker-pressure-Vial
-                                  :greater-temperature-Coffee-temperature-Icecube]
-                                 [:Vial :Icecube]
-                                 [:pressure-Beaker :temperature-Coffee]
-                                 [:pressure-Vial :temperature-Icecube]}})
+                           [:greater-pressure-Beaker-pressure-Vial
+                            :greater-temperature-Coffee-temperature-Icecube]
+                           [:Vial :Icecube]
+                           [:pressure-Beaker :temperature-Coffee]
+                           [:pressure-Vial :temperature-Icecube]}})
 
 (def liquid-gmap {:mhs #{[:Water :Coffee]
                          [:liquid-Water :liquid-Coffee]}})
@@ -261,24 +230,20 @@
     (is (= expected-match-hypotheses
           (SUT/create-match-hypotheses kg simple-water-flow simple-heat-flow rules/literal-similarity))))
 
-  (testing "Propagating emaps"
-    (is (= expected-propagated-from-emaps
-          (SUT/propagate-from-emaps kg expected-hypothesis-structure))))
-
   (testing "Computing initial gmaps"
     (is (= #{[:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
              [:greater-diameter-Beaker-diameter-Vial :greater-temperature-Coffee-temperature-Icecube]
              [:greater-pressure-Beaker-pressure-Vial :greater-temperature-Coffee-temperature-Icecube]
              [:liquid-Water :liquid-Coffee]
              [:flat-top-Water :flat-top-Coffee]}
-          (set (SUT/find-roots kg expected-propagated-from-emaps))))
+          (set (SUT/find-roots kg expected-match-hypotheses))))
 
     (is (= expected-computed-initial-gmaps
-          (SUT/compute-initial-gmaps kg expected-propagated-from-emaps))))
+          (SUT/compute-initial-gmaps kg expected-match-hypotheses))))
 
   (testing "Combining gmaps"
     (is (= expected-combined-gmaps
-          (SUT/combine-gmaps expected-propagated-from-emaps expected-computed-initial-gmaps))))
+          (SUT/combine-gmaps expected-match-hypotheses expected-computed-initial-gmaps))))
 
   (testing "Merging gmaps"
     (is (= expected-merged-gmaps
@@ -286,7 +251,7 @@
 
   (testing "Finalizing gmaps"
     (is (= expected-finalized-gmaps
-          (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-propagated-from-emaps expected-merged-gmaps))))
+          (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-match-hypotheses expected-merged-gmaps))))
 
   (testing "Generating inferences"
     (is (= expected-generated-inferences
