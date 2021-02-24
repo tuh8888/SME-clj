@@ -171,22 +171,22 @@
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
   map with the and the :gmaps set."
   [kg mhs]
-  {:gmaps        (->>
-                   (find-roots kg mhs)
-                   (reduce (fn form-gmap [gmaps root]
-                             (if (consistent? kg mhs root)
-                               (->> mhs
+  (->> mhs
+    (find-roots kg)
+    (reduce (fn form-gmap [gmaps root]
+              (if (consistent? kg mhs root)
+                (->> mhs
 
-                                 (make-gmap kg root)
-                                 (conj gmaps))
-                               (if-let [kids (seq (find-children kg mhs root))]
-                                 (->> kids
-                                   (mapcat #(form-gmap #{} %))
-                                   set
-                                   (set/union gmaps))
-                                 gmaps)))
-                     #{})
-                   vec)})
+                  (make-gmap kg root)
+                  (conj gmaps))
+                (if-let [kids (seq (find-children kg mhs root))]
+                  (->> kids
+                    (mapcat #(form-gmap #{} %))
+                    set
+                    (set/union gmaps))
+                  gmaps)))
+      #{})
+    vec))
 
 
 (defn all-nogood
@@ -224,24 +224,23 @@
 
 (defn combine-gmaps
   "Combine all gmaps in all maximal, consistent ways."
-  [mhs data]
-  (update data :gmaps (fn [gmaps]
-                        (let [consistent-sets (->> gmaps
-                                                vec
-                                                comb/subsets
-                                                (remove empty?)
-                                                (filter (partial gmap-set-internally-consistent? mhs))
-                                                (map set))]
-                          (->> consistent-sets
-                            (remove (fn [gms-a]
-                                      (some (partial strict-subset? gms-a)
-                                        consistent-sets)))
-                            (map vec))))))
+  [mhs gmaps]
+  (let [consistent-sets (->> gmaps
+                          vec
+                          comb/subsets
+                          (remove empty?)
+                          (filter (partial gmap-set-internally-consistent? mhs))
+                          (map set))]
+    (->> consistent-sets
+      (remove (fn [gms-a]
+                (some (partial strict-subset? gms-a)
+                  consistent-sets)))
+      (map vec))))
 
 (defn merge-gmaps
   "Given a collection of sets of gmaps, merges the gmaps in each set into a
   single gmap."
-  [data]
+  [gmap-sets]
   (letfn [(gather-gm [{:keys [mhs] :as total} gm]
             (assoc total
               :mhs (set/union mhs (:mhs gm))))
@@ -249,7 +248,7 @@
           (reduce-to-gm [gm-set]
             (let [args (reduce gather-gm {:mhs #{}} gm-set)]
               {:mhs (:mhs args)}))]
-    (update data :gmaps (partial map reduce-to-gm))))
+    (map reduce-to-gm gmap-sets)))
 
 
 (letfn [(round [n]
@@ -365,11 +364,10 @@
 (defn finalize-gmaps
   "Computes additional information about the gmaps we have found and stores it
   in the gmaps."
-  [kg {base :name} {target :name} mhs data]
-  (update data :gmaps (fn [gmaps]
-                        (->> gmaps
-                          (map #(score-gmap kg mhs %)) ; scores
-                          (map #(assoc % :mapping {:base base :target target}))))))
+  [kg {base :name} {target :name} mhs gmaps]
+  (->> gmaps
+    (map #(score-gmap kg mhs %)) ; scores
+    (map #(assoc % :mapping {:base base :target target}))))
 
 (defn perform-inference
   "
@@ -387,7 +385,7 @@
   "Attempts to find a structure mapping between base and target using an
   implementation of the SME algorithm. Returns a map with the following:
 
-    :gmaps        Collection of GMaps, which represent analogical mappings.
+    Collection of GMaps, which represent analogical mappings.
 
   Keys available in the returned GMaps:
     :mhs          Collection of match hypotheses that form the GMap.
