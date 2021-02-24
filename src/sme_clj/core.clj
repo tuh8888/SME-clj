@@ -109,18 +109,23 @@
                         (set (get tmap t)))))
       set)))
 
+(defn find-nogood
+  "nogood is every mh mapping same target or base"
+  [mhs [base target :as mh]]
+  (let [[bmap tmap] (map #(group-by % mhs) [first second])]
+    (disj (set/union
+            (set (get bmap base))
+            (set (get tmap target)))
+      mh)))
+
 (defn build-mh-structure
-  [kg [bmap tmap] mhs structure [base target :as mh]]
-  (let [nogood (disj (set/union
-                       (set (get bmap base))
-                       (set (get tmap target)))
-                 mh)]
+  [kg mhs structure [base target :as mh]]
+  (let [nogood (find-nogood mhs mh)]
     (cond-> (assoc structure mh nil)
       ;; initial emaps is just ourselves if we are one, for the rest
       ;; this will be filled later
       (not= :expression (types/lookup kg base :type)) (assoc-in [mh :emaps] #{mh})
-      ;; nogood is every mh mapping same target or base
-      (seq nogood)                                    (assoc-in [mh :nogood] nogood))))
+      )))
 
 ;; The below proves useful when checking consistency and such.
 (defn build-hypothesis-structure
@@ -129,7 +134,7 @@
   with 'vals or 'get."
   [kg mhs]
   ;; cache of base/target expressions mapped to their mh
-  (reduce (partial build-mh-structure kg (map #(group-by % mhs) [first second]) mhs)
+  (reduce (partial build-mh-structure kg mhs)
     {} mhs))
 
 ;; For each expression without emaps, recursively add the union of its
@@ -146,18 +151,17 @@
                     mstr-kids   (reduce propagate mstr kids)
                     kids-struct (vals (select-keys mstr-kids kids))]
                 (-> mstr-kids
-                  (update-in [mh :emaps] (partial apply set/union) (map :emaps kids-struct))
-                  (update-in [mh :nogood] (partial apply set/union) (map :nogood kids-struct))))))]
+                  (update-in [mh :emaps] (partial apply set/union) (map :emaps kids-struct))))))]
     (reduce propagate
       mh-structure
       (keys mh-structure))))
 
 (defn consistent?
   "True if an MH is consistent, meaning none of its emaps are in its nogoods."
-  ([{:keys [emaps nogood]}]
-     (empty? (set/intersection emaps nogood)))
-  ([mh mstr]
-     (consistent? (get mstr mh))))
+  ([mh-structure mh]
+   (empty? (set/intersection
+             (get-in mh-structure [mh :emaps])
+             (find-nogood (keys mh-structure) mh)))))
 
 (defn find-roots
   "Returns only the root hypotheses, ie. those that are not children of any
@@ -189,7 +193,7 @@
   [kg root mh-structure]
   {:mhs       (collect-children kg root mh-structure)
    ;; gmap's nogoods/emaps are those of its root(s)
-   :structure (select-keys (get mh-structure root) [:nogood :emaps])})
+   :structure (select-keys (get mh-structure root) [:emaps])})
 
 (defn compute-initial-gmaps
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
@@ -199,7 +203,7 @@
    :gmaps        (->>
                    (find-roots kg mh-structure)
                    (reduce (fn form-gmap [gmaps root]
-                             (if (consistent? (get mh-structure root))
+                             (if (consistent? mh-structure root)
                                (->> mh-structure
                                  (make-gmap kg root)
                                  (conj gmaps))
@@ -212,19 +216,26 @@
                      #{})
                    vec)})
 
+
+(defn all-nogood
+  [mh-structure mhs]
+  (->> mhs
+    (map (partial find-nogood (keys mh-structure)))
+    (reduce set/union)))
+
 (defn gmaps-consistent?
   "Two gmaps are consistent if none of their elements are in the NoGood set of
   the other."
-  [gm-a gm-b]
+  [mh-structure gm-a gm-b]
   (and
-    (empty? (set/intersection (:mhs gm-a) (get-in gm-b [:structure :nogood])))
-    (empty? (set/intersection (:mhs gm-b) (get-in gm-a [:structure :nogood])))))
+    (empty? (set/intersection (:mhs gm-a) (all-nogood mh-structure (:mhs gm-b))))
+    (empty? (set/intersection (:mhs gm-b) (all-nogood mh-structure (:mhs gm-a))))))
 
 (defn gmap-set-internally-consistent?
   "True if the given set of gmaps is internally consistent."
-  [gmap-set]
-  (every? (fn [gm-b]
-            (every? #(gmaps-consistent? gm-b %) gmap-set))
+  [mh-structure gmap-set]
+  (every? (fn [gm-a]
+            (every? #(gmaps-consistent? mh-structure gm-a %) gmap-set))
     gmap-set))
 
 (defn strict-subset? [set1 set2]
@@ -241,13 +252,14 @@
 
 (defn combine-gmaps
   "Combine all gmaps in all maximal, consistent ways."
-  [data]
+  [{:as   data
+    :keys [mh-structure]}]
   (update data :gmaps (fn [gmaps]
                         (let [consistent-sets (->> gmaps
                                                 vec
                                                 comb/subsets
                                                 (remove empty?)
-                                                (filter gmap-set-internally-consistent?)
+                                                (filter (partial gmap-set-internally-consistent? mh-structure))
                                                 (map set))]
                           (->> consistent-sets
                             (remove (fn [gms-a]
