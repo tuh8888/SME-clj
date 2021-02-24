@@ -221,7 +221,29 @@
                                        {:emaps nil}}))
 
 
-(def expected-computed-initial-gmaps ::fail #_(undiff expected-propagated-from-emaps))
+(def expected-computed-initial-gmaps
+  {:mh-structure expected-propagated-from-emaps
+   :gmaps        [{:mhs       #{{:base :Water, :target :Heat}
+                                {:base :Beaker, :target :Coffee}
+                                {:base :flow-Beaker-Vial-Water, :target :flow-Coffee-Icecube-Heat}
+                                {:base :Vial, :target :Icecube}},
+                   :structure {:roots  #{{:base   :flow-Beaker-Vial-Water,
+                                          :target :flow-Coffee-Icecube-Heat}},
+                               :nogood #{},
+                               :emaps  #{{:base :Water, :target :Heat}
+                                         {:base :Beaker, :target :Coffee}
+                                         {:base :Vial, :target :Icecube}}}}
+                  {:mhs       #{{:base   :greater-pressure-Beaker-Vial,
+                                 :target :greater-temperature-Coffee-Icecube}
+                                {:base :Beaker, :target :Coffee}
+                                {:base :pressure-Beaker, :target :temperature-Coffee}
+                                {:base :Vial, :target :Icecube}},
+                   :structure {:roots
+                               #{{:base   :greater-pressure-Beaker-Vial,
+                                  :target :greater-temperature-Coffee-Icecube}},
+                               :nogood #{},
+                               :emaps  #{{:base :Beaker, :target :Coffee}
+                                         {:base :Vial, :target :Icecube}}}}]})
 
 (def expected-combined-gmaps #_(undiff expected-computed-initial-gmaps)
   {:gmaps        [{:mhs       [{:base :Beaker :target :Coffee}
@@ -379,8 +401,12 @@
   (is (= expected-propagated-from-emaps
         (SUT/propagate-from-emaps expected-hypothesis-structure)))
 
-  #_(is (= expected-computed-initial-gmaps
-          (SUT/compute-initial-gmaps kg expected-propagated-from-emaps)))
+  (is (= [{:base :flow-Beaker-Vial-Water, :target :flow-Coffee-Icecube-Heat}
+          {:base :greater-pressure-Beaker-Vial, :target :greater-temperature-Coffee-Icecube}]
+        (SUT/find-roots expected-propagated-from-emaps)))
+
+  (is (= expected-computed-initial-gmaps
+        (SUT/compute-initial-gmaps kg expected-propagated-from-emaps)))
 
   #_(is (= expected-combined-gmaps
           (SUT/combine-gmaps expected-computed-initial-gmaps)))

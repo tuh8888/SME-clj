@@ -208,18 +208,22 @@
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
   map with the :mh-structure and the :gmaps set."
   [kg mh-structure]
-  (->>
-    (find-roots mh-structure)
-    (reduce (fn form-gmap [gmaps root]
-              (if (consistent? (get mh-structure root))
-                (conj gmaps (make-gmap kg root mh-structure))
-                (if-let [kids (seq (:children (get mh-structure root)))]
-                  (set/union gmaps
-                    (set (mapcat #(form-gmap #{} %) kids)))
-                  gmaps)))
-      #{})
-    (hash-map :mh-structure mh-structure
-      :gmaps)))
+  {:mh-structure mh-structure
+   :gmaps        (->>
+                   (find-roots mh-structure)
+                   (reduce (fn form-gmap [gmaps root]
+                             (if (consistent? (get mh-structure root))
+                               (->> mh-structure
+                                 (make-gmap kg root)
+                                 (conj gmaps))
+                               (if-let [kids (seq (:children (get mh-structure root)))]
+                                 (->> kids
+                                   (mapcat #(form-gmap #{} %))
+                                   set
+                                   (set/union gmaps))
+                                 gmaps)))
+                     #{})
+                   vec)})
 
 (defn gmaps-consistent?
   "Two gmaps are consistent if none of their elements are in the NoGood set of
