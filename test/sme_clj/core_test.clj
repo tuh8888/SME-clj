@@ -150,32 +150,16 @@
 
 (def expected-match-hypotheses #{{:base   :Water
                                   :target :Heat}
-                                 {:base   :flow-Beaker-Vial-Water-Pipe
-                                  :target :flow-Coffee-Icecube-Heat-Bar}
-                                 {:base   :greater-diameter-Beaker-diameter-Vial
-                                  :target :greater-temperature-Coffee-temperature-Icecube}
-                                 {:base   :diameter-Beaker
-                                  :target :temperature-Coffee}
-                                 {:base   :greater-pressure-Beaker-pressure-Vial
-                                  :target :greater-temperature-Coffee-temperature-Icecube}
+                                 {:base   :flow-Beaker-Vial-Water
+                                  :target :flow-Coffee-Icecube-Heat}
+                                 {:base   :greater-pressure-Beaker-Vial
+                                  :target :greater-temperature-Coffee-Icecube}
                                  {:base   :Beaker
                                   :target :Coffee}
-                                 {:base   :Water
-                                  :target :Coffee}
-                                 {:base   :pressure-Vial
-                                  :target :temperature-Icecube}
                                  {:base   :pressure-Beaker
                                   :target :temperature-Coffee}
-                                 {:base   :diameter-Vial
-                                  :target :temperature-Icecube}
-                                 {:base   :flat-top-Water
-                                  :target :flat-top-Coffee}
-                                 {:base   :Pipe
-                                  :target :Bar}
                                  {:base   :Vial
-                                  :target :Icecube}
-                                 {:base   :liquid-Water
-                                  :target :liquid-Coffee}})
+                                  :target :Icecube}})
 
 (def expected-hypothesis-structure ::fail #_{})
 
@@ -279,13 +263,9 @@
 (deftest heat-water-test
   ;; Water flow is the base heat flow the target
 
-  #_(is (=
-          expected-match-hypotheses
-          (->> rules/literal-similarity
-            (SUT/create-match-hypotheses kg simple-water-flow simple-heat-flow)
-            (map #(into {} %))
-            set)
-          ))
+  (is (=
+        expected-match-hypotheses
+        (SUT/create-match-hypotheses kg simple-water-flow simple-heat-flow rules/literal-similarity)))
 
   #_(is (=
           expected-hypothesis-structure
