@@ -271,7 +271,7 @@
 
   (testing "Propagating emaps"
     (is (= expected-propagated-from-emaps
-          (SUT/propagate-from-emaps kg expected-hypothesis-structure))))
+          (SUT/propagate-from-emaps kg (keys expected-hypothesis-structure) expected-hypothesis-structure))))
 
   (testing "Computing initial gmaps"
     (is (= #{[:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
@@ -279,14 +279,15 @@
              [:greater-pressure-Beaker-pressure-Vial :greater-temperature-Coffee-temperature-Icecube]
              [:liquid-Water :liquid-Coffee]
              [:flat-top-Water :flat-top-Coffee]}
-          (set (SUT/find-roots kg expected-propagated-from-emaps))))
+          (set (SUT/find-roots kg (keys expected-propagated-from-emaps)))))
 
     (is (= expected-computed-initial-gmaps
-          (SUT/compute-initial-gmaps kg expected-propagated-from-emaps))))
+          (SUT/compute-initial-gmaps kg (keys expected-propagated-from-emaps) expected-propagated-from-emaps))))
 
   (testing "Combining gmaps"
     (is (= expected-combined-gmaps
-          (SUT/combine-gmaps expected-computed-initial-gmaps))))
+          (SUT/combine-gmaps (keys expected-propagated-from-emaps)
+            expected-computed-initial-gmaps))))
 
   (testing "Merging gmaps"
     (is (= expected-merged-gmaps
@@ -294,7 +295,7 @@
 
   (testing "Finalizing gmaps"
     (is (= expected-finalized-gmaps
-          (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-merged-gmaps))))
+          (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow (keys expected-propagated-from-emaps) expected-merged-gmaps))))
 
   (testing "Generating inferences"
     (is (= expected-generated-inferences

@@ -150,34 +150,32 @@
   "Extends structural MH information of each expression without emaps by
   recursively adding the union of its children's emaps and nogoods to
   it. Essentially flows up the structural information."
-  [kg mh-structure]
+  [kg mhs mh-structure]
   (letfn [(propagate [mstr mh]
-            (if (seq (get-in mstr [mh :emaps]))
+            (if (seq (find-emaps kg mh))
               mstr
-              (let [kids        (find-children kg (keys mh-structure) mh)
-                    mstr-kids   (reduce propagate mstr kids)
-                    kids-struct (vals (select-keys mstr-kids kids))]
+              (let [kids        (find-children kg mhs mh)
+                    mstr-kids   (reduce propagate mstr kids)]
                 mstr-kids)))]
     (reduce propagate
       mh-structure
-      (keys mh-structure))))
+      mhs)))
 
 (defn consistent?
   "True if an MH is consistent, meaning none of its emaps are in its nogoods."
-  ([kg mh-structure mh]
+  ([kg mhs mh]
    (empty? (set/intersection
              (find-emaps kg mh)
-             (find-nogood (keys mh-structure) mh)))))
+             (find-nogood mhs mh)))))
 
 (defn find-roots
   "Returns only the root hypotheses, ie. those that are not children of any
   other hypothesis."
-  [kg mh-structure]
+  [kg mhs]
   (let [all-children (reduce #(set/union %1
-                                (find-children kg (keys mh-structure) %2))
-                       #{}
-                       (keys mh-structure))]
-    (filter #(not (contains? all-children %)) (keys mh-structure))))
+                                (find-children kg mhs %2))
+                       #{} mhs)]
+    (filter #(not (contains? all-children %)) mhs)))
 
 (defn is-emap? [kg {:keys [base target]}]
   (and
@@ -186,32 +184,33 @@
 
 (defn collect-children
   "Returns a set of all descendants of a root."
-  [kg root mh-structure]
+  [kg root mhs]
   (letfn [(collect [mh]
             (if (is-emap? kg mh)
               [mh]
               (cons mh (mapcat collect
-                         (find-children kg (keys mh-structure) mh)))))]
+                         (find-children kg mhs mh)))))]
     (set (collect root))))
 
 (defn make-gmap
   "Returns a gmap with the root and all of its descendants."
-  [kg root mh-structure]
-  {:mhs (collect-children kg root mh-structure)})
+  [kg root mhs]
+  {:mhs (collect-children kg root mhs)})
 
 (defn compute-initial-gmaps
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
   map with the :mh-structure and the :gmaps set."
-  [kg mh-structure]
+  [kg mhs mh-structure]
   {:mh-structure mh-structure
    :gmaps        (->>
-                   (find-roots kg mh-structure)
+                   (find-roots kg mhs)
                    (reduce (fn form-gmap [gmaps root]
-                             (if (consistent? kg mh-structure root)
-                               (->> mh-structure
+                             (if (consistent? kg mhs root)
+                               (->> mhs
+
                                  (make-gmap kg root)
                                  (conj gmaps))
-                               (if-let [kids (seq (find-children kg (keys mh-structure) root))]
+                               (if-let [kids (seq (find-children kg mhs root))]
                                  (->> kids
                                    (mapcat #(form-gmap #{} %))
                                    set
@@ -222,24 +221,24 @@
 
 
 (defn all-nogood
-  [mh-structure mhs]
+  [mhs1 mhs]
   (->> mhs
-    (map (partial find-nogood (keys mh-structure)))
+    (map (partial find-nogood mhs1))
     (reduce set/union)))
 
 (defn gmaps-consistent?
   "Two gmaps are consistent if none of their elements are in the NoGood set of
   the other."
-  [mh-structure gm-a gm-b]
+  [mhs gm-a gm-b]
   (and
-    (empty? (set/intersection (:mhs gm-a) (all-nogood mh-structure (:mhs gm-b))))
-    (empty? (set/intersection (:mhs gm-b) (all-nogood mh-structure (:mhs gm-a))))))
+    (empty? (set/intersection (:mhs gm-a) (all-nogood mhs (:mhs gm-b))))
+    (empty? (set/intersection (:mhs gm-b) (all-nogood mhs (:mhs gm-a))))))
 
 (defn gmap-set-internally-consistent?
   "True if the given set of gmaps is internally consistent."
-  [mh-structure gmap-set]
+  [mhs gmap-set]
   (every? (fn [gm-a]
-            (every? #(gmaps-consistent? mh-structure gm-a %) gmap-set))
+            (every? #(gmaps-consistent? mhs gm-a %) gmap-set))
     gmap-set))
 
 (defn strict-subset? [set1 set2]
@@ -256,14 +255,13 @@
 
 (defn combine-gmaps
   "Combine all gmaps in all maximal, consistent ways."
-  [{:as   data
-    :keys [mh-structure]}]
+  [mhs data]
   (update data :gmaps (fn [gmaps]
                         (let [consistent-sets (->> gmaps
                                                 vec
                                                 comb/subsets
                                                 (remove empty?)
-                                                (filter (partial gmap-set-internally-consistent? mh-structure))
+                                                (filter (partial gmap-set-internally-consistent? mhs))
                                                 (map set))]
                           (->> consistent-sets
                             (remove (fn [gms-a]
@@ -320,16 +318,15 @@
 (defn score-gmap
   "Computes SES and emap scores for a gmap. The emap score is not in the
   original SME. It simply counts how many entities match in their content."
-  [kg {:keys [mh-structure]} gm]
+  [kg mhs gm]
   (letfn [(score-mh [mh depth]
             ;; simplified trickle-down SES
-            (if-let [kids (seq (find-children kg (keys mh-structure) mh))]
+            (if-let [kids (seq (find-children kg mhs mh))]
               (reduce + depth (map #(score-mh % (inc depth)) kids))
               depth))]
     (assoc gm
       :score (->> gm
                :mhs
-               (select-keys mh-structure)
                (find-roots kg)
                (map #(score-mh % 0))
                (reduce + (count (:mhs gm))))
@@ -400,10 +397,10 @@
 (defn finalize-gmaps
   "Computes additional information about the gmaps we have found and stores it
   in the gmaps."
-  [kg {base :name} {target :name} data]
+  [kg {base :name} {target :name} mhs data]
   (update data :gmaps (fn [gmaps]
                         (->> gmaps
-                          (map #(score-gmap kg data %)) ; scores
+                          (map #(score-gmap kg mhs %)) ; scores
                           (map #(assoc % :mapping {:base base :target target}))))))
 
 (defn match
@@ -431,14 +428,17 @@
 
   For example: (map :score (match b t)) -> seq of gmap scores."
   ([kg rules base target]
-   (->> (create-match-hypotheses kg base target rules)
-     (build-hypothesis-structure kg)
-     (propagate-from-emaps kg)
-     (compute-initial-gmaps kg)
-     combine-gmaps
-     merge-gmaps
-     (finalize-gmaps kg base target)
-     (generate-inferences kg base)
-     (transfer-inferences kg)))
+   (let [mh-structure (->> (create-match-hypotheses kg base target rules)
+                        (build-hypothesis-structure kg))
+         mhs          (keys mh-structure)
+         data         (->> mh-structure
+                        (propagate-from-emaps kg mhs)
+                        (compute-initial-gmaps kg mhs))]
+     (->> data
+       (combine-gmaps mhs)
+       merge-gmaps
+       (finalize-gmaps kg base target mhs)
+       (generate-inferences kg base)
+       (transfer-inferences kg))))
   ([kg base target]
    (match kg rules/literal-similarity base target)))
