@@ -162,29 +162,29 @@
     nil))
 
 
-(def diameter-gmap {:mhs       #{[:greater-diameter-Beaker-diameter-Vial
+(def diameter-gmap {:mhs #{[:greater-diameter-Beaker-diameter-Vial
                                   :greater-temperature-Coffee-temperature-Icecube]
                                  [:diameter-Beaker :temperature-Coffee]
                                  [:diameter-Vial :temperature-Icecube]
                                  [:Beaker :Coffee]
                                  [:Vial :Icecube]}})
-(def flow-gmap {:mhs       #{[:Water :Heat]
+(def flow-gmap {:mhs #{[:Water :Heat]
                              [:Beaker :Coffee]
                              [:Pipe :Bar]
                              [:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
                              [:Vial :Icecube]}})
 
-(def pressure-gmap {:mhs       #{[:Beaker :Coffee]
+(def pressure-gmap {:mhs #{[:Beaker :Coffee]
                                  [:greater-pressure-Beaker-pressure-Vial
                                   :greater-temperature-Coffee-temperature-Icecube]
                                  [:Vial :Icecube]
                                  [:pressure-Beaker :temperature-Coffee]
                                  [:pressure-Vial :temperature-Icecube]}})
 
-(def liquid-gmap {:mhs       #{[:Water :Coffee]
-                               [:liquid-Water :liquid-Coffee]}})
-(def flat-top-gmap {:mhs       #{[:Water :Coffee]
-                                 [:flat-top-Water :flat-top-Coffee]}})
+(def liquid-gmap {:mhs #{[:Water :Coffee]
+                         [:liquid-Water :liquid-Coffee]}})
+(def flat-top-gmap {:mhs #{[:Water :Coffee]
+                           [:flat-top-Water :flat-top-Coffee]}})
 (def expected-computed-initial-gmaps
   {:mh-structure expected-propagated-from-emaps
    :gmaps        [flow-gmap
@@ -218,7 +218,7 @@
                    [:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
                    [:Vial :Icecube]
                    [:pressure-Vial :temperature-Icecube]}}
-           {:mhs       #{[:Water :Coffee]
+           {:mhs #{[:Water :Coffee]
                          [:liquid-Water :liquid-Coffee]
                          [:flat-top-Water :flat-top-Coffee]}}]
 

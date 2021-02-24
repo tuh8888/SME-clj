@@ -197,7 +197,7 @@
 (defn make-gmap
   "Returns a gmap with the root and all of its descendants."
   [kg root mh-structure]
-  {:mhs       (collect-children kg root mh-structure)})
+  {:mhs (collect-children kg root mh-structure)})
 
 (defn compute-initial-gmaps
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
