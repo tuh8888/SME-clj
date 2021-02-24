@@ -111,31 +111,27 @@
                                (update targets target set/union #{mh})])
                       [{} {}] mhs)]
     (reduce (fn build-mh-structure [structure [base target :as mh]]
-              (assoc structure mh
+              (let [nogood (-> (set/union
+                                 (get bmap base #{})
+                                 (get tmap target) #{})
+                             ;; not nogood of ourselves
+                             (disj mh))]
+                (-> structure
+                  ;; initial emaps is just ourselves if we are one, for the rest
+                  ;; this will be filled later
+                  (cond-> (not= :expression (types/lookup kg base :type)) (assoc-in [mh :emaps] #{mh}))
+                  ;; nogood is every mh mapping same target or base
+                  (cond-> (seq nogood) (assoc-in [mh :nogood] nogood))
 
-                ;; initial emaps is just ourselves if we are one, for the rest
-                ;; this will be filled later
-                {:emaps (if (= :expression (types/lookup kg base :type)) #{} #{mh})
-
-                 ;; nogood is every mh mapping same target or base
-                 :nogood (-> (set/union
-                               (get bmap base #{})
-                               (get tmap target) #{})
-                           ;; not nogood of ourselves
-                           (disj mh))
-
-                 ;; our children are mhs that map our arguments (so children
-                 ;; does not equal our entire set of descendants)
-                 :children (if (= :expression (types/lookup kg base :type))
-                             (->> (types/lookup kg target :args)
-                               (mapcat (fn [b t]
-                                         (set/intersection (get bmap b #{})
-                                           (get tmap t #{})))
-                                 (types/lookup kg base :args))
-                               set)
-                             #{})}))
-      {}
-      mhs)))
+                  ;; our children are mhs that map our arguments (so children
+                  ;; does not equal our entire set of descendants)
+                  (cond-> (= :expression (types/lookup kg base :type)) (assoc-in [mh :children] (->> (types/lookup kg target :args)
+                                                                                                  (mapcat (fn [b t]
+                                                                                                            (set/intersection (get bmap b #{})
+                                                                                                              (get tmap t #{})))
+                                                                                                    (types/lookup kg base :args))
+                                                                                                  set))))))
+      {} mhs)))
 
 ;; For each expression without emaps, recursively add the union of its
 ;; children's emaps and nogoods.
@@ -145,22 +141,17 @@
   it. Essentially flows up the structural information."
   [mh-structure]
   (letfn [(propagate [mstr mh]
-            (if (seq (:emaps (get mstr mh)))
+            (if (seq (get-in mstr [mh :emaps]))
               mstr
-              (let [kids (:children (get mstr mh))
-                    mstr-kids (reduce propagate mstr kids)
+              (let [kids        (get-in mstr [mh :children])
+                    mstr-kids   (reduce propagate mstr kids)
                     kids-struct (vals (select-keys mstr-kids kids))]
-                (update-in mstr-kids
-                           [mh]
-                           #(merge-with set/union %1 %2)
-                           {:emaps
-                            (reduce set/union (map :emaps kids-struct))
-
-                            :nogood
-                            (reduce set/union (map :nogood kids-struct))}))))]
+                (-> mstr-kids
+                  (update-in [mh :emaps] (partial apply set/union) (map :emaps kids-struct))
+                  (update-in [mh :nogood] (partial apply set/union) (map :nogood kids-struct))))))]
     (reduce propagate
-            mh-structure
-            (keys mh-structure))))
+      mh-structure
+      (keys mh-structure))))
 
 (defn consistent?
   "True if an MH is consistent, meaning none of its emaps are in its nogoods."
@@ -319,7 +310,7 @@
   [kg {:keys [mh-structure]} gm]
   (letfn [(score-mh [mh depth]
             ;; simplified trickle-down SES
-            (if-let [kids (seq (:children (get mh-structure mh)))]
+            (if-let [kids (seq (get-in mh-structure [mh :children]))]
               (reduce + depth (map #(score-mh % (inc depth)) kids))
               depth))]
     (assoc gm

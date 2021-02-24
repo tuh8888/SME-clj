@@ -131,57 +131,38 @@
                                  [:pressure-Vial :temperature-Icecube]
                                  [:Vial :Icecube]})
 
-(def expected-hypothesis-structure {[:Beaker :Coffee]                      {:emaps    #{[:Beaker :Coffee]}
-                                                                            :nogood   #{[:Water :Coffee]}
-                                                                            :children #{}}
-                                    [:Vial :Icecube]                       {:emaps    #{[:Vial :Icecube]}
-                                                                            :nogood   #{}
-                                                                            :children #{}}
-                                    [:Water :Heat]                         {:emaps    #{[:Water :Heat]}
-                                                                            :nogood   #{[:Water :Coffee]}
-                                                                            :children #{}}
-                                    [:Pipe :Bar]                           {:emaps    #{[:Pipe :Bar]}
-                                                                            :nogood   #{}
-                                                                            :children #{}}
-                                    [:Water :Coffee]                       {:emaps    #{[:Water :Coffee]}
-                                                                            :nogood   #{[:Water :Heat]
-                                                                                        [:Beaker :Coffee]}
-                                                                            :children #{}}
-                                    [:flat-top-Water :flat-top-Coffee]     {:emaps    #{}
-                                                                            :nogood   #{}
-                                                                            :children #{[:Water :Coffee]}}
-                                    [:liquid-Water :liquid-Coffee]         {:nogood   #{}
-                                                                            :emaps    #{}
-                                                                            :children #{[:Water :Coffee]}}
-                                    [:pressure-Vial :temperature-Icecube]  {:emaps    #{}
-                                                                            :nogood   #{[:diameter-Vial :temperature-Icecube]}
+(def expected-hypothesis-structure {[:Beaker :Coffee]                      {:emaps  #{[:Beaker :Coffee]}
+                                                                            :nogood #{[:Water :Coffee]}}
+                                    [:Vial :Icecube]                       {:emaps #{[:Vial :Icecube]}}
+                                    [:Water :Heat]                         {:emaps  #{[:Water :Heat]}
+                                                                            :nogood #{[:Water :Coffee]}}
+                                    [:Pipe :Bar]                           {:emaps #{[:Pipe :Bar]}}
+                                    [:Water :Coffee]                       {:emaps  #{[:Water :Coffee]}
+                                                                            :nogood #{[:Water :Heat]
+                                                                                      [:Beaker :Coffee]}}
+                                    [:flat-top-Water :flat-top-Coffee]     {:children #{[:Water :Coffee]}}
+                                    [:liquid-Water :liquid-Coffee]         {:children #{[:Water :Coffee]}}
+                                    [:pressure-Vial :temperature-Icecube]  {:nogood   #{[:diameter-Vial :temperature-Icecube]}
                                                                             :children #{[:Vial :Icecube]}}
-                                    [:pressure-Beaker :temperature-Coffee] {:emaps    #{}
-                                                                            :nogood   #{[:diameter-Beaker :temperature-Coffee]}
+                                    [:pressure-Beaker :temperature-Coffee] {:nogood   #{[:diameter-Beaker :temperature-Coffee]}
                                                                             :children #{[:Beaker :Coffee]}}
-                                    [:diameter-Beaker :temperature-Coffee] {:emaps    #{}
-                                                                            :nogood   #{[:pressure-Beaker :temperature-Coffee]}
+                                    [:diameter-Beaker :temperature-Coffee] {:nogood   #{[:pressure-Beaker :temperature-Coffee]}
                                                                             :children #{[:Beaker :Coffee]}}
-                                    [:diameter-Vial :temperature-Icecube]  {:emaps    #{}
-                                                                            :nogood   #{[:pressure-Vial :temperature-Icecube]}
+                                    [:diameter-Vial :temperature-Icecube]  {:nogood   #{[:pressure-Vial :temperature-Icecube]}
                                                                             :children #{[:Vial :Icecube]}}
                                     [:greater-diameter-Beaker-diameter-Vial
                                      :greater-temperature-Coffee-temperature-Icecube]
-                                    {:emaps    #{}
-                                     :nogood   #{[:greater-pressure-Beaker-pressure-Vial
+                                    {:nogood   #{[:greater-pressure-Beaker-pressure-Vial
                                                   :greater-temperature-Coffee-temperature-Icecube]}
                                      :children #{[:diameter-Beaker :temperature-Coffee]
                                                  [:diameter-Vial :temperature-Icecube]}}
                                     [:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
-                                    {:emaps    #{}
-                                     :nogood   #{}
-                                     :children #{[:Beaker :Coffee]
+                                    {:children #{[:Beaker :Coffee]
                                                  [:Vial :Icecube]
                                                  [:Pipe :Bar]
                                                  [:Water :Heat]}}
                                     [:greater-pressure-Beaker-pressure-Vial :greater-temperature-Coffee-temperature-Icecube]
-                                    {:emaps    #{}
-                                     :nogood   #{[:greater-diameter-Beaker-diameter-Vial
+                                    {:nogood   #{[:greater-diameter-Beaker-diameter-Vial
                                                   :greater-temperature-Coffee-temperature-Icecube]}
                                      :children #{[:pressure-Vial :temperature-Icecube]
                                                  [:pressure-Beaker :temperature-Coffee]}}})
