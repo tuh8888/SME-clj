@@ -394,14 +394,11 @@
 (defn finalize-gmaps
   "Computes additional information about the gmaps we have found and stores it
   in the gmaps."
-  [kg base target data]
-  (->>
-    (:gmaps data)
-
-    (map #(score-gmap kg data %))                            ; scores
-    (map #(assoc % :mapping {:base base :target target})) ; what we mappped
-
-    (assoc data :gmaps)))
+  [kg {base :name} {target :name} data]
+  (update data :gmaps (fn [gmaps]
+                        (->> gmaps
+                          (map #(score-gmap kg data %)) ; scores
+                          (map #(assoc % :mapping {:base base :target target}))))))
 
 (defn match
   "Attempts to find a structure mapping between base and target using an

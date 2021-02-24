@@ -61,7 +61,7 @@
 
 ;; Concept graph definitions
 
-(def simple-water-flow (types/make-concept-graph (keyword "simple-water-flow")
+(def simple-water-flow (types/make-concept-graph :simple-water-flow
                          [:cause
                           [:greater [:pressure :Beaker] :Vial #_[:pressure :Vial]]
                           [:flow :Beaker :Vial :Water #_:Pipe]]
@@ -70,7 +70,7 @@
                          #_[:flat-top :Water]
                          #_[:liquid :Water]))
 
-(def simple-heat-flow (types/make-concept-graph (keyword "simple-heat-flow")
+(def simple-heat-flow (types/make-concept-graph :simple-heat-flow
                         [:flow :Coffee :Icecube :Heat #_:Bar]
                         [:greater [:temperature :Coffee] :Icecube #_[:temperature :Icecube]]
                         #_[:flat-top :Coffee]
@@ -188,9 +188,67 @@
 
 (def expected-combined-gmaps ::fail #_(undiff expected-computed-initial-gmaps))
 
-(def expected-merged-gmaps ::fail #_(undiff expected-combined-gmaps))
+(def expected-gmap-score ::fail #_(undiff expected-combined-gmaps))
 
-(def expected-gmap-score ::fail #_(undiff expected-merged-gmaps))
+(def expected-merged-gmaps #_(undiff expected-merged-gmaps)
+  {:gmaps        [{:mhs          [{:base :Beaker :target :Coffee}
+                                  {:base :Vial :target :Icecube}
+                                  {:base :Water :target :Heat}
+                                  {:base :flow-Beaker-Vial-Water :target :flow-Coffee-Icecube-Heat}
+                                  {:base :pressure-Beaker :target :temperature-Coffee}
+                                  {:base :greater-pressure-Beaker-Vial :target :greater-temperature-Coffee-Icecube}]
+                   :structure    {:roots  #{{:base   :flow-Beaker-Vial-Water
+                                             :target :flow-Coffee-Icecube-Heat}
+                                            {:base   :greater-pressure-Beaker-Vial
+                                             :target :greater-temperature-Coffee-Icecube}}
+                                  :nogood #{}
+                                  :emaps  #{{:base   :Beaker
+                                             :target :Coffee}
+                                            {:base   :Vial
+                                             :target :Icecube}
+                                            {:base   :Water
+                                             :target :Heat}}}
+                   :score        13
+                   :emap-matches 0}]
+   :mh-structure {{:base :Beaker :target :Coffee}                                                   {:emaps    #{{:base   :Beaker
+                                                                                                                  :target :Coffee}}
+                                                                                                     :nogood   #{}
+                                                                                                     :children #{}}
+                  {:base :Vial :target :Icecube}                                                    {:emaps    #{{:base   :Vial
+                                                                                                                  :target :Icecube}}
+                                                                                                     :nogood   #{}
+                                                                                                     :children #{}}
+                  {:base :Water :target :Heat}                                                      {:emaps    #{{:base   :Water
+                                                                                                                  :target :Heat}}
+                                                                                                     :nogood   #{}
+                                                                                                     :children #{}}
+                  {:base :flow-Beaker-Vial-Water :target :flow-Coffee-Icecube-Heat}                 {:emaps    #{{:base   :Beaker
+                                                                                                                  :target :Coffee}
+                                                                                                                 {:base   :Vial
+                                                                                                                  :target :Icecube}
+                                                                                                                 {:base   :Water
+                                                                                                                  :target :Heat}}
+                                                                                                     :nogood   #{}
+                                                                                                     :children #{{:base   :Beaker
+                                                                                                                  :target :Coffee}
+                                                                                                                 {:base   :Vial
+                                                                                                                  :target :Icecube}
+                                                                                                                 {:base   :Water
+                                                                                                                  :target :Heat}}}
+                  {:base :pressure-Beaker :target :temperature-Coffee}                              {:emaps    #{{:base   :Beaker
+                                                                                                                  :target :Coffee}}
+                                                                                                     :nogood   #{}
+                                                                                                     :children #{{:base   :Beaker
+                                                                                                                  :target :Coffee}}}
+                  {:base :greater-pressure-Beaker-Vial :target :greater-temperature-Coffee-Icecube} {:emaps    #{{:base   :Beaker
+                                                                                                                  :target :Coffee}
+                                                                                                                 {:base   :Vial
+                                                                                                                  :target :Icecube}}
+                                                                                                     :nogood   #{}
+                                                                                                     :children #{{:base   :Vial
+                                                                                                                  :target :Icecube}
+                                                                                                                 {:base   :pressure-Beaker
+                                                                                                                  :target :temperature-Coffee}}}}})
 
 (def expected-finalized-gmaps #_(undiff expected-gmap-score)
   {:gmaps        [{:mhs          [{:base :Beaker :target :Coffee}
@@ -212,17 +270,8 @@
                                              :target :Heat}}}
                    :score        13
                    :emap-matches 0
-                   :mapping      {:base   {:name       "simple water flow"
-                                           :graph      [:cause-greater-pressure-Beaker-Vial-flow-Beaker-Vial-Water
-                                                        :greater-pressure-Beaker-Vial
-                                                        :pressure-Beaker
-                                                        :flow-Beaker-Vial-Water]
-                                           :id-counter 3}
-                                  :target {:name       "simple heat flow"
-                                           :graph      [:flow-Coffee-Icecube-Heat
-                                                        :greater-temperature-Coffee-Icecube
-                                                        :temperature-Coffee]
-                                           :id-counter 2}}}]
+                   :mapping      {:base   :simple-water-flow
+                                  :target :simple-heat-flow}}]
    :mh-structure {{:base :Beaker :target :Coffee}                                                   {:emaps    #{{:base   :Beaker
                                                                                                                   :target :Coffee}}
                                                                                                      :nogood   #{}
@@ -342,10 +391,9 @@
           expected-gmap-score
           (SUT/score-gmap kg expected-merged-gmaps (-> expected-merged-gmaps :gmaps first))))
 
-  #_(is (=
-          (remove-mapping expected-finalized-gmaps)
-          (-> (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-merged-gmaps)
-            remove-mapping)))
+  (is (=
+        expected-finalized-gmaps
+        (SUT/finalize-gmaps kg simple-water-flow simple-heat-flow expected-merged-gmaps)))
 
   (is (=
         expected-generated-inferences
