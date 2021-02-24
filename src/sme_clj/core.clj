@@ -85,15 +85,12 @@
   "Apply rules from a ruleset to base and target to generate match hypotheses
   for the graphs."
   [kg base target rules]
-  (let [[base target] (->> [base target]
-                        (map :graph)
-                        (map keys))]
-    (->> (for [b base
-               t target]
-           [b t])
-      (map (partial apply types/make-match-hypothesis))
-      (apply-filter-rules kg rules)
-      (apply-intern-rules kg rules))))
+  (->> (for [b base
+             t target]
+         [b t])
+    (map (partial apply types/make-match-hypothesis))
+    (apply-filter-rules kg rules)
+    (apply-intern-rules kg rules)))
 
 ;;;;
 ;;;; FORMING GMAPS
@@ -391,7 +388,10 @@
 
   For example: (map :score (match b t)) -> seq of gmap scores."
   ([kg rules base target]
-   (let [all-mhs (create-match-hypotheses kg base target rules)]
+   (let [[base target] (->> [base target]
+                         (map :graph)
+                         (map keys))
+         all-mhs       (create-match-hypotheses kg base target rules)]
      (->> all-mhs
        (split-into-mhs-sets kg)
        (consistent-combs-of-mhs-sets all-mhs)

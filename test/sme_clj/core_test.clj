@@ -46,68 +46,79 @@
                         [:flat-top :Coffee]
                         [:liquid :Coffee]))
 
-(let [kg                {:cause       {:upstream   :Expression
-                                       :downstream :Expression
-                                       :parents    #{:Expression}}
-                         :greater     {:less    :Expression
-                                       :more    :Expression
-                                       :parents #{:Expression}}
-                         :flow        {:from    :Entity
-                                       :to      :Entity
-                                       :flow-er :Entity
-                                       :via     :Entity
-                                       :parents #{:Expression}}
-                         :pressure    {:container :Entity}
-                         :temperature {:thermal-entity :Entity
-                                       :parents        #{:Expression}}
-                         :flat-top    {:parents    #{:Expression}
-                                       :surface-of :Entity}
-                         :liquid      {:parents #{:Expression}
-                                       :entity  :Entity}
-                         :Coffee      {:parents #{:Entity}}
-                         :Water       {:parents #{:Entity}}
-                         :Heat        {:parents #{:Entity}}
-                         :Pipe        {:parents #{:Entity}}
-                         :Vial        {:parents #{:Entity}}
-                         :Icecube     {:parents #{:Entity}}
-                         :Bar         {:parents #{:Entity}}
-                         :Beaker      {:parents #{:Entity}}
-                         }
-      simple-water-flow {:ftw             {:parents    #{:flat-top}
-                                           :surface-of :Water}
-                         :lw              {:parents #{:liquid}
-                                           :entity  :Water}
-                         ;;cause-greater-beaker-pressure-vial-pressure-flow-from-beaker-to-vial-flow-er-water-via-pipe
-                         :cgbpvpffbtvfwvp {:upstream   :gbpvp
-                                           :downstream :ffbtvfwvp}
-                         :gbpvp           {:more    :bp
-                                           :less    :vp
-                                           :parents #{:greater}}
-                         :bp              {:parents   #{:pressure}
-                                           :container :Beaker}
-                         :vp              {:parents   #{:pressure}
-                                           :container :Vial}
-                         :ffbtvfwvp       {:from    :Beaker
-                                           :to      :Vial
-                                           :flow-er :Water
-                                           :via     :Pipe
-                                           :parents #{:flow}}}
-      simple-heat-flow  {:ffctifhvb {:from    :Coffee
-                                     :to      :Icecube
-                                     :flow-er :Heat
-                                     :via     :Bar
-                                     :parents #{:flow}}
-                         :gctit     {:more    :ct
-                                     :less    :it
-                                     :parents #{:greater}}
-                         :ct        {:parents        #{:termerature}
-                                     :thermal-entity :Coffee}
-                         :it        {:thermal-entity :Icecube
-                                     :parents        #{:temperature}}
-                         :ftc       {:surface-of :Coffee
-                                     :parents    #{:flat-top}}
-                         :lc        {:entity  :Coffee
-                                     :parents #{:liquid}}}])
+
+(defn make-mop
+  ([m id slots]
+   (mops/add-mop m (mops/->mop id slots)))
+  ([m [parent & slots]]
+   (mops/add-mop m (mops/->mop (types/combine-ids (-> slots
+                                                    (->> (map second))
+                                                    (conj parent)))
+                     (into {} slots)))))
+
+(deftest mop-representation
+  (let [kg                (-> (mr/make-mop-map)
+                            (make-mop [:cause       {:upstream   :Expression
+                                                     :downstream :Expression
+                                                     :parents    #{:Expression}}])
+                            (make-mop :greater     {:less    :Expression
+                                                    :more    :Expression
+                                                    :parents #{:Expression}})
+                            (make-mop :flow        {:from    :Entity
+                                                    :to      :Entity
+                                                    :flow-er :Entity
+                                                    :via     :Entity
+                                                    :parents #{:Expression}})
+                            (make-mop :pressure    {:container :Entity})
+                            (make-mop :temperature {:thermal-entity :Entity
+                                                    :parents        #{:Expression}})
+                            (make-mop :flat-top    {:parents    #{:Expression}
+                                                    :surface-of :Entity})
+                            (make-mop :liquid      {:parents #{:Expression}
+                                                    :entity  :Entity})
+                            (make-mop :Coffee      {:parents #{:Entity}})
+                            (make-mop :Water       {:parents #{:Entity}})
+                            (make-mop :Heat        {:parents #{:Entity}})
+                            (make-mop :Pipe        {:parents #{:Entity}})
+                            (make-mop :Vial        {:parents #{:Entity}})
+                            (make-mop :Icecube     {:parents #{:Entity}})
+                            (make-mop :Bar         {:parents #{:Entity}})
+                            (make-mop :Beaker      {:parents #{:Entity}}))
+        simple-water-flow (-> (mr/make-mop-map)
+                            (make-mop [:flat-top [:surface-of :Water]])
+                            (make-mop [:liquid [:entity  :Water]])
+                            (make-mop [:cause
+                                       [:upstream :greater-pressure-Beaker-pressure-Vial]
+                                       [:downstream :flow-Beaker-Vial-Water-Pipe]])
+                            (make-mop [:greater
+                                       [:more :pressure-Beaker]
+                                       [:less :pressure-Vial]])
+                            (make-mop [:pressure [:container :Beaker]])
+                            (make-mop [:pressure [:container :Vial]])
+                            (make-mop [:flow
+                                       [:from    :Beaker]
+                                       [:to      :Vial]
+                                       [:flow-er :Water]
+                                       [:via     :Pipe]]))
+        simple-heat-flow  (-> (mr/make-mop-map)
+                            (make-mop [:flow
+                                       [:from    :Coffee]
+                                       [:to      :Icecube]
+                                       [:flow-er :Heat]
+                                       [:via     :Bar]])
+                            (make-mop [:greater
+                                       [:more    :temperature-Coffee]
+                                       [:less    :temperature-Icecube]])
+                            (make-mop [:termerature [:thermal-entity :Coffee]])
+                            (make-mop [:temperature [:thermal-entity :Icecube]])
+                            (make-mop [:flat-top [:surface-of :Coffee]])
+                            (make-mop [:liquid [:entity  :Coffee]]))
+        full-kg           (update kg :mops merge (:mops simple-heat-flow) (:mops simple-water-flow))]
+
+
+    (testing "Creating match hypotheses"
+      (is (= expected-match-hypotheses
+            (SUT/create-match-hypotheses full-kg (-> simple-water-flow :mops keys) (-> simple-heat-flow :mops keys) rules/literal-similarity))))))
 
 (def kg (merge-with (fn [v1 v2]
                       {:help (vector v1 v2)})
@@ -224,7 +235,7 @@
 
   (testing "Creating match hypotheses"
     (is (= expected-match-hypotheses
-          (SUT/create-match-hypotheses kg simple-water-flow simple-heat-flow rules/literal-similarity))))
+          (SUT/create-match-hypotheses kg (-> simple-water-flow :graph keys) (-> simple-heat-flow :graph keys) rules/literal-similarity))))
 
   (testing "Computing initial gmaps"
     (is (= #{[:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
