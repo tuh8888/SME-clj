@@ -35,8 +35,8 @@
                          [:cause
                           [:greater [:pressure :Beaker] [:pressure :Vial]]
                           [:flow :Beaker :Vial :Water :Pipe]]
-                         #_[:greater [:diameter :Beaker] [:diameter :Vial]]
-                         #_[:clear :Beaker]
+                         [:greater [:diameter :Beaker] [:diameter :Vial]]
+                         [:clear :Beaker]
                          #_[:flat-top :Water]
                          #_[:liquid :Water]))
 
@@ -117,6 +117,9 @@
           (:graph simple-water-flow)))
 
 (def expected-match-hypotheses #{{:base :Water :target :Heat}
+                                 {:base :greater-diameter-Beaker-diameter-Vial :target :greater-temperature-Coffee-temperature-Icecube}
+                                 {:base :diameter-Beaker :target :temperature-Coffee}
+                                 {:base :diameter-Vial :target :temperature-Icecube}
                                  {:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar}
                                  {:base :greater-pressure-Beaker-pressure-Vial :target :greater-temperature-Coffee-temperature-Icecube}
                                  {:base :Beaker :target :Coffee}
@@ -137,6 +140,20 @@
                                     {:base :Pipe :target :Bar}      {:emaps    #{{:base :Pipe :target :Bar}}
                                                                      :nogood   #{}
                                                                      :children #{}}
+
+                                    {:base   :greater-diameter-Beaker-diameter-Vial
+                                     :target :greater-temperature-Coffee-temperature-Icecube}
+                                    {:emaps    #{}
+                                     :nogood   #{{:base   :greater-pressure-Beaker-pressure-Vial
+                                                  :target :greater-temperature-Coffee-temperature-Icecube}}
+                                     :children #{{:base :diameter-Beaker :target :temperature-Coffee}
+                                                 {:base :diameter-Vial :target :temperature-Icecube}}}
+                                    {:base :diameter-Beaker :target :temperature-Coffee} {:emaps    #{}
+                                                                                          :nogood   #{{:base :pressure-Beaker :target :temperature-Coffee}}
+                                                                                          :children #{{:base :Beaker :target :Coffee}}}
+                                    {:base :diameter-Vial :target :temperature-Icecube}  {:emaps    #{}
+                                                                                          :nogood   #{{:base :pressure-Vial :target :temperature-Icecube}}
+                                                                                          :children #{{:base :Vial :target :Icecube}}}
                                     {:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar}
                                     {:emaps    #{}
                                      :nogood   #{}
@@ -146,15 +163,16 @@
                                                  {:base :Water :target :Heat}}}
                                     {:base :pressure-Vial :target :temperature-Icecube}
                                     {:emaps    #{}
-                                     :nogood   #{}
+                                     :nogood   #{{:base :diameter-Vial :target :temperature-Icecube}}
                                      :children #{{:base :Vial :target :Icecube}}}
                                     {:base :pressure-Beaker :target :temperature-Coffee}
                                     {:emaps    #{}
-                                     :nogood   #{}
+                                     :nogood   #{{:base :diameter-Beaker :target :temperature-Coffee}}
                                      :children #{{:base :Beaker :target :Coffee}}}
                                     {:base :greater-pressure-Beaker-pressure-Vial :target :greater-temperature-Coffee-temperature-Icecube}
                                     {:emaps    #{}
-                                     :nogood   #{}
+                                     :nogood   #{{:base   :greater-diameter-Beaker-diameter-Vial
+                                                  :target :greater-temperature-Coffee-temperature-Icecube}}
                                      :children #{{:base :pressure-Vial :target :temperature-Icecube}
                                                  {:base :pressure-Beaker :target :temperature-Coffee}}}})
 
@@ -162,49 +180,105 @@
 (def expected-propagated-from-emaps
   (undiff expected-hypothesis-structure
     {{:base :greater-pressure-Beaker-pressure-Vial :target :greater-temperature-Coffee-temperature-Icecube}
-     {:emaps #{{:base :Beaker :target :Coffee} {:base :Vial :target :Icecube}}}
+     {:emaps  #{{:base :Beaker :target :Coffee} {:base :Vial :target :Icecube}}
+      :nogood #{{:base :diameter-Beaker :target :temperature-Coffee}
+                {:base :diameter-Vial :target :temperature-Icecube}}}
+     {:base :diameter-Vial :target :temperature-Icecube}                        {:emaps #{{:base :Vial :target :Icecube}}}
+     {:base :diameter-Beaker :target :temperature-Coffee}                       {:emaps #{{:base :Beaker :target :Coffee}}}
      {:base :pressure-Beaker :target :temperature-Coffee}                       {:emaps #{{:base :Beaker :target :Coffee}}}
      {:base :pressure-Vial :target :temperature-Icecube}                        {:emaps #{{:base :Vial :target :Icecube}}}
+     {:base :greater-diameter-Beaker-diameter-Vial :target :greater-temperature-Coffee-temperature-Icecube}
+     {:emaps  #{{:base :Beaker :target :Coffee}
+                {:base :Vial :target :Icecube}}
+      :nogood #{{:base :pressure-Vial :target :temperature-Icecube}
+                {:base :pressure-Beaker :target :temperature-Coffee}}}
      {:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar} {:emaps #{{:base :Water :target :Heat}
-                                                                                           {:base :Beaker :target :Coffee}
-                                                                                           {:base :Pipe :target :Bar}
-                                                                                           {:base :Vial :target :Icecube}}}}
+                                                                                          {:base :Beaker :target :Coffee}
+                                                                                          {:base :Pipe :target :Bar}
+                                                                                          {:base :Vial :target :Icecube}}}}
     {{:base :greater-pressure-Beaker-pressure-Vial :target :greater-temperature-Coffee-temperature-Icecube}
      {:emaps nil}
      {:base :pressure-Beaker :target :temperature-Coffee}                       {:emaps nil}
      {:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar} {:emaps nil}}))
 
 
+(def diameter-gmap {:mhs       #{{:base   :greater-diameter-Beaker-diameter-Vial
+                                  :target :greater-temperature-Coffee-temperature-Icecube}
+                                 {:base :diameter-Beaker :target :temperature-Coffee}
+                                 {:base :diameter-Vial :target :temperature-Icecube}
+                                 {:base :Beaker :target :Coffee}
+                                 {:base :Vial :target :Icecube}}
+                    :structure {:roots  #{{:base   :greater-diameter-Beaker-diameter-Vial
+                                           :target :greater-temperature-Coffee-temperature-Icecube}}
+                                :nogood #{{:base :pressure-Vial :target :temperature-Icecube}
+                                          {:base :pressure-Beaker :target :temperature-Coffee}
+                                          {:base   :greater-pressure-Beaker-pressure-Vial
+                                           :target :greater-temperature-Coffee-temperature-Icecube}}
+                                :emaps  #{{:base :Beaker :target :Coffee}
+                                          {:base :Vial :target :Icecube}}}})
+(def flow-gmap {:mhs       #{{:base :Water :target :Heat}
+                             {:base :Beaker :target :Coffee}
+                             {:base :Pipe :target :Bar}
+                             {:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar}
+                             {:base :Vial :target :Icecube}}
+                :structure {:roots  #{{:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar}}
+                            :nogood #{}
+                            :emaps  #{{:base :Water :target :Heat}
+                                      {:base :Pipe :target :Bar}
+                                      {:base :Beaker :target :Coffee}
+                                      {:base :Vial :target :Icecube}}}})
+
+(def pressure-gmap {:mhs       #{{:base :Beaker :target :Coffee}
+                                 {:base   :greater-pressure-Beaker-pressure-Vial
+                                  :target :greater-temperature-Coffee-temperature-Icecube}
+                                 {:base :Vial :target :Icecube}
+                                 {:base :pressure-Beaker :target :temperature-Coffee}
+                                 {:base :pressure-Vial :target :temperature-Icecube}}
+                    :structure {:roots  #{{:base   :greater-pressure-Beaker-pressure-Vial
+                                           :target :greater-temperature-Coffee-temperature-Icecube}}
+                                :nogood #{{:base :diameter-Beaker :target :temperature-Coffee}
+                                          {:base :diameter-Vial :target :temperature-Icecube}
+                                          {:base   :greater-diameter-Beaker-diameter-Vial
+                                           :target :greater-temperature-Coffee-temperature-Icecube}}
+                                :emaps  #{{:base :Beaker :target :Coffee}
+                                          {:base :Vial :target :Icecube}}}})
 (def expected-computed-initial-gmaps
   {:mh-structure expected-propagated-from-emaps
-   :gmaps        [{:mhs       #{{:base   :greater-pressure-Beaker-pressure-Vial
-                                 :target :greater-temperature-Coffee-temperature-Icecube}
-                                {:base :Beaker :target :Coffee}
-                                {:base :Vial :target :Icecube}
-                                {:base :pressure-Beaker :target :temperature-Coffee}
-                                {:base :pressure-Vial :target :temperature-Icecube}}
-                   :structure {:roots  #{{:base   :greater-pressure-Beaker-pressure-Vial
-                                          :target :greater-temperature-Coffee-temperature-Icecube}}
-                               :nogood #{}
-                               :emaps  #{{:base :Beaker :target :Coffee}
-                                         {:base :Vial :target :Icecube}}}}
-                  {:mhs       #{{:base :Water :target :Heat}
-                                {:base :Beaker :target :Coffee}
-                                {:base :Pipe :target :Bar}
-                                {:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar}
-                                {:base :Vial :target :Icecube}}
-                   :structure {:roots  #{{:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar}}
-                               :nogood #{}
-                               :emaps  #{{:base :Water :target :Heat}
-                                         {:base :Pipe :target :Bar}
-                                         {:base :Beaker :target :Coffee}
-                                         {:base :Vial :target :Icecube}}}}]})
+   :gmaps        [diameter-gmap
+                  flow-gmap
+                  pressure-gmap]})
 
 (def expected-combined-gmaps
-  (update expected-computed-initial-gmaps :gmaps vector))
+  {:mh-structure expected-propagated-from-emaps
+   :gmaps        [[diameter-gmap
+                   flow-gmap]
+                  [flow-gmap
+                   pressure-gmap]]})
 
 (def expected-merged-gmaps
-  {:gmaps        [{:mhs       #{{:base :Beaker :target :Coffee}
+  {:gmaps        [{:mhs       #{{:base   :greater-diameter-Beaker-diameter-Vial
+                                 :target :greater-temperature-Coffee-temperature-Icecube}
+                                {:base :diameter-Beaker :target :temperature-Coffee}
+                                {:base :diameter-Vial :target :temperature-Icecube}
+                                {:base :Beaker :target :Coffee}
+                                {:base :Vial :target :Icecube}
+                                {:base :Water :target :Heat}
+                                {:base   :flow-Beaker-Vial-Water-Pipe
+                                 :target :flow-Coffee-Icecube-Heat-Bar}
+                                {:base :Pipe :target :Bar}}
+                   :structure {:roots  #{{:base   :greater-diameter-Beaker-diameter-Vial
+                                          :target :greater-temperature-Coffee-temperature-Icecube}
+                                         {:base   :flow-Beaker-Vial-Water-Pipe
+                                          :target :flow-Coffee-Icecube-Heat-Bar}}
+                               :nogood #{{:base :pressure-Vial :target :temperature-Icecube}
+                                         {:base :pressure-Beaker :target :temperature-Coffee}
+                                         {:base   :greater-pressure-Beaker-pressure-Vial
+                                          :target :greater-temperature-Coffee-temperature-Icecube}}
+                               :emaps  #{{:base :Beaker :target :Coffee}
+                                         {:base :Vial :target :Icecube}
+                                         {:base :Water :target :Heat}
+                                         {:base :Pipe :target :Bar}}}}
+                  {:mhs       #{{:base :Beaker :target :Coffee}
                                 {:base :Vial :target :Icecube}
                                 {:base :Water :target :Heat}
                                 {:base :Pipe :target :Bar}
@@ -216,7 +290,10 @@
                                           :target :flow-Coffee-Icecube-Heat-Bar}
                                          {:base   :greater-pressure-Beaker-pressure-Vial
                                           :target :greater-temperature-Coffee-temperature-Icecube}}
-                               :nogood #{}
+                               :nogood #{{:base   :greater-diameter-Beaker-diameter-Vial
+                                          :target :greater-temperature-Coffee-temperature-Icecube}
+                                         {:base :diameter-Beaker :target :temperature-Coffee}
+                                         {:base :diameter-Vial :target :temperature-Icecube}}
                                :emaps  #{{:base :Beaker :target :Coffee}
                                          {:base :Vial :target :Icecube}
                                          {:base :Water :target :Heat}
@@ -226,17 +303,30 @@
 (def expected-finalized-gmaps (undiff expected-merged-gmaps
                                 {:gmaps [{:score        18
                                           :emap-matches 0
+                                          :mapping      {:base :simple-water-flow :target :simple-heat-flow}}
+                                         {:score        18
+                                          :emap-matches 0
                                           :mapping      {:base :simple-water-flow :target :simple-heat-flow}}]}
                                 nil))
 
 (def expected-generated-inferences (undiff expected-finalized-gmaps
-                                     {:gmaps [{:inferences #{:cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe}}]}
+                                     {:gmaps [{:inferences #{:cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe
+                                                             :pressure-Vial
+                                                             :pressure-Beaker
+                                                             :greater-pressure-Beaker-pressure-Vial}}
+                                              {:inferences #{:cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe}}]}
                                      nil))
 
-(def expected-transferred [[:cause :greater-temperature-Coffee-temperature-Icecube :flow-Coffee-Icecube-Heat-Bar]])
+(def expected-transferred1 #{[:greater [:pressure :Coffee] [:pressure :Icecube]]
+                             [:pressure :Icecube]
+                             [:pressure :Coffee]
+                             [:cause [:greater [:pressure :Coffee] [:pressure :Icecube]]
+                              :flow-Coffee-Icecube-Heat-Bar]})
+(def expected-transferred2 #{[:cause :greater-temperature-Coffee-temperature-Icecube :flow-Coffee-Icecube-Heat-Bar]})
 
 (def expected-transferred-inferences (undiff expected-generated-inferences
-                                       {:gmaps [{:transferred expected-transferred}]}
+                                       {:gmaps [{:transferred expected-transferred1}
+                                                {:transferred expected-transferred2}]}
                                        nil))
 
 (deftest heat-water-test
@@ -256,6 +346,7 @@
 
   (testing "Computing initial gmaps"
     (is (= [{:base :flow-Beaker-Vial-Water-Pipe :target :flow-Coffee-Icecube-Heat-Bar}
+            {:base :greater-diameter-Beaker-diameter-Vial :target :greater-temperature-Coffee-temperature-Icecube}
             {:base :greater-pressure-Beaker-pressure-Vial :target :greater-temperature-Coffee-temperature-Icecube}]
           (SUT/find-roots expected-propagated-from-emaps)))
 
@@ -287,7 +378,7 @@
       ;; Should show the cause relation between the greater temperature
       ;; relation and the heat flow relation. This relation has been inferred
       ;; based on the analogical cause relation in the water flow graph.
-      (is (= expected-transferred
+      (is (= expected-transferred1
             (-> result
               :gmaps
               first

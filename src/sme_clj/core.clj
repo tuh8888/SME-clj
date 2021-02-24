@@ -383,7 +383,7 @@
                          (cons (types/lookup kg expr :functor)
                            (doall (map transfer (types/lookup kg expr :args)))))))]
       (assoc gmap
-        :transferred (doall (map transfer inferences))))
+        :transferred (set (doall (map transfer inferences)))))
     (catch RuntimeException e
       gmap)))
 
