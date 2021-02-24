@@ -99,28 +99,28 @@
 ;;;; FORMING GMAPS
 ;;;;
 
+(defn find-children [kg mhs [base target]]
+  (let [[bmap tmap] (map #(group-by % mhs) [first second])]
+    (->> [base target]
+      (map #(types/lookup kg % :args))
+      (apply mapcat (fn [b t]
+                      (set/intersection
+                        (set (get bmap b))
+                        (set (get tmap t)))))
+      set)))
+
 (defn build-mh-structure
-  [kg bmap tmap structure [base target :as mh]]
-  (let [nogood (-> (set/union
-                     (get bmap base #{})
-                     (get tmap target) #{})
-                 ;; not nogood of ourselves
-                 (disj mh))]
-    (-> structure
+  [kg [bmap tmap] mhs structure [base target :as mh]]
+  (let [nogood (disj (set/union
+                       (set (get bmap base))
+                       (set (get tmap target)))
+                 mh)]
+    (cond-> (assoc structure mh nil)
       ;; initial emaps is just ourselves if we are one, for the rest
       ;; this will be filled later
-      (cond-> (not= :expression (types/lookup kg base :type)) (assoc-in [mh :emaps] #{mh}))
+      (not= :expression (types/lookup kg base :type)) (assoc-in [mh :emaps] #{mh})
       ;; nogood is every mh mapping same target or base
-      (cond-> (seq nogood) (assoc-in [mh :nogood] nogood))
-
-      ;; our children are mhs that map our arguments (so children
-      ;; does not equal our entire set of descendants)
-      (cond-> (= :expression (types/lookup kg base :type)) (assoc-in [mh :children] (->> (types/lookup kg target :args)
-                                                                                      (mapcat (fn [b t]
-                                                                                                (set/intersection (get bmap b #{})
-                                                                                                  (get tmap t #{})))
-                                                                                        (types/lookup kg base :args))
-                                                                                      set))))))
+      (seq nogood)                                    (assoc-in [mh :nogood] nogood))))
 
 ;; The below proves useful when checking consistency and such.
 (defn build-hypothesis-structure
@@ -129,12 +129,8 @@
   with 'vals or 'get."
   [kg mhs]
   ;; cache of base/target expressions mapped to their mh
-  (let [[bmap tmap] (reduce (fn [[bases targets] [base target :as mh]]
-                              [(update bases base set/union #{mh})
-                               (update targets target set/union #{mh})])
-                      nil mhs)]
-    (reduce (partial build-mh-structure kg bmap tmap)
-      {} mhs)))
+  (reduce (partial build-mh-structure kg (map #(group-by % mhs) [first second]) mhs)
+    {} mhs))
 
 ;; For each expression without emaps, recursively add the union of its
 ;; children's emaps and nogoods.
@@ -142,11 +138,11 @@
   "Extends structural MH information of each expression without emaps by
   recursively adding the union of its children's emaps and nogoods to
   it. Essentially flows up the structural information."
-  [mh-structure]
+  [kg mh-structure]
   (letfn [(propagate [mstr mh]
             (if (seq (get-in mstr [mh :emaps]))
               mstr
-              (let [kids        (get-in mstr [mh :children])
+              (let [kids        (find-children kg (keys mh-structure) mh)
                     mstr-kids   (reduce propagate mstr kids)
                     kids-struct (vals (select-keys mstr-kids kids))]
                 (-> mstr-kids
@@ -166,10 +162,11 @@
 (defn find-roots
   "Returns only the root hypotheses, ie. those that are not children of any
   other hypothesis."
-  [mh-structure]
-  (let [all-children (reduce #(set/union %1 (:children %2))
+  [kg mh-structure]
+  (let [all-children (reduce #(set/union %1
+                                (find-children kg (keys mh-structure) %2))
                        #{}
-                       (vals mh-structure))]
+                       (keys mh-structure))]
     (filter #(not (contains? all-children %)) (keys mh-structure))))
 
 (defn is-emap? [kg {:keys [base target]}]
@@ -184,7 +181,7 @@
             (if (is-emap? kg mh)
               [mh]
               (cons mh (mapcat collect
-                         (:children (get mh-structure mh))))))]
+                         (find-children kg (keys mh-structure) mh)))))]
     (set (collect root))))
 
 (defn make-gmap
@@ -200,13 +197,13 @@
   [kg mh-structure]
   {:mh-structure mh-structure
    :gmaps        (->>
-                   (find-roots mh-structure)
+                   (find-roots kg mh-structure)
                    (reduce (fn form-gmap [gmaps root]
                              (if (consistent? (get mh-structure root))
                                (->> mh-structure
                                  (make-gmap kg root)
                                  (conj gmaps))
-                               (if-let [kids (seq (:children (get mh-structure root)))]
+                               (if-let [kids (seq (find-children kg (keys mh-structure) root))]
                                  (->> kids
                                    (mapcat #(form-gmap #{} %))
                                    set
@@ -312,14 +309,14 @@
   [kg {:keys [mh-structure]} gm]
   (letfn [(score-mh [mh depth]
             ;; simplified trickle-down SES
-            (if-let [kids (seq (get-in mh-structure [mh :children]))]
+            (if-let [kids (seq (find-children kg (keys mh-structure) mh))]
               (reduce + depth (map #(score-mh % (inc depth)) kids))
               depth))]
     (assoc gm
       :score (->> gm
                :mhs
                (select-keys mh-structure)
-               find-roots
+               (find-roots kg)
                (map #(score-mh % 0))
                (reduce + (count (:mhs gm))))
       :emap-matches (count (matching-emaps kg gm)))))
@@ -422,7 +419,7 @@
   ([kg rules base target]
    (->> (create-match-hypotheses kg base target rules)
      (build-hypothesis-structure kg)
-     propagate-from-emaps
+     (propagate-from-emaps kg)
      (compute-initial-gmaps kg)
      combine-gmaps
      merge-gmaps
