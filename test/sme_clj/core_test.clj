@@ -161,7 +161,45 @@
                                  {:base   :Vial
                                   :target :Icecube}})
 
-(def expected-hypothesis-structure ::fail #_{})
+(def expected-hypothesis-structure {{:base :Beaker :target :Coffee}
+                                    {:emaps    #{{:base   :Beaker
+                                                  :target :Coffee}}
+                                     :nogood   #{}
+                                     :children #{}}
+                                    {:base :Vial :target :Icecube}
+                                    {:emaps    #{{:base   :Vial
+                                                  :target :Icecube}}
+                                     :nogood   #{}
+                                     :children #{}}
+                                    {:base :Water :target :Heat}
+                                    {:emaps    #{{:base   :Water
+                                                  :target :Heat}}
+                                     :nogood   #{}
+                                     :children #{}}
+                                    {:base   :flow-Beaker-Vial-Water
+                                     :target :flow-Coffee-Icecube-Heat}
+                                    {:emaps    #{}
+                                     :nogood   #{}
+                                     :children #{{:base   :Beaker
+                                                  :target :Coffee}
+                                                 {:base   :Vial
+                                                  :target :Icecube}
+                                                 {:base   :Water
+                                                  :target :Heat}}}
+                                    {:base   :pressure-Beaker
+                                     :target :temperature-Coffee}
+                                    {:emaps    #{}
+                                     :nogood   #{}
+                                     :children #{{:base   :Beaker
+                                                  :target :Coffee}}}
+                                    {:base   :greater-pressure-Beaker-Vial
+                                     :target :greater-temperature-Coffee-Icecube}
+                                    {:emaps    #{}
+                                     :nogood   #{}
+                                     :children #{{:base   :Vial
+                                                  :target :Icecube}
+                                                 {:base   :pressure-Beaker
+                                                  :target :temperature-Coffee}}}})
 
 
 (def expected-propagated-from-emaps ::fail #_(undiff expected-hypothesis-structure))
@@ -267,9 +305,9 @@
         expected-match-hypotheses
         (SUT/create-match-hypotheses kg simple-water-flow simple-heat-flow rules/literal-similarity)))
 
-  #_(is (=
-          expected-hypothesis-structure
-          (SUT/build-hypothesis-structure kg expected-match-hypotheses)))
+  (is (=
+        expected-hypothesis-structure
+        (SUT/build-hypothesis-structure kg expected-match-hypotheses)))
 
   #_(is (=
           expected-propagated-from-emaps
