@@ -3,7 +3,8 @@
    similarity rules and macros for defining new rulesets."
   (:require [mops :as mops]
             [sme-clj.typedef :as types]
-            [sme-clj.util :refer [vals-as-keys]]))
+            [sme-clj.util :refer [vals-as-keys]]
+            [clojure.set :as set]))
 
 ;;; Rule definition helpers
 (defn apply-rule
@@ -75,31 +76,41 @@
 (defn mop-expression? [kg k]
   (mops/abstr? kg k :Expression))
 
+(defn interesting-roles [mop]
+  (->> mop
+    mops/roles
+    (remove #{:id :parents :names :inst?})))
+
 (def mops-literal-similarity (vals-as-keys :name
                                [(make-rule :same-functor :filter
                                   (fn [kg [base target :as mh]]
                                     [(when ((every-pred
                                               (partial every? (partial mop-expression? kg)) ; Both expressions
-                                              (comp (partial apply =) (partial map first) (partial map #(mops/strict-abstrs kg %)))) ; Same functors
+                                              (comp (partial apply =)
+                                                (partial map first)
+                                                (partial map #(mops/strict-abstrs kg %)))) ; Same functors
                                             [base target])
                                        mh)]))
 
                                 (make-rule :compatible-args :intern
-                                  (fn [kg [base target]]
-                                    (when (and
-                                            (types/lookup kg base :functor :ordered?)
-                                            (types/lookup kg target :functor :ordered?))
-                                      (map (fn [bchild tchild]
-                                             (when (or
-                                                     (not (or
-                                                            (expression? kg bchild)
-                                                            (expression? kg tchild)))
-                                                     (and
-                                                       (= :function (types/lookup kg bchild :functor :type))
-                                                       (= :function (types/lookup kg tchild :functor :type))))
-                                               (types/make-match-hypothesis bchild tchild)))
-                                        (types/lookup kg base :args)
-                                        (types/lookup kg target :args)))))
+                                  (fn [kg mh]
+                                    (let [[base target] (->> mh
+                                                          (map (partial mops/get-mop kg)))]
+                                      (->>
+                                        (set/intersection
+                                          (set (interesting-roles base))
+                                          (set (interesting-roles target)))
+                                        (map (fn [role]
+                                               (let [[bchild tchild] (->> [base target]
+                                                                       (map #(mops/filler % role)))]
+                                                 (when (or
+                                                         (not (or
+                                                                (mop-expression? kg bchild)
+                                                                (mop-expression? kg tchild)))
+                                                         (and
+                                                           (mops/abstr? kg bchild :Function)
+                                                           (mops/abstr? kg tchild :Function)))
+                                                   (types/make-match-hypothesis bchild tchild)))))))))
 
                                 ;; this rule not tested much yet
                                 (make-rule :commutative-args :intern
