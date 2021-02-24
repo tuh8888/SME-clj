@@ -150,6 +150,8 @@
             [:pressure-Vial :pressure-Vial]
             [:Bar :Bar]})
 
+(def expected-commutative-args #{})
+
 (t/deftest literal-similarity-test
   (t/testing "Same functor"
     (t/is (= expected-same-functor-matches
@@ -165,6 +167,14 @@
                        t (keys kg)]
                    [b t])
               (mapcat (partial sut/apply-rule kg (:compatible-args sut/literal-similarity 1)))
+              (remove nil?)
+              set))))
+  (t/testing "Commutative args"
+    (t/is (= expected-commutative-args
+            (->> (for [b (keys kg)
+                       t (keys kg)]
+                   [b t])
+              (mapcat (partial sut/apply-rule kg (:commutative-args sut/literal-similarity 1)))
               (remove nil?)
               set)))))
 
