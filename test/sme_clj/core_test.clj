@@ -202,7 +202,23 @@
                                                   :target :temperature-Coffee}}}})
 
 
-(def expected-propagated-from-emaps ::fail #_(undiff expected-hypothesis-structure))
+(def expected-propagated-from-emaps (undiff expected-hypothesis-structure
+                                      {{:base   :greater-pressure-Beaker-Vial,
+                                        :target :greater-temperature-Coffee-Icecube}
+                                       {:emaps #{{:base :Beaker, :target :Coffee} {:base :Vial, :target :Icecube}}},
+                                       {:base :pressure-Beaker, :target :temperature-Coffee}
+                                       {:emaps #{{:base :Beaker, :target :Coffee}}},
+                                       {:base :flow-Beaker-Vial-Water, :target :flow-Coffee-Icecube-Heat}
+                                       {:emaps
+                                        #{{:base :Water, :target :Heat}
+                                          {:base :Beaker, :target :Coffee}
+                                          {:base :Vial, :target :Icecube}}}}
+                                      {{:base   :greater-pressure-Beaker-Vial,
+                                        :target :greater-temperature-Coffee-Icecube}
+                                       {:emaps nil},
+                                       {:base :pressure-Beaker, :target :temperature-Coffee} {:emaps nil},
+                                       {:base :flow-Beaker-Vial-Water, :target :flow-Coffee-Icecube-Heat}
+                                       {:emaps nil}}))
 
 
 (def expected-computed-initial-gmaps ::fail #_(undiff expected-propagated-from-emaps))
@@ -363,9 +379,9 @@
         expected-hypothesis-structure
         (SUT/build-hypothesis-structure kg expected-match-hypotheses)))
 
-  #_(is (=
-          expected-propagated-from-emaps
-          (SUT/propagate-from-emaps expected-hypothesis-structure)))
+  (is (=
+        expected-propagated-from-emaps
+        (SUT/propagate-from-emaps expected-hypothesis-structure)))
 
   #_(is (=
           expected-computed-initial-gmaps
