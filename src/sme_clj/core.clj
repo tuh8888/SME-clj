@@ -313,8 +313,8 @@
 
 (defn generate-inferences
   "Appends :inferences to gmaps in given data, for a given base graph."
-  [kg base data]
-  (update data :gmaps (partial map #(assoc % :inferences (gmap-inferences kg base %)))))
+  [kg base gmaps]
+  (map #(assoc % :inferences (gmap-inferences kg base %)) gmaps))
 
 ;; On inference integration, recursive method:
 ;;
@@ -359,8 +359,8 @@
       gmap)))
 
 (defn transfer-inferences
-  [kg data]
-  (update data :gmaps (partial map (partial transfer-gmap-inferences kg))))
+  [kg gmaps]
+  (map (partial transfer-gmap-inferences kg) gmaps))
 
 (defn finalize-gmaps
   "Computes additional information about the gmaps we have found and stores it
@@ -370,6 +370,18 @@
                         (->> gmaps
                           (map #(score-gmap kg mhs %)) ; scores
                           (map #(assoc % :mapping {:base base :target target}))))))
+
+(defn perform-inference
+  "
+    :inferences   Maximal set of potential inferences.
+
+    :transferred  Inferences transferred to target, ready to be added into the
+                  target's concept graph.
+  "
+  [kg base gmaps]
+  (->> gmaps
+    (generate-inferences kg base)
+    (transfer-inferences kg)))
 
 (defn match
   "Attempts to find a structure mapping between base and target using an
@@ -383,10 +395,6 @@
 
     :score        Structural evaluation score (SES), simple implementation.
 
-    :inferences   Maximal set of potential inferences.
-
-    :transferred  Inferences transferred to target, ready to be added into the
-                  target's concept graph.
 
   For example: (map :score (match b t)) -> seq of gmap scores."
   ([kg rules base target]
@@ -395,8 +403,6 @@
        (compute-initial-gmaps kg)
        (combine-gmaps mhs)
        merge-gmaps
-       (finalize-gmaps kg base target mhs)
-       (generate-inferences kg base)
-       (transfer-inferences kg))))
+       (finalize-gmaps kg base target mhs))))
   ([kg base target]
    (match kg rules/literal-similarity base target)))

@@ -201,14 +201,12 @@
                                           :mapping      {:base :simple-water-flow :target :simple-heat-flow}}]}
                                 nil))
 
-(def expected-generated-inferences (undiff expected-finalized-gmaps
-                                     {:gmaps [{:inferences #{:cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe
-                                                             :pressure-Vial
-                                                             :pressure-Beaker
-                                                             :greater-pressure-Beaker-pressure-Vial}}
-                                              {:inferences #{:cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe}}
-                                              {:inferences #{}}]}
-                                     nil))
+(def expected-generated-inferences [#{:cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe
+                                      :pressure-Vial
+                                      :pressure-Beaker
+                                      :greater-pressure-Beaker-pressure-Vial}
+                                    #{:cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe}
+                                    #{}])
 
 (def expected-transferred2 #{[:greater [:pressure :Coffee] [:pressure :Icecube]]
                              [:pressure :Icecube]
@@ -217,11 +215,9 @@
                               :flow-Coffee-Icecube-Heat-Bar]})
 (def expected-transferred1 #{[:cause :greater-temperature-Coffee-temperature-Icecube :flow-Coffee-Icecube-Heat-Bar]})
 
-(def expected-transferred-inferences (undiff expected-generated-inferences
-                                       {:gmaps [{:transferred expected-transferred2}
-                                                {:transferred expected-transferred1}
-                                                {:transferred #{}}]}
-                                       nil))
+(def expected-transferred-inferences [expected-transferred2
+                                      expected-transferred1
+                                      #{}])
 
 (deftest heat-water-test
   ;; Water flow is the base heat flow the target
@@ -255,23 +251,13 @@
 
   (testing "Generating inferences"
     (is (= expected-generated-inferences
-          (SUT/generate-inferences kg simple-water-flow expected-finalized-gmaps))))
+          (map :inferences (SUT/generate-inferences kg simple-water-flow (:gmaps expected-finalized-gmaps))))))
 
   (testing "Transferring inferences"
     (is (= expected-transferred-inferences
-          (SUT/transfer-inferences kg expected-generated-inferences))))
-
-  (testing "Full match pipeline"
-    (let [result (SUT/match kg rules/literal-similarity simple-water-flow simple-heat-flow)]
-      ;; Should show the cause relation between the greater temperature
-      ;; relation and the heat flow relation. This relation has been inferred
-      ;; based on the analogical cause relation in the water flow graph.
-      (is (= expected-transferred1
-            (-> result
-              :gmaps
-              (nth 1)
-              :transferred)))
-
-      (is (= expected-transferred-inferences result)))))
+          (->> expected-generated-inferences
+            (map #(assoc %1 :inferences %2) (:gmaps expected-finalized-gmaps))
+            (SUT/transfer-inferences kg)
+            (map :transferred))))))
 
                                         ; LocalWords:  gmaps
