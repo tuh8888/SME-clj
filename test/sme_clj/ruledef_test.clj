@@ -5,7 +5,6 @@
             [sme-clj.ruledef :as sut]
             [sme-clj.typedef :as types]
             [sme-clj.util :as util]))
-
 (def predicates [(types/make-predicate :flow :type :relation :arity 4)
                  (types/make-predicate :greater :type :relation :arity 2)
                  (types/make-predicate :cause :type :relation :arity 2)
@@ -192,11 +191,6 @@
                       [:entity2    :Expression]
                       [:more    :Expression]])
   mops/infer-hierarchy)
-(def predicates [
-                 (types/make-predicate :temperature :type :function)
-                 (types/make-predicate :flat-top :type :function)
-                 (types/make-predicate :pressure :type :function)
-                 (types/make-predicate :diameter :type :function)])
 
 
 (t/deftest mop-representation
