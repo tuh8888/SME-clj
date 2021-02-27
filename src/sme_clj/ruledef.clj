@@ -1,10 +1,10 @@
 (ns sme-clj.ruledef
   "Structure mapping matching rule definitions. Contains both basic literal
    similarity rules and macros for defining new rulesets."
-  (:require [mops :as mops]
+  (:require [clojure.set :as set]
+            [mops :as mops]
             [sme-clj.typedef :as types]
-            [sme-clj.util :refer [vals-as-keys]]
-            [clojure.set :as set]))
+            [sme-clj.util :refer [vals-as-keys]]))
 
 ;;; Rule definition helpers
 (defn apply-rule

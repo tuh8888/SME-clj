@@ -34,11 +34,10 @@
           engine: algorithm and examples. Artificial Intelligence, 41, 1-62."
   (:require [clojure.math.combinatorics :as comb]
             [clojure.set :as set]
-            [mop-records]
             [mops :as mops]
             [sme-clj.ruledef :as rules]
             [sme-clj.typedef :as types])
-  (:import [mop_records MopMap]))
+  (:import mop_records.MopMap))
 
 ;;;;
 ;;;; GENERATING MATCH HYPOTHESES

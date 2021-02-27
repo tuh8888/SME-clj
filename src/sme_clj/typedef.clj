@@ -1,10 +1,10 @@
 (ns sme-clj.typedef
   "Data type definitions and protocols for SME, as well as facilities to create
    instances of types and manipulate them."
-  (:require [clojure.walk :as walk]
-            [sme-clj.util :as util]
-            [clojure.repl :refer [demunge]]
-            [clojure.test :refer [function?]]))
+  (:require [clojure.repl :refer [demunge]]
+            [clojure.test :refer [function?]]
+            [clojure.walk :as walk]
+            [sme-clj.util :as util]))
 
 ;;; ENTITY AND PREDICATE
 
@@ -16,17 +16,12 @@
    :type  :entity
    :slots slots})
 
-#_(defn entity? [{:keys [type]}] (= :entity type))
-
 (defn make-predicate [name & {:keys [type arity ordered?]
                               :or   {type :relation, arity 2, ordered? true}}]
   {:name     name
    :type     type
    :arity    (if (= type :relation) 1 arity)
    :ordered? ordered?})
-
-#_(defn function? [{:keys [type]}] (= :function type))
-#_(defn attribute? [{:keys [type]}] (= :attribute type))
 
 (defn predicate? [{:keys [type]}] (#{:function :attribute :relation} type))
 
@@ -40,7 +35,6 @@
 ;;
 ;; An Expression's id is not guaranteed to be related to any implicit ordering
 ;; of the expressions within a graph, but in practice often is.
-
 
 (defn make-expression [id functor & args]
   {:name    id
