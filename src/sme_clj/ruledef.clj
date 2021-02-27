@@ -3,7 +3,8 @@
    similarity rules and macros for defining new rulesets."
   (:require [mops :as mops]
             [sme-clj.typedef :as types]
-            [sme-clj.util :refer [vals-as-keys]]))
+            [sme-clj.util :refer [vals-as-keys]]
+            [clojure.set :as set]))
 
 ;;; Rule definition helpers
 (defn apply-rule
@@ -27,21 +28,17 @@
                                   mh)]))
 
                            (make-rule :compatible-args :intern
-                             (fn [kg [base target]]
-                               (when (and
-                                       (types/lookup kg base :functor :ordered?)
-                                       (types/lookup kg target :functor :ordered?))
-                                 (map (fn [bchild tchild]
-                                        (when (or
-                                                (not (or
-                                                       (types/expression? kg bchild)
-                                                       (types/expression? kg tchild)))
-                                                (and
-                                                  (= ::types/Function (types/lookup kg bchild :functor :type))
-                                                  (= ::types/Function (types/lookup kg tchild :functor :type))))
-                                          (types/make-match-hypothesis bchild tchild)))
-                                   (map second (types/expression-args kg base))
-                                   (map second (types/expression-args kg target))))))
+                             (fn [kg mh]
+                               (when (every? #(types/lookup kg % :functor :ordered?) mh)
+                                 (->> mh
+                                   (map (partial types/expression-args kg))
+                                   (map (partial map second))
+                                   (apply map vector)
+                                   (filter (fn [mh]
+                                             ((some-fn
+                                                (complement (partial some (partial types/expression? kg)))
+                                                (partial every? #(= ::types/Function (types/lookup kg % :functor :type))))
+                                              mh)))))))
 
                            ;; this rule not tested much yet
                            (make-rule :commutative-args :intern
@@ -64,23 +61,26 @@
                                              (= ::types/Function (types/lookup kg tchild :functor :type))))
                                      (types/make-match-hypothesis bchild tchild))))))]))
 
+(defn extract-common-role-fillers
+  [m1 m2]
+  (let [common-roles (set/intersection
+                       (-> m1 keys set)
+                       (-> m2 keys set))]
+    [m1 m2 common-roles]
+    (map (juxt m1 m2) common-roles)))
+
 (def mops-literal-similarity (vals-as-keys :name
                                [(make-rule :compatible-args :intern
                                   (fn [kg mh]
                                     (->> mh
                                       (map (partial types/expression-args kg))
-                                      (apply map vector)
-                                      (filter #(apply = (map first %)))
-                                      (map (partial map second))
-                                      (map (fn [[bchild tchild]]
-                                             (when (or
-                                                     (not (or
-                                                            (types/expression? kg bchild)
-                                                            (types/expression? kg tchild)))
-                                                     (and
-                                                       (mops/abstr? kg bchild ::types/Function)
-                                                       (mops/abstr? kg tchild ::types/Function)))
-                                               (types/make-match-hypothesis bchild tchild)))))))
+                                      (map (partial into {}))
+                                      (apply extract-common-role-fillers)
+                                      (filter (fn [new-mh]
+                                                ((some-fn
+                                                   (complement (partial some (partial types/expression? kg)))
+                                                   (partial every? #(mops/abstr? kg % ::types/Function)))
+                                                 new-mh))))))
 
                                 ;; this rule not tested much yet
                                 (make-rule :commutative-args :intern
