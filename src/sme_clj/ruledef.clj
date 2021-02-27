@@ -7,12 +7,8 @@
 
 ;;; Rule definition helpers
 (defn apply-rule
-  #_([kg rule base target parent]
-     ((:body rule) kg base target parent))
-  #_([kg rule base target]
-     (apply-rule kg rule base target nil))
-  ([kg rule mh]
-   ((:body rule) kg mh)))
+  [kg {:keys [body]} mh]
+  (body kg mh))
 
 (def rule-types #{:intern :filter})
 
@@ -45,8 +41,8 @@
                                                   (= ::types/Function (types/lookup kg bchild :functor :type))
                                                   (= ::types/Function (types/lookup kg tchild :functor :type))))
                                           (types/make-match-hypothesis bchild tchild)))
-                                   (types/expression-args kg base)
-                                   (types/expression-args kg target)))))
+                                   (map second (types/expression-args kg base))
+                                   (map second (types/expression-args kg target))))))
 
                            ;; this rule not tested much yet
                            (make-rule :commutative-args :intern

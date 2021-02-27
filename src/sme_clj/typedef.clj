@@ -4,9 +4,10 @@
   (:require [clojure.repl :refer [demunge]]
             [clojure.test :refer [function?]]
             [clojure.walk :as walk]
+            [mop-records]
             [mops :as mops]
             [sme-clj.util :as util])
-  (:import mop_records.MopMap))
+  (:import [mop_records MopMap]))
 
 ;;; ENTITY AND PREDICATE
 
@@ -49,7 +50,7 @@
             (get-in kg [k prop]))
     k props))
 
-(defmulti expression? (fn [kg _] (type kg)))
+(defmulti expression? (comp type first vector))
 
 (defmethod expression? :default
   [kg k]
@@ -59,16 +60,12 @@
   [kg k]
   (mops/abstr? kg k ::Expression))
 
-(defmulti expression-args (fn [kg _] (type kg)))
+(defmulti expression-args (comp type first vector))
 
-;; TODO these two return different types of values
-;; :default returns the list of args while
-;; MopMap returns a nested list of roles->fillers
-;; where the fillers are the args.
 (defmethod expression-args :default
   [kg k]
   (when (expression? kg k)
-    (lookup kg k :args)))
+    (map (partial vector :arg) (lookup kg k :args))))
 
 (defmethod expression-args MopMap
   [kg k]
@@ -79,22 +76,13 @@
         (remove (conj mops/reserved-roles :concept-graph))
         (map (partial mops/slot mop))))))
 
-(defmulti ancestor?
+(defn ancestor?
   "Returns true if a given expression is an ancestor of one of the expressions
   in the base set."
-  (fn [kg & _] (type kg)))
-
-(defmethod ancestor? :default
   [kg base-set expr]
   (and (expression? kg expr)
     (or (contains? base-set expr)
-      (some #(ancestor? kg base-set %) (lookup kg expr :args)))))
-
-(defmethod ancestor? MopMap
-  [kg base-set expr]
-  (and (= ::Expression (lookup kg expr :type))
-    (or (contains? base-set expr)
-      (some #(ancestor? kg base-set %) (lookup kg expr :args)))))
+      (some #(ancestor? kg base-set %) (map second (expression-args kg expr))))))
 
 (defn get-descendants
   "Returns the seq of descendants of the given expression."
