@@ -256,30 +256,31 @@
               (map :transferred))))))
 
 (t/deftest mop-representation
-  (let [mops-kg (-> (mr/make-mop-map)
-                  (moppers/make-mop :cause :Expression {:e1 :Expression
-                                                        :e2 :Expression})
-                  (moppers/make-mop :greater :Expression {:e1 :Expression
-                                                          :e2 :Expression})
-                  (moppers/make-mop :flow :Expression {:e1 :Entity
-                                                       :e2 :Entity
-                                                       :e3 :Entity
-                                                       :e4 :Entity})
-                  (moppers/make-mop :Function :Expression)
-                  (moppers/make-mop :pressure :Function {:e1 :Entity})
-                  (moppers/make-mop :diameter :Function {:e1 :Entity})
-                  (moppers/make-mop :clear :Expression {:e1 :Entity})
-                  (moppers/make-mop :temperature :Function {:e1 :Entity})
-                  (moppers/make-mop :flat-top :Function {:e1 :Entity})
-                  (moppers/make-mop :liquid :Expression {:e1 :Entity})
-                  (moppers/make-mop :Coffee :Entity)
-                  (moppers/make-mop :Water :Entity)
-                  (moppers/make-mop :Heat :Entity)
-                  (moppers/make-mop :Pipe :Entity)
-                  (moppers/make-mop :Vial :Entity)
-                  (moppers/make-mop :Icecube :Entity)
-                  (moppers/make-mop :Bar :Entity)
-                  (moppers/make-mop :Beaker :Entity)
+  (let [mops-kg (-> (reduce (partial apply moppers/make-mop)
+                      (mr/make-mop-map)
+                      [[:cause :Expression {:e1 :Expression
+                                            :e2 :Expression}]
+                       [:greater :Expression {:e1 :Expression
+                                              :e2 :Expression}]
+                       [:flow :Expression {:e1 :Entity
+                                           :e2 :Entity
+                                           :e3 :Entity
+                                           :e4 :Entity}]
+                       [:Function :Expression]
+                       [:pressure :Function {:e1 :Entity}]
+                       [:diameter :Function {:e1 :Entity}]
+                       [:clear :Expression {:e1 :Entity}]
+                       [:temperature :Function {:e1 :Entity}]
+                       [:flat-top :Function {:e1 :Entity}]
+                       [:liquid :Expression {:e1 :Entity}]
+                       [:Coffee :Entity]
+                       [:Water :Entity]
+                       [:Heat :Entity]
+                       [:Pipe :Entity]
+                       [:Vial :Entity]
+                       [:Icecube :Entity]
+                       [:Bar :Entity]
+                       [:Beaker :Entity]])
 
                   (moppers/mops-add-concept-graph :simple-water-flow
                     [:flat-top [:e1 :Water]]
