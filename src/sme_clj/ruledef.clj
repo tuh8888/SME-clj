@@ -3,8 +3,10 @@
    similarity rules and macros for defining new rulesets."
   (:require [mops :as mops]
             [sme-clj.typedef :as types]
+            [mop-records]
             [sme-clj.util :refer [vals-as-keys]]
-            [clojure.set :as set]))
+            [clojure.set :as set])
+  (:import [mop_records MopMap]))
 
 ;;; Rule definition helpers
 (defn apply-rule
@@ -18,6 +20,24 @@
    :type type
    :body body})
 
+
+(defmulti extract-common-role-fillers (comp type first vector))
+
+(defmethod extract-common-role-fillers :default
+  [_ & ms]
+  (->> ms
+    (map (partial map second))
+    (apply map vector)))
+
+(defmethod extract-common-role-fillers MopMap
+  [_ & ms]
+  (let [ms           (map (partial into {}) ms)
+        common-roles (->> ms
+                       (map keys)
+                       (map set)
+                       (apply set/intersection))]
+    (map (apply juxt ms) common-roles)))
+
 ;; As in SME, basic analogical matching rules, direct port
 (def literal-similarity
   (vals-as-keys :name
@@ -30,15 +50,17 @@
 
      (make-rule :compatible-args :intern
        (fn [kg mh]
-         (when (every? #(types/lookup kg % :functor :ordered?) mh)
+         (when (every? #(when-let [functor (types/expression-functor kg %)]
+                          (types/ordered? kg functor))
+                 mh)
            (->> mh
              (map (partial types/expression-args kg))
-             (map (partial map second))
-             (apply map vector)
+             (apply extract-common-role-fillers kg)
              (filter (fn [mh]
                        ((some-fn
-                          (complement (partial some (partial types/expression? kg)))
-                          (partial every? #(= ::types/Function (types/lookup kg % :functor :type))))
+                          (partial every? (every-pred (complement (partial types/expression? kg))
+                                      (complement #{::types/Entity})))
+                          (partial every? (comp (partial types/type-function? kg) (partial types/expression-functor kg))))
                         mh)))))))
 
      ;; this rule not tested much yet
@@ -62,30 +84,11 @@
                        (= ::types/Function (types/lookup kg tchild :functor :type))))
                (types/make-match-hypothesis bchild tchild))))))]))
 
-(defn extract-common-role-fillers
-  [m1 m2]
-  (let [common-roles (set/intersection
-                       (-> m1 keys set)
-                       (-> m2 keys set))]
-    [m1 m2 common-roles]
-    (map (juxt m1 m2) common-roles)))
 
 (def mops-literal-similarity
   (vals-as-keys :name
     [(:same-functor literal-similarity)
-
-     (make-rule :compatible-args :intern
-       (fn [kg mh]
-         (->> mh
-           (map (partial types/expression-args kg))
-           (map (partial into {}))
-           (apply extract-common-role-fillers)
-           (filter (fn [new-mh]
-                     ((some-fn
-                        (partial every? (every-pred (complement (partial types/expression? kg))
-                                    (complement #{::types/Entity})))
-                        (partial every? (comp #(mops/abstr? kg % ::types/Function) (partial types/expression-functor kg))))
-                      new-mh))))))
+     (:compatible-args literal-similarity)
 
      ;; this rule not tested much yet
      (make-rule :commutative-args :intern

@@ -89,7 +89,7 @@
                    [[::types/Expression :thing]
                     [::types/Entity :thing]
                     [::types/Functor ::types/Expression]
-                    [::types/Relation ::types/Functor]
+                    [::types/Relation ::types/Functor {:ordered? true}]
                     [::types/Attribute ::types/Functor]
                     [::types/Function ::types/Functor]
                     [:cause ::types/Relation {:e1 ::types/Expression

@@ -137,7 +137,7 @@
                 (wrapped-rule-lit :compatible-args kg sme-mhs))))
       (t/testing "Mops"
         (t/is (= expected-compatible-args-matches
-                (wrapped-rule sut/mops-literal-similarity :compatible-args mops-kg sme-mhs)))))
+                (wrapped-rule-lit :compatible-args mops-kg sme-mhs)))))
 
     (t/testing "Commutative args"
       (t/testing "SME"

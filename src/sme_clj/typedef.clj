@@ -1,7 +1,8 @@
 (ns sme-clj.typedef
   "Data type definitions and protocols for SME, as well as facilities to create
    instances of types and manipulate them."
-  (:require [clojure.repl :refer [demunge]]
+  (:require
+            [clojure.repl :refer [demunge]]
             [clojure.test :refer [function?]]
             [clojure.walk :as walk]
             [mop-records]
@@ -89,6 +90,28 @@
   [kg k]
   (when (expression? kg k)
     (lookup kg k :functor)))
+
+(defmulti type-function? (comp type first vector))
+
+(defmethod type-function? MopMap
+  [kg k]
+  (mops/abstr? kg k ::Function))
+
+
+(defmethod type-function? :default
+  [kg k]
+  (= ::Function (lookup kg k :type)))
+
+(defmulti ordered? (comp type first vector))
+
+(defmethod ordered? MopMap
+  [kg k]
+  (when (mops/get-mop kg k)
+    (mops/inherit-filler kg k :ordered?)))
+
+(defmethod ordered? :default
+  [kg k]
+  (lookup kg k :ordered?))
 
 
 (defn ancestor?
