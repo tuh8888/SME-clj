@@ -79,7 +79,7 @@
 (defn interesting-roles [mop]
   (->> mop
     mops/roles
-    (remove #{:id :parents :names :inst?})))
+    (remove #{:id :parents :names :inst? :concept-graph})))
 
 (def mops-literal-similarity (vals-as-keys :name
                                [(make-rule :same-functor :filter
@@ -102,7 +102,8 @@
                                           (set (interesting-roles target)))
                                         (map (fn [role]
                                                (let [[bchild tchild] (->> [base target]
-                                                                       (map #(mops/filler % role)))]
+                                                                       (map #(mops/filler % role))
+                                                                       (map first))]
                                                  (when (or
                                                          (not (or
                                                                 (mop-expression? kg bchild)

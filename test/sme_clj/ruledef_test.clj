@@ -2,9 +2,11 @@
   (:require [clojure.test :as t]
             [mop-records :as mr]
             [mops :as mops]
+            [sme-clj.mop-helpers :as moppers]
             [sme-clj.ruledef :as sut]
             [sme-clj.typedef :as types]
             [sme-clj.util :as util]))
+
 (def predicates [(types/make-predicate :flow :type :relation :arity 4)
                  (types/make-predicate :greater :type :relation :arity 2)
                  (types/make-predicate :cause :type :relation :arity 2)
@@ -194,79 +196,78 @@
 
 
 (t/deftest mop-representation
-  (let [kg                (-> (mr/make-mop-map)
-                            (make-mop :cause [:Expression
-                                              [:e1   :Expression]
-                                              [:e2 :Expression]])
-                            (make-mop :greater [:Expression
-                                                [:e1    :Expression]
-                                                [:e2    :Expression]])
-                            (make-mop :flow [:Expression
-                                             [:e1    :Entity]
-                                             [:e2      :Entity]
-                                             [:e3 :Entity]
-                                             [:e4     :Entity]])
-                            (make-mop :Function [:Expression])
-                            (make-mop :pressure    [:Function [:e1 :Entity]])
-                            (make-mop :diameter [:Function [:e1 :Entity]])
-                            (make-mop :clear [:Expression [:e1 :Entity]])
-                            (make-mop :temperature [:Function [:e1 :Entity]])
-                            (make-mop :flat-top [:Function [:e1 :Entity]])
-                            (make-mop :liquid [:Expression [:e1  :Entity]])
-                            (make-mop :Coffee [:Entity])
-                            (make-mop :Water [:Entity])
-                            (make-mop :Heat [:Entity])
-                            (make-mop :Pipe [:Entity])
-                            (make-mop :Vial [:Entity])
-                            (make-mop :Icecube [:Entity])
-                            (make-mop :Bar [:Entity])
-                            (make-mop :Beaker [:Entity]))
-        simple-water-flow (-> (mr/make-mop-map)
-                            (make-mop [:flat-top [:e1 :Water]])
-                            (make-mop [:liquid [:e1  :Water]])
-                            (make-mop [:cause
-                                       [:e1 :greater-pressure-Beaker-pressure-Vial]
-                                       [:e2 :flow-Beaker-Vial-Water-Pipe]])
-                            (make-mop [:greater
-                                       [:e1 :pressure-Beaker]
-                                       [:e2 :pressure-Vial]])
-                            (make-mop [:greater
-                                       [:e1 :diameter-Beaker]
-                                       [:e2 :diameter-Vial]])
-                            (make-mop [:clear [:e1 :Beaker]])
-                            (make-mop [:diameter [:e1 :Beaker]])
-                            (make-mop [:diameter [:e1 :Vial]])
-                            (make-mop [:pressure [:e1 :Beaker]])
-                            (make-mop [:pressure [:e1 :Vial]])
-                            (make-mop [:flow
-                                       [:e1 :Beaker]
-                                       [:e2 :Vial]
-                                       [:e3 :Water]
-                                       [:e4 :Pipe]]))
-        simple-heat-flow  (-> (mr/make-mop-map)
-                            (make-mop [:flow
-                                       [:e1 :Coffee]
-                                       [:e2 :Icecube]
-                                       [:e3 :Heat]
-                                       [:e4 :Bar]])
-                            (make-mop [:greater
-                                       [:e1 :temperature-Coffee]
-                                       [:e2 :temperature-Icecube]])
-                            (make-mop [:temperature [:e1 :Coffee]])
-                            (make-mop [:temperature [:e1 :Icecube]])
-                            (make-mop [:flat-top [:e1 :Coffee]])
-                            (make-mop [:liquid [:e1  :Coffee]]))
-        full-kg           (-> kg
-                            (update :mops mr/merge-mops (:mops simple-heat-flow) (:mops simple-water-flow))
-                            mops/infer-hierarchy)
-        expressions       (->> [simple-water-flow simple-heat-flow]
-                            (map (comp keys :mops))
-                            (apply concat))
-        mhs               (for [b expressions
-                                t expressions]
-                            [b t])]
+  (let [full-kg (-> (mr/make-mop-map)
+                  (moppers/make-mop :cause :Expression {:e1 :Expression
+                                                        :e2 :Expression})
+                  (moppers/make-mop :greater :Expression {:e1 :Expression
+                                                          :e2 :Expression})
+                  (moppers/make-mop :flow :Expression {:e1 :Entity
+                                                       :e2 :Entity
+                                                       :e3 :Entity
+                                                       :e4 :Entity})
+                  (moppers/make-mop :Function :Expression)
+                  (moppers/make-mop :pressure :Function {:e1 :Entity})
+                  (moppers/make-mop :diameter :Function {:e1 :Entity})
+                  (moppers/make-mop :clear :Expression {:e1 :Entity})
+                  (moppers/make-mop :temperature :Function {:e1 :Entity})
+                  (moppers/make-mop :flat-top :Function {:e1 :Entity})
+                  (moppers/make-mop :liquid :Expression {:e1 :Entity})
+                  (moppers/make-mop :Coffee :Entity)
+                  (moppers/make-mop :Water :Entity)
+                  (moppers/make-mop :Heat :Entity)
+                  (moppers/make-mop :Pipe :Entity)
+                  (moppers/make-mop :Vial :Entity)
+                  (moppers/make-mop :Icecube :Entity)
+                  (moppers/make-mop :Bar :Entity)
+                  (moppers/make-mop :Beaker :Entity)
 
-    (t/testing "Creating match hypotheses"
+                  (moppers/mops-add-concept-graph :simple-water-flow
+                    [:flat-top [:e1 :Water]]
+                    [:liquid [:e1 :Water]]
+                    [:cause
+                     [:e1 :greater-pressure-Beaker-pressure-Vial]
+                     [:e2 :flow-Beaker-Vial-Water-Pipe]]
+                    [:greater
+                     [:e1 :pressure-Beaker]
+                     [:e2 :pressure-Vial]]
+                    [:greater
+                     [:e1 :diameter-Beaker]
+                     [:e2 :diameter-Vial]]
+                    [:clear [:e1 :Beaker]]
+                    [:diameter [:e1 :Beaker]]
+                    [:diameter [:e1 :Vial]]
+                    [:pressure [:e1 :Beaker]]
+                    [:pressure [:e1 :Vial]]
+                    [:flow
+                     [:e1 :Beaker]
+                     [:e2 :Vial]
+                     [:e3 :Water]
+                     [:e4 :Pipe]])
+
+                  (moppers/mops-add-concept-graph :simple-heat-flow
+                    [:flow
+                     [:e1 :Coffee]
+                     [:e2 :Icecube]
+                     [:e3 :Heat]
+                     [:e4 :Bar]]
+                    [:greater
+                     [:e1 :temperature-Coffee]
+                     [:e2 :temperature-Icecube]]
+                    [:temperature [:e1 :Coffee]]
+                    [:temperature [:e1 :Icecube]]
+                    [:flat-top [:e1 :Coffee]]
+                    [:liquid [:e1  :Coffee]])
+                  mops/infer-hierarchy)
+        expressions (->> full-kg
+                      :mops
+                      vals
+                      (filter :concept-graph)
+                      (map :id))
+        mhs         (for [b expressions
+                          t expressions]
+                      [b t])]
+
+    (t/testing "Same functor"
       (t/is (= expected-same-functor-matches
               (->> mhs
                 (mapcat (partial sut/apply-rule full-kg (:same-functor sut/mops-literal-similarity)))
