@@ -77,6 +77,25 @@
         (map (partial mops/slot mop))
         (map (juxt first (comp first second)))))))
 
+(defmulti expression-functor (comp type first vector))
+
+(defmethod expression-functor MopMap
+  [kg k]
+  ;; TODO Perhaps I do need to place the functor in a special slot of the expression mop.
+  (let [parent (->> k
+                 (mops/strict-abstrs kg)
+                 first)]
+    (when (and
+            (expression? kg k)
+            (not (contains? (mops/strict-abstrs kg parent) ::Functor)))
+      parent)))
+
+(defmethod expression-functor :default
+  [kg k]
+  (when (expression? kg k)
+    (lookup kg k :functor)))
+
+
 (defn ancestor?
   "Returns true if a given expression is an ancestor of one of the expressions
   in the base set."

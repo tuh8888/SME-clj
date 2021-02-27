@@ -1,7 +1,8 @@
 (ns sme-clj.ruledef-test
   (:require [clojure.test :as t]
             [sme-clj.ruledef :as sut]
-            [sme-clj.simple-water-heat :refer [kg mops-kg]]))
+            [sme-clj.simple-water-heat :refer [kg mops-kg]]
+            [sme-clj.typedef :as types]))
 
 (def expected-same-functor-matches
   #{[:diameter-Vial :diameter-Vial]
@@ -104,51 +105,51 @@
 (def expected-commutative-args #{})
 
 (t/deftest literal-similarity-test
-  (t/testing "Same functor"
-    (t/is (= expected-same-functor-matches
-            (->> (for [b (keys kg)
-                       t (keys kg)]
-                   [b t])
-              (mapcat (partial sut/apply-rule kg (:same-functor sut/literal-similarity 0)))
-              (remove nil?)
-              set))))
-  (t/testing "Compatible args"
-    (t/is (= expected-compatible-args-matches
-            (->> (for [b (keys kg)
-                       t (keys kg)]
-                   [b t])
-              (mapcat (partial sut/apply-rule kg (:compatible-args sut/literal-similarity 1)))
-              (remove nil?)
-              set))))
-  (t/testing "Commutative args"
-    (t/is (= expected-commutative-args
-            (->> (for [b (keys kg)
-                       t (keys kg)]
-                   [b t])
-              (mapcat (partial sut/apply-rule kg (:commutative-args sut/literal-similarity 1)))
-              (remove nil?)
-              set)))))
 
-(t/deftest mop-representation
   (let [expressions (->> mops-kg
                       :mops
                       vals
                       (filter :concept-graph)
                       (map :id))
-        mhs         (for [b expressions
+        mops-mhs    (for [b expressions
                           t expressions]
+                      [b t])
+        sme-mhs     (for [b (keys kg)
+                          t (keys kg)]
                       [b t])]
-
     (t/testing "Same functor"
-      (t/is (= expected-same-functor-matches
-              (->> mhs
-                (mapcat (partial sut/apply-rule mops-kg (:same-functor sut/mops-literal-similarity)))
-                (remove nil?)
-                set))))
+      (t/testing "SME"
+        (t/is (= expected-same-functor-matches
+                (->> sme-mhs
+                  (mapcat (partial sut/apply-rule kg (:same-functor sut/literal-similarity)))
+                  (remove nil?)
+                  set))))
+      (t/testing "Mops"
+        (t/is (= expected-same-functor-matches
+                (->> sme-mhs
+                  (mapcat (partial sut/apply-rule mops-kg (:same-functor sut/literal-similarity)))
+                  (remove nil?)
+                  set)))))
 
     (t/testing "Compatible args"
-      (t/is (= expected-compatible-args-matches
-              (->> mhs
-                (mapcat (partial sut/apply-rule mops-kg (:compatible-args sut/mops-literal-similarity)))
-                (remove nil?)
-                set))))))
+      (t/testing "SME"
+        (t/is (= expected-compatible-args-matches
+                (->> sme-mhs
+                  (mapcat (partial sut/apply-rule kg (:compatible-args sut/literal-similarity 1)))
+                  (remove nil?)
+                  set))))
+      (t/testing "Mops"
+        (t/is (= expected-compatible-args-matches
+                (->> mops-mhs
+                  (mapcat (partial sut/apply-rule mops-kg (:compatible-args sut/mops-literal-similarity)))
+                  (remove nil?)
+                  set)))))
+
+    (t/testing "Commutative args"
+      (t/testing "SME"
+        (t/is (= expected-commutative-args
+                (->> sme-mhs
+                  (mapcat (partial sut/apply-rule kg (:commutative-args sut/literal-similarity 1)))
+                  (remove nil?)
+                  set))))
+      (t/testing "Mops"))))

@@ -65,7 +65,10 @@
   (let [mop (mops/->mop id slots)]
     (-> m
       (mops/add-mop mop)
-      (mr/-add-slot-to-mop id :parents #{parent}))))
+      (mr/-add-slot-to-mop id :parents (into #{}
+                                         (cond-> parent
+                                           ((complement coll?) parent)
+                                           (vector parent)))))))
 
 (defn mops-add-concept-graph
   [m k & expressions]
@@ -82,21 +85,24 @@
 
 (def mops-kg (-> (reduce (partial apply make-mop)
                    (mr/make-mop-map)
-                   [[:cause ::types/Expression {:e1 ::types/Expression
+                   [[::types/Functor ::types/Expression]
+                    [::types/Relation ::types/Functor]
+                    [::types/Attribute ::types/Functor]
+                    [::types/Function ::types/Functor]
+                    [:cause ::types/Relation {:e1 ::types/Expression
+                                              :e2 ::types/Expression}]
+                    [:greater ::types/Relation {:e1 ::types/Expression
                                                 :e2 ::types/Expression}]
-                    [:greater ::types/Expression {:e1 ::types/Expression
-                                                  :e2 ::types/Expression}]
-                    [:flow ::types/Expression {:e1 ::types/Entity
-                                               :e2 ::types/Entity
-                                               :e3 ::types/Entity
-                                               :e4 ::types/Entity}]
-                    [::types/Function ::types/Expression]
+                    [:flow ::types/Relation {:e1 ::types/Entity
+                                             :e2 ::types/Entity
+                                             :e3 ::types/Entity
+                                             :e4 ::types/Entity}]
                     [:pressure ::types/Function {:e1 ::types/Entity}]
                     [:diameter ::types/Function {:e1 ::types/Entity}]
-                    [:clear ::types/Expression {:e1 ::types/Entity}]
+                    [:clear ::types/Attribute {:e1 ::types/Entity}]
                     [:temperature ::types/Function {:e1 ::types/Entity}]
                     [:flat-top ::types/Function {:e1 ::types/Entity}]
-                    [:liquid ::types/Expression {:e1 ::types/Entity}]
+                    [:liquid ::types/Attribute {:e1 ::types/Entity}]
                     [:Coffee ::types/Entity]
                     [:Water ::types/Entity]
                     [:Heat ::types/Entity]
@@ -143,3 +149,7 @@
                  [:flat-top [:e1 :Coffee]]
                  [:liquid [:e1  :Coffee]])
                mops/infer-hierarchy))
+
+(mops/all-abstrs mops-kg :greater-diameter-Beaker-diameter-Vial)
+(map (juxt identity (partial types/expression-functor mops-kg)) [:clear
+                                                           :greater-pressure-Beaker-pressure-Vial])

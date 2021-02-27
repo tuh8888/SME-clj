@@ -20,11 +20,10 @@
 ;; As in SME, basic analogical matching rules, direct port
 (def literal-similarity (vals-as-keys :name
                           [(make-rule :same-functor :filter
-                             (fn [kg [base target :as mh]]
-                               [(when ((every-pred
-                                         (partial every? (partial types/expression? kg)) ; Both expressions
-                                         (comp (partial apply =) (partial map #(types/lookup kg % :functor)))) ; Same functors
-                                       [base target])
+                             (fn [kg mh]
+                               [(when (let [functors (map (partial types/expression-functor kg) mh)]
+                                        (and (every? identity functors)
+                                          (apply = functors)))
                                   mh)]))
 
                            (make-rule :compatible-args :intern
@@ -66,16 +65,7 @@
                                      (types/make-match-hypothesis bchild tchild))))))]))
 
 (def mops-literal-similarity (vals-as-keys :name
-                               [(make-rule :same-functor :filter
-                                  (fn [kg [base target :as mh]]
-                                    [(when ((every-pred
-                                              (partial every? (partial types/expression? kg)) ; Both expressions
-                                              (comp (partial apply =)
-                                                (partial map first)
-                                                (partial map #(mops/strict-abstrs kg %)))) ; Same functors
-                                            [base target])
-                                       mh)]))
-                                (make-rule :compatible-args :intern
+                               [(make-rule :compatible-args :intern
                                   (fn [kg mh]
                                     (->> mh
                                       (map (partial types/expression-args kg))
