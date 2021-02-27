@@ -408,10 +408,7 @@
 
   For example: (map :score (match b t)) -> seq of gmap scores."
   ([kg rules base target]
-   (let [[base target] (->> [base target]
-                         (map :graph)
-                         (map keys))
-         all-mhs       (create-match-hypotheses kg base target rules)]
+   (let [all-mhs (create-match-hypotheses kg base target rules)]
      (->> all-mhs
        (split-into-mhs-sets kg)
        (consistent-combs-of-mhs-sets all-mhs)
