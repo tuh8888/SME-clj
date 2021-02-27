@@ -4,7 +4,8 @@
   (:require [clojure.set :as set]
             [mops :as mops]
             [sme-clj.typedef :as types]
-            [sme-clj.util :refer [vals-as-keys]]))
+            [sme-clj.util :refer [vals-as-keys]])
+  (:import mop_records.MopMap))
 
 ;;; Rule definition helpers
 (defn apply-rule
@@ -22,7 +23,11 @@
    :type type
    :body body})
 
-(defn expression? [kg k]
+(defmulti expression?
+  (fn [kg _] (type kg)))
+
+(defmethod expression? :default
+  [kg k]
   ((comp (partial = ::types/Expression) #(types/lookup kg % :type)) k))
 
 ;; As in SME, basic analogical matching rules, direct port
@@ -73,19 +78,24 @@
                                              (= ::types/Function (types/lookup kg tchild :functor :type))))
                                      (types/make-match-hypothesis bchild tchild))))))]))
 
-(defn mop-expression? [kg k]
+(defmethod expression? MopMap
+  [kg k]
   (mops/abstr? kg k ::types/Expression))
 
-(defn interesting-roles [mop]
-  (->> mop
-    mops/roles
-    (remove #{:id :parents :names :inst? :concept-graph})))
+(defn expression-args
+  [kg k]
+  (when (expression? kg k)
+    (let [mop (mops/get-mop kg k)]
+      (->> mop
+        mops/roles
+        (remove (conj mops/reserved-roles :concept-graph))
+        (map (partial mops/slot mop))))))
 
 (def mops-literal-similarity (vals-as-keys :name
                                [(make-rule :same-functor :filter
                                   (fn [kg [base target :as mh]]
                                     [(when ((every-pred
-                                              (partial every? (partial mop-expression? kg)) ; Both expressions
+                                              (partial every? (partial expression? kg)) ; Both expressions
                                               (comp (partial apply =)
                                                 (partial map first)
                                                 (partial map #(mops/strict-abstrs kg %)))) ; Same functors
@@ -93,24 +103,21 @@
                                        mh)]))
                                 (make-rule :compatible-args :intern
                                   (fn [kg mh]
-                                    (let [[base target] (->> mh
-                                                          (map (partial mops/get-mop kg)))]
-                                      (->>
-                                        (set/intersection
-                                          (set (interesting-roles base))
-                                          (set (interesting-roles target)))
-                                        (map (fn [role]
-                                               (let [[bchild tchild] (->> [base target]
-                                                                       (map #(mops/filler % role))
-                                                                       (map first))]
-                                                 (when (or
-                                                         (not (or
-                                                                (mop-expression? kg bchild)
-                                                                (mop-expression? kg tchild)))
-                                                         (and
-                                                           (mops/abstr? kg bchild ::types/Function)
-                                                           (mops/abstr? kg tchild ::types/Function)))
-                                                   (types/make-match-hypothesis bchild tchild)))))))))
+                                    (->> mh
+                                      (map (partial expression-args kg))
+                                      (apply map vector)
+                                      (filter #(apply = (map first %)))
+                                      (map (partial map second))
+                                      (map (partial map first))
+                                      (map (fn [[bchild tchild]]
+                                             (when (or
+                                                     (not (or
+                                                            (expression? kg bchild)
+                                                            (expression? kg tchild)))
+                                                     (and
+                                                       (mops/abstr? kg bchild ::types/Function)
+                                                       (mops/abstr? kg tchild ::types/Function)))
+                                               (types/make-match-hypothesis bchild tchild)))))))
 
                                 ;; this rule not tested much yet
                                 (make-rule :commutative-args :intern
