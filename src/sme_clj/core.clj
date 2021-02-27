@@ -137,7 +137,7 @@
 
 (defn find-emaps
   [kg [base :as mh]]
-  (when-not (= :expression (types/lookup kg base :type))
+  (when-not (= ::types/Expression (types/lookup kg base :type))
     #{mh}))
 
 (defn all-emaps

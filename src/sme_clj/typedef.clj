@@ -38,7 +38,7 @@
 
 (defn make-expression [id functor & args]
   {:name    id
-   :type    :expression
+   :type    ::Expression
    :functor functor
    :args    args})
 
@@ -51,14 +51,14 @@
   "Returns true if a given expression is an ancestor of one of the expressions
   in the base set."
   [kg base-set expr]
-  (and (= :expression (lookup kg expr :type))
+  (and (= ::Expression (lookup kg expr :type))
     (or (contains? base-set expr)
       (some #(ancestor? kg base-set %) (lookup kg expr :args)))))
 
 (defn get-descendants
   "Returns the seq of descendants of the given expression."
   [kg expr]
-  (tree-seq #(= :expression (lookup kg % :type)) #(lookup kg % :args) expr))
+  (tree-seq #(= ::Expression (lookup kg % :type)) #(lookup kg % :args) expr))
 
 ;;; CONCEPT GRAPH
 

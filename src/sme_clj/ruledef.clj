@@ -23,7 +23,7 @@
    :body body})
 
 (defn expression? [kg k]
-  ((comp (partial = :expression) #(types/lookup kg % :type)) k))
+  ((comp (partial = ::types/Expression) #(types/lookup kg % :type)) k))
 
 ;; As in SME, basic analogical matching rules, direct port
 (def literal-similarity (vals-as-keys :name
@@ -74,7 +74,7 @@
                                      (types/make-match-hypothesis bchild tchild))))))]))
 
 (defn mop-expression? [kg k]
-  (mops/abstr? kg k :Expression))
+  (mops/abstr? kg k ::types/Expression))
 
 (defn interesting-roles [mop]
   (->> mop
@@ -91,7 +91,6 @@
                                                 (partial map #(mops/strict-abstrs kg %)))) ; Same functors
                                             [base target])
                                        mh)]))
-
                                 (make-rule :compatible-args :intern
                                   (fn [kg mh]
                                     (let [[base target] (->> mh

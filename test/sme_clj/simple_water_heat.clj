@@ -1,7 +1,8 @@
 (ns sme-clj.simple-water-heat
   (:require [mop-records :as mr]
             [sme-clj.typedef :as types]
-            [sme-clj.util :as util]))
+            [sme-clj.util :as util]
+            [mops :as mops]))
 
 (defn map-vals
   [f m]
@@ -81,21 +82,21 @@
 
 (def mops-kg (-> (reduce (partial apply make-mop)
                    (mr/make-mop-map)
-                   [[:cause :Expression {:e1 :Expression
-                                         :e2 :Expression}]
-                    [:greater :Expression {:e1 :Expression
-                                           :e2 :Expression}]
-                    [:flow :Expression {:e1 :Entity
-                                        :e2 :Entity
-                                        :e3 :Entity
-                                        :e4 :Entity}]
-                    [:Function :Expression]
+                   [[:cause ::types/Expression {:e1 ::types/Expression
+                                                :e2 ::types/Expression}]
+                    [:greater ::types/Expression {:e1 ::types/Expression
+                                                  :e2 ::types/Expression}]
+                    [:flow ::types/Expression {:e1 :Entity
+                                               :e2 :Entity
+                                               :e3 :Entity
+                                               :e4 :Entity}]
+                    [:Function ::types/Expression]
                     [:pressure :Function {:e1 :Entity}]
                     [:diameter :Function {:e1 :Entity}]
-                    [:clear :Expression {:e1 :Entity}]
+                    [:clear ::types/Expression {:e1 :Entity}]
                     [:temperature :Function {:e1 :Entity}]
                     [:flat-top :Function {:e1 :Entity}]
-                    [:liquid :Expression {:e1 :Entity}]
+                    [:liquid ::types/Expression {:e1 :Entity}]
                     [:Coffee :Entity]
                     [:Water :Entity]
                     [:Heat :Entity]
