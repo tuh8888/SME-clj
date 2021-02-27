@@ -2,7 +2,8 @@
   (:require [clojure.test :as t]
             [sme-clj.core :as sut]
             [sme-clj.ruledef :as rules]
-            [sme-clj.simple-water-heat :refer [kg mops-kg]]))
+            [sme-clj.simple-water-heat :refer [kg mops-kg]]
+            [mops :as mops]))
 
 (def expected-concept-graph-expressions
   #{:diameter-Vial
@@ -62,14 +63,32 @@
     (t/is (= expected-match-hypotheses
             (sut/create-match-hypotheses mops-kg :simple-water-flow :simple-heat-flow rules/mops-literal-similarity)))))
 
+(t/deftest find-children-test
+  (let [expected-found-children1 #{}
+        expected-found-children2 #{[:Beaker :Coffee] [:Water :Heat] [:Pipe :Bar] [:Vial :Icecube]}  ]
+    (t/testing "SME"
+      (t/is (= expected-found-children1
+              (set (sut/find-children kg expected-match-hypotheses [:Beaker :Coffee]))))
+      (t/is (= expected-found-children2
+              (set (sut/find-children kg expected-match-hypotheses [:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar])))))
+    (t/testing "Mops"
+      (t/is (= expected-found-children1
+              (set (sut/find-children mops-kg expected-match-hypotheses [:Beaker :Coffee]))))
+      (t/is (= expected-found-children2
+              (set (sut/find-children mops-kg expected-match-hypotheses [:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar])))))))
+
+(def expected-found-roots #{[:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
+                            [:greater-diameter-Beaker-diameter-Vial :greater-temperature-Coffee-temperature-Icecube]
+                            [:greater-pressure-Beaker-pressure-Vial :greater-temperature-Coffee-temperature-Icecube]
+                            [:liquid-Water :liquid-Coffee]
+                            [:flat-top-Water :flat-top-Coffee]})
 (t/deftest find-roots-test
   (t/testing "SME"
-    (t/is (= #{[:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
-               [:greater-diameter-Beaker-diameter-Vial :greater-temperature-Coffee-temperature-Icecube]
-               [:greater-pressure-Beaker-pressure-Vial :greater-temperature-Coffee-temperature-Icecube]
-               [:liquid-Water :liquid-Coffee]
-               [:flat-top-Water :flat-top-Coffee]}
-            (set (sut/find-roots kg expected-match-hypotheses))))))
+    (t/is (= expected-found-roots
+            (set (sut/find-roots kg expected-match-hypotheses)))))
+  (t/testing "Mops"
+    (t/is (= expected-found-roots
+            (set (sut/find-roots mops-kg expected-match-hypotheses))))))
 
 (def diameter-gmap #{[:greater-diameter-Beaker-diameter-Vial
                       :greater-temperature-Coffee-temperature-Icecube]

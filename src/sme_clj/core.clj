@@ -116,7 +116,24 @@
 ;;;; FORMING GMAPS
 ;;;;
 
-(defn find-children [kg mhs [base target]]
+(defmulti find-children
+  (fn [kg & _] (type kg)))
+
+(defmethod find-children MopMap
+  [kg mhs [base target]]
+  (let [[bmap tmap] (map #(group-by % mhs) [first second])]
+    (->> [base target]
+      (map #(->> %
+              (rules/expression-args kg)
+              (mapcat second)))
+      (apply mapcat (fn [b t]
+                      (set/intersection
+                        (set (get bmap b))
+                        (set (get tmap t)))))
+      set)))
+
+(defmethod find-children :default
+  [kg mhs [base target]]
   (let [[bmap tmap] (map #(group-by % mhs) [first second])]
     (->> [base target]
       (map #(types/lookup kg % :args))
