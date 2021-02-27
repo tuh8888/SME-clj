@@ -1,8 +1,9 @@
 (ns sme-clj.simple-water-heat
   (:require [mop-records :as mr]
+            [mops :as mops]
             [sme-clj.typedef :as types]
-            [sme-clj.util :as util]
-            [mops :as mops]))
+            [sme-clj.util :as util])
+  (:import mop_records.MopMap))
 
 (defn map-vals
   [f m]
@@ -10,7 +11,23 @@
     (map (juxt key (comp f val)))
     (into {})))
 
-(defn add-concept-graph
+(defmulti add-concept-graph (comp type first vector))
+
+(defmethod add-concept-graph MopMap
+  [m k & expressions]
+  (reduce (fn [m [functor & slots]]
+            (let [id  (types/combine-ids (-> slots
+                                           (->> (map second))
+                                           (conj functor)))
+                  mop (mops/->mop id (into {} slots))]
+              (-> m
+                (mops/add-mop mop)
+                (mops/add-slot-to-mop id :parents ::types/Expression)
+                (mops/add-slot-to-mop id :functor functor)
+                (mops/add-slot-to-mop id :concept-graph k))))
+    (mops/add-mop m (mops/->mop k nil)) expressions))
+
+(defmethod add-concept-graph :default
   [kg k & expressions]
   (let [concept-graph (apply types/make-concept-graph k expressions)]
     (-> (merge-with (fn [v1 v2]
@@ -70,19 +87,6 @@
                                            ((complement coll?) parent)
                                            (vector parent)))))))
 
-(defn mops-add-concept-graph
-  [m k & expressions]
-  (reduce (fn [m [functor & slots]]
-            (let [id  (types/combine-ids (-> slots
-                                           (->> (map second))
-                                           (conj functor)))
-                  mop (mops/->mop id (into {} slots))]
-              (-> m
-                (mops/add-mop mop)
-                (mops/add-slot-to-mop id :parents ::types/Expression)
-                (mops/add-slot-to-mop id :functor functor)
-                (mops/add-slot-to-mop id :concept-graph k))))
-    (mops/add-mop m (mops/->mop k nil)) expressions))
 
 (def mops-kg (-> (reduce (partial apply make-mop)
                    (mr/make-mop-map)
@@ -115,7 +119,7 @@
                     [:Bar ::types/Entity]
                     [:Beaker ::types/Entity]])
 
-               (mops-add-concept-graph :simple-water-flow
+               (add-concept-graph :simple-water-flow
                  [:flat-top [:e1 :Water]]
                  [:liquid [:e1 :Water]]
                  [:cause
@@ -138,7 +142,7 @@
                   [:e3 :Water]
                   [:e4 :Pipe]])
 
-               (mops-add-concept-graph :simple-heat-flow
+               (add-concept-graph :simple-heat-flow
                  [:flow
                   [:e1 :Coffee]
                   [:e2 :Icecube]

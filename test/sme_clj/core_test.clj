@@ -2,8 +2,7 @@
   (:require [clojure.test :as t]
             [sme-clj.core :as sut]
             [sme-clj.ruledef :as rules]
-            [sme-clj.simple-water-heat :refer [kg mops-kg]]
-            [mops :as mops]))
+            [sme-clj.simple-water-heat :refer [kg mops-kg]]))
 
 (def expected-concept-graph-expressions
   #{:diameter-Vial
