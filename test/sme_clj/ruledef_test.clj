@@ -257,7 +257,7 @@
                             (make-mop [:flat-top [:e1 :Coffee]])
                             (make-mop [:liquid [:e1  :Coffee]]))
         full-kg           (-> kg
-                            (update :mops (partial merge-with mr/merge-mop) (:mops simple-heat-flow) (:mops simple-water-flow))
+                            (update :mops mr/merge-mops (:mops simple-heat-flow) (:mops simple-water-flow))
                             mops/infer-hierarchy)
         expressions       (->> [simple-water-flow simple-heat-flow]
                             (map (comp keys :mops))

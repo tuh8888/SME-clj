@@ -34,8 +34,11 @@
           engine: algorithm and examples. Artificial Intelligence, 41, 1-62."
   (:require [clojure.math.combinatorics :as comb]
             [clojure.set :as set]
+            [mop-records]
+            [mops :as mops]
             [sme-clj.ruledef :as rules]
-            [sme-clj.typedef :as types]))
+            [sme-clj.typedef :as types])
+  (:import [mop_records MopMap]))
 
 ;;;;
 ;;;; GENERATING MATCH HYPOTHESES
@@ -81,12 +84,30 @@
           ;; set of all MHs tested on intern rules
           result)))))
 
+(defmulti get-concept-graph-expressions
+  (fn [kg _ ] (type kg)))
+
+(defmethod get-concept-graph-expressions MopMap
+  [kg concept-graph-name]
+  (-> kg
+    :mops
+    (map  (mops/mop-ids kg))
+    (->> (filter #(= #{concept-graph-name} (mops/filler % :concept-graph))))
+    (->> (map :id))))
+
+(defmethod get-concept-graph-expressions :default
+  [kg concept-graph-name]
+  (->> kg
+    vals
+    (filter #(= concept-graph-name (:concept-graph %)))
+    (map :name)))
+
 (defn create-match-hypotheses
   "Apply rules from a ruleset to base and target to generate match hypotheses
   for the graphs."
   [kg base target rules]
-  (->> (for [b base
-             t target]
+  (->> (for [b (get-concept-graph-expressions kg base)
+             t (get-concept-graph-expressions kg target)]
          [b t])
     (map (partial apply types/make-match-hypothesis))
     (apply-filter-rules kg rules)
