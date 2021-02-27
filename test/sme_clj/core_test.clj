@@ -122,65 +122,78 @@
                                          :flow-Coffee-Icecube-Heat-Bar]}
                                       #{}])
 
-(t/deftest heat-water-test
-  ;; Water flow is the base heat flow the target
 
-  (t/testing "Creating match hypotheses"
+(t/deftest get-concept-graph-expressions-test
+  (t/testing "SME"
     (t/is (= expected-concept-graph-expressions
             (into #{}
               (lazy-cat
                 (sut/get-concept-graph-expressions kg :simple-water-flow)
-                (sut/get-concept-graph-expressions kg :simple-heat-flow)))))
-    (t/is (= expected-match-hypotheses
-            (sut/create-match-hypotheses kg
-              :simple-water-flow
-              :simple-heat-flow
-              rules/literal-similarity))))
+                (sut/get-concept-graph-expressions kg :simple-heat-flow))))))
 
-  (t/testing "Computing initial gmaps"
+  (t/testing "Mops"
+    (t/is (= expected-concept-graph-expressions
+            (into #{}
+              (lazy-cat
+                (sut/get-concept-graph-expressions mops-kg :simple-heat-flow)
+                (sut/get-concept-graph-expressions mops-kg :simple-water-flow)))))))
+
+(t/deftest create-match-hypotheses-test
+  ;; Water flow is the base heat flow the target
+  (t/testing "SME"
+    (t/is (= expected-match-hypotheses
+            (sut/create-match-hypotheses kg :simple-water-flow :simple-heat-flow rules/literal-similarity))))
+  (t/testing "Mops"
+    (t/is (= expected-match-hypotheses
+            (sut/create-match-hypotheses mops-kg :simple-water-flow :simple-heat-flow rules/mops-literal-similarity)))))
+
+(t/deftest find-roots-test
+  (t/testing "SME"
     (t/is (= #{[:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
                [:greater-diameter-Beaker-diameter-Vial :greater-temperature-Coffee-temperature-Icecube]
                [:greater-pressure-Beaker-pressure-Vial :greater-temperature-Coffee-temperature-Icecube]
                [:liquid-Water :liquid-Coffee]
                [:flat-top-Water :flat-top-Coffee]}
-            (set (sut/find-roots kg expected-match-hypotheses))))
+            (set (sut/find-roots kg expected-match-hypotheses))))))
 
+(t/deftest split-into-mhs-sets-test
+  (t/testing "SME"
     (t/is (= expected-computed-initial-gmaps
-            (sut/split-into-mhs-sets kg expected-match-hypotheses))))
+            (sut/split-into-mhs-sets kg expected-match-hypotheses)))))
 
-  (t/testing "Combining gmaps"
+(t/deftest concistent-combs-of-mhs-sets-test
+  (t/testing "SME"
     (t/is (= expected-combined-gmaps
-            (sut/consistent-combs-of-mhs-sets expected-match-hypotheses expected-computed-initial-gmaps))))
+            (sut/consistent-combs-of-mhs-sets expected-match-hypotheses expected-computed-initial-gmaps)))))
 
-  (t/testing "Merging gmaps"
+(t/deftest merge-mhs-sets-test
+  (t/testing "SME"
     (t/is (= expected-merged-gmaps
-            (sut/merge-mhs-sets expected-combined-gmaps))))
+            (sut/merge-mhs-sets expected-combined-gmaps)))))
 
-  (t/testing "Finalizing gmaps"
+(t/deftest finalize-gmaps-tets
+  (t/testing "SME"
     (t/is (= expected-finalized-gmaps
-            (sut/finalize-gmaps kg :simple-water-flow :simple-heat-flow expected-match-hypotheses expected-merged-gmaps))))
+            (sut/finalize-gmaps kg :simple-water-flow :simple-heat-flow expected-match-hypotheses expected-merged-gmaps)))))
 
-  (t/testing "Generating inferences"
+(t/deftest generate-inferences-test
+  (t/testing "SME"
     (t/is (= expected-generated-inferences
             (->> expected-finalized-gmaps
               (sut/generate-inferences kg :simple-water-flow)
-              (map :inferences)))))
+              (map :inferences))))))
 
-  (t/testing "Transferring inferences"
+(t/deftest transfer-inferences-test
+  (t/testing "SME"
     (t/is (= expected-transferred-inferences
             (->> expected-generated-inferences
               (map #(assoc %1 :inferences %2) expected-finalized-gmaps)
               (sut/transfer-inferences kg)
               (map :transferred))))))
 
-(t/deftest mop-representation
-  (t/testing "Creating match hypotheses"
-    (t/is (= expected-concept-graph-expressions
-            (into #{}
-              (lazy-cat
-                (sut/get-concept-graph-expressions mops-kg :simple-heat-flow)
-                (sut/get-concept-graph-expressions mops-kg :simple-water-flow)))))
+(t/deftest match-test
+  (t/testing "SME"
+    (t/is (= expected-finalized-gmaps
+            (sut/match kg :simple-water-flow :simple-heat-flow)))))
 
-    (t/is (= expected-match-hypotheses
-            (sut/create-match-hypotheses mops-kg :simple-water-flow :simple-heat-flow rules/mops-literal-similarity)))))
                                         ; LocalWords:  gmaps
