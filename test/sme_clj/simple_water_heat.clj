@@ -72,16 +72,17 @@
 
 (defn mops-add-concept-graph
   [m k & expressions]
-  (reduce (fn [m [parent & slots]]
+  (reduce (fn [m [functor & slots]]
             (let [id  (types/combine-ids (-> slots
                                            (->> (map second))
-                                           (conj parent)))
+                                           (conj functor)))
                   mop (mops/->mop id (into {} slots))]
               (-> m
                 (mops/add-mop mop)
-                (mops/add-slot-to-mop id :parents parent)
+                (mops/add-slot-to-mop id :parents ::types/Expression)
+                (mops/add-slot-to-mop id :functor functor)
                 (mops/add-slot-to-mop id :concept-graph k))))
-    m expressions))
+    (mops/add-mop m (mops/->mop k nil)) expressions))
 
 (def mops-kg (-> (reduce (partial apply make-mop)
                    (mr/make-mop-map)

@@ -82,13 +82,8 @@
 (defmethod expression-functor MopMap
   [kg k]
   ;; TODO Perhaps I do need to place the functor in a special slot of the expression mop.
-  (let [parent (->> k
-                 (mops/strict-abstrs kg)
-                 first)]
-    (when (and
-            (expression? kg k)
-            (not (contains? (mops/strict-abstrs kg parent) ::Functor)))
-      parent)))
+  (let [mop (mops/get-mop kg k)]
+    (first (mops/filler mop :functor))))
 
 (defmethod expression-functor :default
   [kg k]
