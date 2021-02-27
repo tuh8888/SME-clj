@@ -74,7 +74,8 @@
       (->> mop
         mops/roles
         (remove (conj mops/reserved-roles :concept-graph))
-        (map (partial mops/slot mop))))))
+        (map (partial mops/slot mop))
+        (map (juxt first (comp first second)))))))
 
 (defn ancestor?
   "Returns true if a given expression is an ancestor of one of the expressions
@@ -87,7 +88,7 @@
 (defn get-descendants
   "Returns the seq of descendants of the given expression."
   [kg expr]
-  (tree-seq #(= ::Expression (lookup kg % :type)) #(lookup kg % :args) expr))
+  (tree-seq (partial expression? kg) (comp  (partial map second) (partial expression-args kg)) expr))
 
 ;;; CONCEPT GRAPH
 

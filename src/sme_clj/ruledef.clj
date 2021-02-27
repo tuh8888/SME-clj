@@ -82,7 +82,6 @@
                                       (apply map vector)
                                       (filter #(apply = (map first %)))
                                       (map (partial map second))
-                                      (map (partial map first))
                                       (map (fn [[bchild tchild]]
                                              (when (or
                                                      (not (or

@@ -123,14 +123,18 @@
 (t/deftest split-into-mhs-sets-test
   (t/testing "SME"
     (t/is (= expected-computed-initial-gmaps
-            (sut/split-into-mhs-sets kg expected-match-hypotheses)))))
+            (sut/split-into-mhs-sets kg expected-match-hypotheses))))
+
+  (t/testing "Mops"
+    (t/is (= expected-computed-initial-gmaps
+            (sut/split-into-mhs-sets mops-kg expected-match-hypotheses)))))
 
 (def expected-combined-gmaps [[pressure-gmap flow-gmap]
                               [flow-gmap diameter-gmap]
                               [flat-top-gmap liquid-gmap]])
 
 (t/deftest concistent-combs-of-mhs-sets-test
-  (t/testing "SME"
+  (t/testing "SME and Mops"
     (t/is (= expected-combined-gmaps
             (sut/consistent-combs-of-mhs-sets expected-match-hypotheses expected-computed-initial-gmaps)))))
 
@@ -179,7 +183,11 @@
 (t/deftest finalize-gmaps-tets
   (t/testing "SME"
     (t/is (= expected-finalized-gmaps
-            (sut/finalize-gmaps kg :simple-water-flow :simple-heat-flow expected-match-hypotheses expected-merged-gmaps)))))
+            (sut/finalize-gmaps kg :simple-water-flow :simple-heat-flow expected-match-hypotheses expected-merged-gmaps))))
+
+  (t/testing "Mops"
+    (t/is (= expected-finalized-gmaps
+            (sut/finalize-gmaps mops-kg :simple-water-flow :simple-heat-flow expected-match-hypotheses expected-merged-gmaps)))))
 
 (def expected-generated-inferences [#{:cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe}
                                     #{:cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe
@@ -193,6 +201,12 @@
     (t/is (= expected-generated-inferences
             (->> expected-finalized-gmaps
               (sut/generate-inferences kg :simple-water-flow)
+              (map :inferences)))))
+
+  (t/testing "Mops"
+    (t/is (= expected-generated-inferences
+            (->> expected-finalized-gmaps
+              (sut/generate-inferences mops-kg :simple-water-flow)
               (map :inferences))))))
 
 (def expected-transferred-inferences [#{[:cause :greater-temperature-Coffee-temperature-Icecube :flow-Coffee-Icecube-Heat-Bar]}

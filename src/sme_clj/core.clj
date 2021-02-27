@@ -124,8 +124,8 @@
   (let [[bmap tmap] (map #(group-by % mhs) [first second])]
     (->> [base target]
       (map #(->> %
-              (rules/expression-args kg)
-              (mapcat second)))
+              (types/expression-args kg)
+              (map second)))
       (apply mapcat (fn [b t]
                       (set/intersection
                         (set (get bmap b))
