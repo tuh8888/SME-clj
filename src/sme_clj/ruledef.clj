@@ -72,7 +72,8 @@
 
 (def mops-literal-similarity
   (vals-as-keys :name
-    [(make-rule :compatible-args :intern
+    [(:same-functor literal-similarity)
+     (make-rule :compatible-args :intern
        (fn [kg mh]
          (->> mh
            (map (partial types/expression-args kg))
@@ -80,7 +81,7 @@
            (apply extract-common-role-fillers)
            (filter (fn [new-mh]
                      ((some-fn
-                        (complement (partial some (partial types/expression? kg)))
+                        (partial every? (complement (partial types/expression? kg)))
                         (partial every? #(mops/abstr? kg % ::types/Function)))
                       new-mh))))))
 
