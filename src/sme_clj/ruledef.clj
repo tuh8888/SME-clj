@@ -73,6 +73,7 @@
 (def mops-literal-similarity
   (vals-as-keys :name
     [(:same-functor literal-similarity)
+
      (make-rule :compatible-args :intern
        (fn [kg mh]
          (->> mh
@@ -81,8 +82,9 @@
            (apply extract-common-role-fillers)
            (filter (fn [new-mh]
                      ((some-fn
-                        (partial every? (complement (partial types/expression? kg)))
-                        (partial every? #(mops/abstr? kg % ::types/Function)))
+                        (partial every? (every-pred (complement (partial types/expression? kg))
+                                    (complement #{::types/Entity})))
+                        (partial every? (comp #(mops/abstr? kg % ::types/Function) (partial types/expression-functor kg))))
                       new-mh))))))
 
      ;; this rule not tested much yet
@@ -105,3 +107,5 @@
                        (= ::types/Function (types/lookup kg bchild :functor :type))
                        (= ::types/Function (types/lookup kg tchild :functor :type))))
                (types/make-match-hypothesis bchild tchild))))))]))
+
+; LocalWords:  mh

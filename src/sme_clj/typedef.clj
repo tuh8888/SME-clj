@@ -73,7 +73,7 @@
     (let [mop (mops/get-mop kg k)]
       (->> mop
         mops/roles
-        (remove (conj mops/reserved-roles :concept-graph))
+        (remove (into mops/reserved-roles [:concept-graph :functor]))
         (map (partial mops/slot mop))
         (map (juxt first (comp first second)))))))
 

@@ -86,7 +86,9 @@
 
 (def mops-kg (-> (reduce (partial apply make-mop)
                    (mr/make-mop-map)
-                   [[::types/Functor ::types/Expression]
+                   [[::types/Expression :thing]
+                    [::types/Entity :thing]
+                    [::types/Functor ::types/Expression]
                     [::types/Relation ::types/Functor]
                     [::types/Attribute ::types/Functor]
                     [::types/Function ::types/Functor]
