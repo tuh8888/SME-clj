@@ -46,8 +46,8 @@
                                                        (expression? kg bchild)
                                                        (expression? kg tchild)))
                                                 (and
-                                                  (= :function (types/lookup kg bchild :functor :type))
-                                                  (= :function (types/lookup kg tchild :functor :type))))
+                                                  (= ::types/Function (types/lookup kg bchild :functor :type))
+                                                  (= ::types/Function (types/lookup kg tchild :functor :type))))
                                           (types/make-match-hypothesis bchild tchild)))
                                    (types/lookup kg base :args)
                                    (types/lookup kg target :args)))))
@@ -69,8 +69,8 @@
                                            (and
                                              (expression? kg bchild)
                                              (expression? kg tchild)
-                                             (= :function (types/lookup kg bchild :functor :type))
-                                             (= :function (types/lookup kg tchild :functor :type))))
+                                             (= ::types/Function (types/lookup kg bchild :functor :type))
+                                             (= ::types/Function (types/lookup kg tchild :functor :type))))
                                      (types/make-match-hypothesis bchild tchild))))))]))
 
 (defn mop-expression? [kg k]
@@ -108,8 +108,8 @@
                                                                 (mop-expression? kg bchild)
                                                                 (mop-expression? kg tchild)))
                                                          (and
-                                                           (mops/abstr? kg bchild :Function)
-                                                           (mops/abstr? kg tchild :Function)))
+                                                           (mops/abstr? kg bchild ::types/Function)
+                                                           (mops/abstr? kg tchild ::types/Function)))
                                                    (types/make-match-hypothesis bchild tchild)))))))))
 
                                 ;; this rule not tested much yet
@@ -129,6 +129,6 @@
                                                 (and
                                                   (expression? kg bchild)
                                                   (expression? kg tchild)
-                                                  (= :function (types/lookup kg bchild :functor :type))
-                                                  (= :function (types/lookup kg tchild :functor :type))))
+                                                  (= ::types/Function (types/lookup kg bchild :functor :type))
+                                                  (= ::types/Function (types/lookup kg tchild :functor :type))))
                                           (types/make-match-hypothesis bchild tchild))))))]))

@@ -17,13 +17,13 @@
    :slots slots})
 
 (defn make-predicate [name & {:keys [type arity ordered?]
-                              :or   {type :relation, arity 2, ordered? true}}]
+                              :or   {type ::Relation, arity 2, ordered? true}}]
   {:name     name
    :type     type
-   :arity    (if (= type :relation) 1 arity)
+   :arity    (if (= type ::Relation) 1 arity)
    :ordered? ordered?})
 
-(defn predicate? [{:keys [type]}] (#{:function :attribute :relation} type))
+(defn predicate? [{:keys [type]}] (#{::Function ::Attribute ::Relation} type))
 
 ;;; EXPRESSION
 

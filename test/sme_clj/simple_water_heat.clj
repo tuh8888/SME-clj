@@ -34,15 +34,15 @@
                        [:Pipe]]
                    (map (partial apply types/make-entity))
                    (util/vals-as-keys :name)))
-          (merge (->> [[:flow :type :relation :arity 4]
-                       [:greater :type :relation :arity 2]
-                       [:cause :type :relation :arity 2]
-                       [:temperature :type :function]
-                       [:flat-top :type :function]
-                       [:pressure :type :function]
-                       [:diameter :type :function]
-                       [:liquid :type :attribute]
-                       [:clear :type :attribute]]
+          (merge (->> [[:flow :type ::types/Relation :arity 4]
+                       [:greater :type ::types/Relation :arity 2]
+                       [:cause :type ::types/Relation :arity 2]
+                       [:temperature :type ::types/Function]
+                       [:flat-top :type ::types/Function]
+                       [:pressure :type ::types/Function]
+                       [:diameter :type ::types/Function]
+                       [:liquid :type ::types/Attribute]
+                       [:clear :type ::types/Attribute]]
                    (map (partial apply types/make-predicate))
                    (util/vals-as-keys :name)))
           (add-concept-graph :simple-water-flow
@@ -86,25 +86,25 @@
                                                 :e2 ::types/Expression}]
                     [:greater ::types/Expression {:e1 ::types/Expression
                                                   :e2 ::types/Expression}]
-                    [:flow ::types/Expression {:e1 :Entity
-                                               :e2 :Entity
-                                               :e3 :Entity
-                                               :e4 :Entity}]
-                    [:Function ::types/Expression]
-                    [:pressure :Function {:e1 :Entity}]
-                    [:diameter :Function {:e1 :Entity}]
-                    [:clear ::types/Expression {:e1 :Entity}]
-                    [:temperature :Function {:e1 :Entity}]
-                    [:flat-top :Function {:e1 :Entity}]
-                    [:liquid ::types/Expression {:e1 :Entity}]
-                    [:Coffee :Entity]
-                    [:Water :Entity]
-                    [:Heat :Entity]
-                    [:Pipe :Entity]
-                    [:Vial :Entity]
-                    [:Icecube :Entity]
-                    [:Bar :Entity]
-                    [:Beaker :Entity]])
+                    [:flow ::types/Expression {:e1 ::types/Entity
+                                               :e2 ::types/Entity
+                                               :e3 ::types/Entity
+                                               :e4 ::types/Entity}]
+                    [::types/Function ::types/Expression]
+                    [:pressure ::types/Function {:e1 ::types/Entity}]
+                    [:diameter ::types/Function {:e1 ::types/Entity}]
+                    [:clear ::types/Expression {:e1 ::types/Entity}]
+                    [:temperature ::types/Function {:e1 ::types/Entity}]
+                    [:flat-top ::types/Function {:e1 ::types/Entity}]
+                    [:liquid ::types/Expression {:e1 ::types/Entity}]
+                    [:Coffee ::types/Entity]
+                    [:Water ::types/Entity]
+                    [:Heat ::types/Entity]
+                    [:Pipe ::types/Entity]
+                    [:Vial ::types/Entity]
+                    [:Icecube ::types/Entity]
+                    [:Bar ::types/Entity]
+                    [:Beaker ::types/Entity]])
 
                (mops-add-concept-graph :simple-water-flow
                  [:flat-top [:e1 :Water]]
