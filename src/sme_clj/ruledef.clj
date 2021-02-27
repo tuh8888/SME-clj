@@ -1,12 +1,10 @@
 (ns sme-clj.ruledef
   "Structure mapping matching rule definitions. Contains both basic literal
    similarity rules and macros for defining new rulesets."
-  (:require [mops :as mops]
+  (:require [clojure.set :as set]
             [sme-clj.typedef :as types]
-            [mop-records]
-            [sme-clj.util :refer [vals-as-keys]]
-            [clojure.set :as set])
-  (:import [mop_records MopMap]))
+            [sme-clj.util :refer [vals-as-keys]])
+  (:import mop_records.MopMap))
 
 ;;; Rule definition helpers
 (defn apply-rule
@@ -84,31 +82,4 @@
                        (= ::types/Function (types/lookup kg tchild :functor :type))))
                (types/make-match-hypothesis bchild tchild))))))]))
 
-
-(def mops-literal-similarity
-  (vals-as-keys :name
-    [(:same-functor literal-similarity)
-     (:compatible-args literal-similarity)
-
-     ;; this rule not tested much yet
-     (make-rule :commutative-args :intern
-       (fn [kg [base target]]
-         (when (and
-                 (types/expression? kg base)
-                 (types/expression? kg target)
-                 (not (types/lookup kg base :functor :ordered?))
-                 (not (types/lookup kg target :functor :ordered?)))
-           (for [bchild (types/lookup kg base :args)
-                 tchild (types/lookup kg target :args)]
-             (when (or
-                     (not (or
-                            (types/expression? kg bchild)
-                            (types/expression? kg tchild)))
-                     (and
-                       (types/expression? kg bchild)
-                       (types/expression? kg tchild)
-                       (= ::types/Function (types/lookup kg bchild :functor :type))
-                       (= ::types/Function (types/lookup kg tchild :functor :type))))
-               (types/make-match-hypothesis bchild tchild))))))]))
-
-; LocalWords:  mh
+                                        ; LocalWords:  mh

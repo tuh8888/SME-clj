@@ -1,8 +1,7 @@
 (ns sme-clj.ruledef-test
   (:require [clojure.test :as t]
             [sme-clj.ruledef :as sut]
-            [sme-clj.simple-water-heat :refer [kg mops-kg]]
-            [sme-clj.typedef :as types]))
+            [sme-clj.simple-water-heat :refer [kg mops-kg]]))
 
 (def expected-same-functor-matches
   #{[:diameter-Vial :diameter-Vial]
@@ -106,15 +105,7 @@
 
 (t/deftest literal-similarity-test
 
-  (let [expressions      (->> mops-kg
-                           :mops
-                           vals
-                           (filter :concept-graph)
-                           (map :id))
-        mops-mhs         (for [b expressions
-                               t expressions]
-                           [b t])
-        sme-mhs          (for [b (keys kg)
+  (let [mhs              (for [b (keys kg)
                                t (keys kg)]
                            [b t])
         wrapped-rule     (fn [rules rule-id kg mhs]
@@ -126,21 +117,21 @@
     (t/testing "Same functor"
       (t/testing "SME"
         (t/is (= expected-same-functor-matches
-                (wrapped-rule-lit :same-functor kg sme-mhs))))
+                (wrapped-rule-lit :same-functor kg mhs))))
       (t/testing "Mops"
         (t/is (= expected-same-functor-matches
-                (wrapped-rule-lit :same-functor mops-kg sme-mhs)))))
+                (wrapped-rule-lit :same-functor mops-kg mhs)))))
 
     (t/testing "Compatible args"
       (t/testing "SME"
         (t/is (= expected-compatible-args-matches
-                (wrapped-rule-lit :compatible-args kg sme-mhs))))
+                (wrapped-rule-lit :compatible-args kg mhs))))
       (t/testing "Mops"
         (t/is (= expected-compatible-args-matches
-                (wrapped-rule-lit :compatible-args mops-kg sme-mhs)))))
+                (wrapped-rule-lit :compatible-args mops-kg mhs)))))
 
     (t/testing "Commutative args"
       (t/testing "SME"
         (t/is (= expected-commutative-args
-                (wrapped-rule-lit :commutative-args kg sme-mhs))))
+                (wrapped-rule-lit :commutative-args kg mhs))))
       (t/testing "Mops"))))

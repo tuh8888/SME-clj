@@ -61,7 +61,7 @@
             (sut/create-match-hypotheses kg :simple-water-flow :simple-heat-flow rules/literal-similarity))))
   (t/testing "Mops"
     (t/is (= expected-match-hypotheses
-            (sut/create-match-hypotheses mops-kg :simple-water-flow :simple-heat-flow rules/mops-literal-similarity)))))
+            (sut/create-match-hypotheses mops-kg :simple-water-flow :simple-heat-flow rules/literal-similarity)))))
 
 (t/deftest find-children-test
   (let [expected-found-children1 #{}
