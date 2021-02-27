@@ -315,9 +315,9 @@
 
 (defn gmap-inferences
   "Generates maximal inferences for a given gmap, based on SME algorithm."
-  [kg {base :graph} gmap]
+  [kg base-name gmap]
   (let [mh-bases  (set (map first gmap))
-        unmatched (set/difference (set (keys base)) mh-bases)
+        unmatched (set/difference (set (get-concept-graph-expressions kg base-name)) mh-bases)
         ancestors (set/select #(types/ancestor? kg mh-bases %) unmatched)]
     (set/difference (set (mapcat (partial types/get-descendants kg) ancestors))
       mh-bases)))
@@ -377,10 +377,10 @@
 (defn finalize-gmaps
   "Computes additional information about the gmaps we have found and stores it
   in the gmaps."
-  [kg {base :name} {target :name} mhs gmaps]
+  [kg base-name target-name mhs gmaps]
   (->> gmaps
     (map #(score-gmap kg mhs %)) ; scores
-    (map #(assoc % :mapping {:base base :target target}))))
+    (map #(assoc % :mapping {:base base-name :target target-name}))))
 
 (defn perform-inference
   "
