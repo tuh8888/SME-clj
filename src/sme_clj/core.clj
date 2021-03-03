@@ -99,7 +99,7 @@
   (->> kg
     vals
     (filter #(= concept-graph-name (:concept-graph %)))
-    (map :name)))
+    (map :id)))
 
 (defn create-match-hypotheses
   "Apply rules from a ruleset to base and target to generate match hypotheses

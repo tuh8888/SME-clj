@@ -13,11 +13,10 @@
 
 (def rule-types #{:intern :filter})
 
-(defn make-rule [name type body]
-  {:name name
+(defn make-rule [id type body]
+  {:id id
    :type type
    :body body})
-
 
 (defmulti extract-common-role-fillers (comp type first vector))
 
@@ -38,7 +37,7 @@
 
 ;; As in SME, basic analogical matching rules, direct port
 (def literal-similarity
-  (vals-as-keys :name
+  (vals-as-keys :id
     [(make-rule :same-functor :filter
        (fn [kg mh]
          [(when (let [functors (map (partial types/expression-functor kg) mh)]

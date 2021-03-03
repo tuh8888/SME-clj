@@ -36,7 +36,7 @@
           kg
           (->> (:graph concept-graph)
             (map-vals #(assoc % :concept-graph k))))
-      (assoc k {:name k
+      (assoc k {:id k
                 :type :ConceptGraph
                 :spec (:spec concept-graph)}))))
 (def kg (-> {}
@@ -50,7 +50,7 @@
                        [:Vial]
                        [:Pipe]]
                    (map (partial apply types/make-entity))
-                   (util/vals-as-keys :name)))
+                   (util/vals-as-keys :id)))
           (merge (->> [[:flow :type ::types/Relation :arity 4]
                        [:greater :type ::types/Relation :arity 2]
                        [:cause :type ::types/Relation :arity 2]
@@ -61,7 +61,7 @@
                        [:liquid :type ::types/Attribute]
                        [:clear :type ::types/Attribute]]
                    (map (partial apply types/make-predicate))
-                   (util/vals-as-keys :name)))
+                   (util/vals-as-keys :id)))
           (add-concept-graph :simple-water-flow
             [:cause
              [:greater [:pressure :Beaker] [:pressure :Vial]]

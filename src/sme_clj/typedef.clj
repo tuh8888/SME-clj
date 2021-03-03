@@ -15,14 +15,14 @@
 ;; This base Entity is primarily here for testing mapping mechanics. Real
 ;; concept graphs will have specialised data types with value slots.
 
-(defn make-entity [name & slots]
-  {:name  name
+(defn make-entity [id & slots]
+  {:id    id
    :type  :entity
    :slots slots})
 
-(defn make-predicate [name & {:keys [type arity ordered?]
-                              :or   {type ::Relation, arity 2, ordered? true}}]
-  {:name     name
+(defn make-predicate [id & {:keys [type arity ordered?]
+                            :or   {type ::Relation, arity 2, ordered? true}}]
+  {:id id
    :type     type
    :arity    (if (= type ::Relation) 1 arity)
    :ordered? ordered?})
@@ -41,7 +41,7 @@
 ;; of the expressions within a graph, but in practice often is.
 
 (defn make-expression [id functor & args]
-  {:name    id
+  {:id      id
    :type    ::Expression
    :functor functor
    :args    args})
@@ -149,19 +149,49 @@
     (apply str)
     keyword))
 
-(defn make-concept-graph [name & expressions]
+(defmulti make-concept-graph (comp type first vector))
+
+(defmethod make-concept-graph :default
+  [id & expressions]
   (let [e-map (atom [])]
-    (letfn [(add-expr! [x]
-              (let [new-x (combine-ids x)]
-                (swap! e-map conj (apply make-expression new-x x) )
-                new-x))]
+    (letfn [(add-expr! [args]
+              (let [id (combine-ids args)]
+                (swap! e-map conj (apply make-expression id args) )
+                id))]
       ;; Doseq is used here instead of passing all expressions to postwalk to prevent the
       ;; entire set of expressions for the concept graph being counted as an expression.
       (doseq [expression expressions]
         (walk/postwalk #(cond->> % (coll? %) add-expr!) expression))
-      {:name  name
-       :graph (util/vals-as-keys :name @e-map)
+      {:id    id
+       :graph (util/vals-as-keys :id @e-map)
        :spec  expressions})))
+
+(defn make-mop-expression
+  [id ])
+
+(defmethod make-concept-graph MopMap
+  [m concept-graph-id & expressions]
+  (let [e-map (atom [])]
+    (letfn [(add-expr! [args]
+              (let [id (combine-ids args)]
+                (swap! e-map conj (apply make-expression id args) )
+                id))]
+      ;; Doseq is used here instead of passing all expressions to postwalk to prevent the
+      ;; entire set of expressions for the concept graph being counted as an expression.
+      (doseq [expression expressions]
+        (walk/postwalk #(cond->> % (coll? %) add-expr!) expression))
+      (reduce (fn [m {:keys [functor id args]}]
+                (let [mop (mops/->mop id (->> args
+                                           (map-indexed (comp (juxt (comp keyword (partial str "e") inc first)
+                                                             second)
+                                                          vector))
+                                           (into {})))]
+                  (-> m
+                    (mops/add-mop mop)
+                    (mops/add-slot-to-mop id :parents ::Expression)
+                    (mops/add-slot-to-mop id :functor functor)
+                    (mops/add-slot-to-mop id :concept-graph concept-graph-id))))
+        (mops/add-mop m (mops/->mop concept-graph-id nil)) @e-map))))
 
 ;;; MATCH HYPOTHESIS
 
