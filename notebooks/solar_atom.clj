@@ -25,10 +25,37 @@
         (uber/add-nodes-with-attrs g [source {:color (cond
                                                        (#{#{:solar-system}} concept-graph)    :blue
                                                        (#{#{:rutherford-atom}} concept-graph) :red
-                                                       :else                                  :green)}])
+                                                       (nil? concept-graph)                   :black
+                                                       :else                                  :purple)}])
         (dissoc mop :id :inst? :names :concept-graph (when-not include-abstrs? :parents))))
     (uber/multidigraph)
     (:mops m)))
+
+(defn visualize-analogy
+  [kg]
+  (let [functors       (->> kg
+                         mops/mop-ids
+                         (filter #(mops/abstr? kg % ::types/Functor)))
+        concept-graphs (->> kg
+                         mops/mop-ids
+                         (filter #(mops/abstr? kg % ::types/ConceptGraph)))
+        boring-mops    (-> (mr/make-mop-map)
+                         types/initialize-kg
+                         :mops
+                         keys
+                         set
+                         (into functors))]
+    (-> kg
+      (update :mops (fn [mops]
+                      (map-vals
+                        (fn [mop]
+                          (->> (dissoc mop :id :inst? :names :functor)
+                            (remove (fn [[_ filler]]
+                                      (some boring-mops (cond-> filler (not (coll? filler)) vector))))
+                            (into {})))
+                        (apply dissoc mops (into boring-mops concept-graphs)))))
+      as-graph
+      uber/viz-graph)))
 
 (def kg
   (as-> (mr/make-mop-map) m
@@ -76,29 +103,19 @@
     (mops/infer-hierarchy m)))
 
 ;; Visualize the kg
-#_(let [boring-mops (-> (mr/make-mop-map)
-                      types/initialize-kg
-                      :mops
-                      keys
-                      set)]
-    (-> kg
-      (update :mops (fn [mops]
-                      (map-vals
-                        (fn [mop]
-                          (->> (dissoc mop :id :inst? :names)
-                            (remove (fn [[_ filler]]
-                                      (some boring-mops (cond-> filler (not (coll? filler)) vector))))
-                            (into {})))
-                        (apply dissoc mops (into boring-mops [:solar-system :rutherford-atom])))))
-      as-graph
-      uber/viz-graph))
+(visualize-analogy kg)
 
-(->> rules/analogy
-  (sme/match kg :solar-system :rutherford-atom)
-  (sme/perform-inference kg :solar-system)
-  (sort-by :score)
-  (reverse)
-  (map :transferred))
+(def inferences (->> rules/analogy
+                  (sme/match kg :solar-system :rutherford-atom)
+                  (sme/perform-inference kg :solar-system)
+                  (sort-by :score)
+                  (reverse)
+                  (map :transferred)))
+
+(def new-kg  (-> (apply types/add-concept-graph kg :new-inferences (first inferences))
+               mops/infer-hierarchy))
+
+(visualize-analogy new-kg)
 
 #_(rules/apply-rule kg (rules/analogy :compatible-args) [:cause-gravity-mass-Sun-mass-Planet-attracts-Sun-Planet
                                                          :cause-opposite-sign-charge-Nucleus-charge-Electron-attracts-Nucleus-Electron])
