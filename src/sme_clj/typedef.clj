@@ -252,7 +252,7 @@
                 id))]
       (doseq [expression expressions]
         (walk/postwalk #(cond->> % (coll? %) add-expr!) expression))
-      (mops/add-mop @e-map (mops/->mop concept-graph-id nil)))))
+      (mops/add-mop @e-map (mops/->mop concept-graph-id {:parents #{::ConceptGraph}})))))
 
 ;;; GMAP
 

@@ -109,9 +109,10 @@
                                                  :functor       #{:flow}
                                                  :names         #{}
                                                  :inst?         false}
-                   :simple-water-flow           {:id    :simple-water-flow
-                                                 :inst? false
-                                                 :names #{}}
+                   :simple-water-flow           {:id      :simple-water-flow
+                                                 :parents #{::sut/ConceptGraph}
+                                                 :inst?   false
+                                                 :names   #{}}
                    :diameter-Beaker             {:id            :diameter-Beaker
                                                  :inst?         false
                                                  :e1            #{:Beaker}
@@ -198,7 +199,10 @@
             (->> (into {}))
             (update :mops (partial map-vals (partial into {}))))))
     (is (= {:ids  {}
-            :mops {:simple-heat-flow {:id :simple-heat-flow :inst? false :names #{}}
+            :mops {:simple-heat-flow {:id      :simple-heat-flow
+                                      :inst?   false
+                                      :names   #{}
+                                      :parents #{::sut/ConceptGraph}}
                    :liquid-Coffee    {:id            :liquid-Coffee
                                       :inst?         false
                                       :e1            #{:Coffee}
