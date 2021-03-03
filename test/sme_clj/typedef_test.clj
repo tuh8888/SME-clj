@@ -1,7 +1,7 @@
 (ns sme-clj.typedef-test
   (:require [clojure.test :refer [deftest is testing]]
             [mop-records :as mr]
-            [sme-clj.typedef :as types]))
+            [sme-clj.typedef :as sut]))
 
 (defn map-vals
   [f m]
