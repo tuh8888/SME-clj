@@ -52,6 +52,16 @@
             (get-in kg [k prop]))
     k props))
 
+(defmulti attribute? (comp type first vector))
+
+(defmethod attribute? :default
+  [kg k]
+  ((comp (partial = ::Attribute) #(lookup kg % :type)) k))
+
+(defmethod attribute? MopMap
+  [kg k]
+  (mops/abstr? kg k ::Attribute))
+
 (defmulti entity? (comp type first vector))
 
 (defmethod entity? :default

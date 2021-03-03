@@ -35,30 +35,78 @@
                        (apply set/intersection))]
     (map (apply juxt ms) common-roles)))
 
+(defn ordered-functor?
+  [kg k]
+  (when-let [functor (types/expression-functor kg k)]
+    (types/ordered? kg functor)))
+
 ;; As in SME, basic analogical matching rules, direct port
 (def literal-similarity
   (vals-as-keys :id
     [(make-rule :same-functor :filter
        (fn [kg mh]
-         [(when (let [functors (map (partial types/expression-functor kg) mh)]
-                  (and (every? identity functors)
-                    (apply = functors)))
+         [(when (->> mh
+                  (map (partial types/expression-functor kg))
+                  ((every-pred
+                     (partial every? some?)
+                     (partial apply =))))
             mh)]))
 
      (make-rule :compatible-args :intern
        (fn [kg mh]
-         (when (every? #(when-let [functor (types/expression-functor kg %)]
-                          (types/ordered? kg functor))
-                 mh)
+         (when (every? (partial ordered-functor? kg) mh)
            (->> mh
              (map (partial types/expression-args kg))
              (apply extract-common-role-fillers kg)
-             (filter (fn [mh]
-                       ((some-fn
-                          (partial every? (every-pred (complement (partial types/expression? kg))
-                                      (complement #{::types/Entity})))
-                          (partial every? (comp (partial types/type-function? kg) (partial types/expression-functor kg))))
-                        mh)))))))
+             (filter (some-fn
+                       (partial every? (every-pred (partial types/entity? kg) (complement #{::types/Entity})))
+                       (partial every? (comp (partial types/type-function? kg) (partial types/expression-functor kg)))))))))
+
+     ;; this rule not tested much yet
+     (make-rule :commutative-args :intern
+       (fn [kg mh]
+         (when (not-any? (partial ordered-functor? kg) mh)
+           (->> mh
+             (map (partial types/expression-args kg))
+             (apply extract-common-role-fillers kg)
+             (filter (some-fn
+                       (partial not-any? (partial types/expression? kg))
+                       (every-pred
+                         (partial every? (partial types/expression? kg))
+                         (partial every? (comp (partial types/type-function? kg) (partial types/expression-functor kg))))))))))]))
+
+(def analogy
+  (vals-as-keys :id
+    [(make-rule :same-functor :filter
+       (fn [kg [base _ :as mh]]
+         [(when (and
+                  (->> mh
+                    (map (partial types/expression-functor kg))
+                    ((every-pred
+                       (partial every? some?)
+                       (partial apply =))))
+                  (->> base
+                    (types/expression-functor kg)
+                    (types/attribute? kg)
+                    not))
+            mh)]))
+
+     (make-rule :compatible-args :intern
+       (fn [kg mh]
+         (when (every? ordered-functor? mh)
+           (->> mh
+             (map (partial types/expression-args kg))
+             (apply extract-common-role-fillers kg)
+             (filter (some-fn
+                       (partial every? (every-pred (partial types/entity? kg) (complement #{::types/Entity})))
+                       (partial every? (comp (partial types/type-function? kg) (partial types/expression-functor kg)))
+                       (fn [[base _ :as mh]]
+                         (and (->> base
+                                (types/expression-functor kg)
+                                (types/attribute? kg))
+                           (->> mh
+                             (map (partial types/expression-functor kg))
+                             (apply =))))))))))
 
      ;; this rule not tested much yet
      (make-rule :commutative-args :intern
@@ -66,7 +114,7 @@
          (when (and
                  (types/expression? kg base)
                  (types/expression? kg target)
-                 (not (types/lookup kg base :functor :ordered?))
+                 (not (ordered-functor? kg base))
                  (not (types/lookup kg target :functor :ordered?)))
            (for [bchild (types/lookup kg base :args)
                  tchild (types/lookup kg target :args)]
