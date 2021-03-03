@@ -90,7 +90,7 @@
 
 (defn attribute-function?
   [kg]
-  (comp (types/attribute? kg) (types/expression-functor kg)))
+  (comp (partial types/attribute? kg) (partial types/expression-functor kg)))
 
 (def analogy
   (vals-as-keys :id
