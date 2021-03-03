@@ -82,22 +82,24 @@
                  target (types/expression-args kg target)
                  :let   [mh [base target]]
                  :when  ((some-fn
-                           (partial not-any? (partial types/expression? kg))
+                           (partial every? (strict-entity? kg))
                            (partial every? (functor-function? kg)))
                          mh)]
              mh))))]))
 
 
-(defn attribute-function?
+(defn attribute-functor?
   [kg]
   (comp (partial types/attribute? kg) (partial types/expression-functor kg)))
 
 (def analogy
   (vals-as-keys :id
     [(make-rule :same-functor :filter
-       (fn [kg [base _ :as mh]]
-         [(when (and (apply same-functor? kg mh)
-                  ((complement (attribute-function? kg)) base))
+       (fn [kg mh]
+         [(when ((every-pred
+                   (partial apply same-functor? kg)
+                   (partial every? (complement (attribute-functor? kg))))
+                 mh)
             mh)]))
 
      (make-rule :compatible-args :intern
@@ -109,9 +111,9 @@
              (filter (some-fn
                        (partial every? (strict-entity? kg))
                        (partial every? (functor-function? kg))
-                       (fn [[base _ :as mh]]
-                         (and ((attribute-function? kg) base)
-                           (apply same-functor? kg mh)))))))))
+                       (every-pred
+                         (partial every? (attribute-functor? kg))
+                         (partial apply same-functor? kg))))))))
 
      ;; this rule not tested much yet
      (make-rule :commutative-args :intern
@@ -120,12 +122,13 @@
            (for [base   (types/expression-args kg base)
                  target (types/expression-args kg target)
                  :let   [mh [base target]]
-                 :when  (or ((some-fn
-                               (partial every? (strict-entity? kg))
-                               (partial every? (functor-function? kg)))
-                             mh)
-                          (and ((attribute-function? kg) base)
-                            (apply same-functor? kg mh)))]
+                 :when  ((some-fn
+                           (partial every? (strict-entity? kg))
+                           (partial every? (functor-function? kg))
+                           (every-pred
+                             (partial every? (attribute-functor? kg))
+                             (partial apply same-functor? kg)))
+                         mh)]
              mh))))]))
 
                                         ; LocalWords:  mh
