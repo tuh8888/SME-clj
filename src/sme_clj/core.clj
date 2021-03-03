@@ -70,7 +70,6 @@
            result (hash-set)]
       (let [[mh & rest-mhs] mhs]
         (if mh
-          ;; test this MH on all intern rules, adding new matches to todo list
           (let [result  (conj result mh)
                 new-mhs (->> rules
                           (mapcat #(rules/apply-rule kg % mh))
@@ -108,7 +107,6 @@
   (->> (for [b (get-concept-graph-expressions kg base)
              t (get-concept-graph-expressions kg target)]
          [b t])
-    (map (partial apply types/make-match-hypothesis))
     (apply-filter-rules kg rules)
     (apply-intern-rules kg rules)))
 
