@@ -1,8 +1,9 @@
 (ns sme-clj.core-test
-  (:require [clojure.test :as t]
+  (:require [clojure.test :refer [testing deftest is]]
             [sme-clj.core :as sut]
             [sme-clj.ruledef :as rules]
-            [sme-clj.simple-water-heat :refer [kg mops-kg]]))
+            [sme-clj.simple-water-heat :refer [kg mops-kg]]
+            [mops :as mops]))
 
 (def expected-concept-graph-expressions
   #{:diameter-Vial
@@ -23,20 +24,20 @@
     :flat-top-Water
     :flow-Coffee-Icecube-Heat-Bar})
 
-(t/deftest get-concept-graph-expressions-test
-  (t/testing "SME"
-    (t/is (= expected-concept-graph-expressions
-            (into #{}
-              (lazy-cat
-                (sut/get-concept-graph-expressions kg :simple-water-flow)
-                (sut/get-concept-graph-expressions kg :simple-heat-flow))))))
+(deftest get-concept-graph-expressions-test
+  (testing "SME"
+    (is (= expected-concept-graph-expressions
+          (into #{}
+            (lazy-cat
+              (sut/get-concept-graph-expressions kg :simple-water-flow)
+              (sut/get-concept-graph-expressions kg :simple-heat-flow))))))
 
-  (t/testing "Mops"
-    (t/is (= expected-concept-graph-expressions
-            (into #{}
-              (lazy-cat
-                (sut/get-concept-graph-expressions mops-kg :simple-heat-flow)
-                (sut/get-concept-graph-expressions mops-kg :simple-water-flow)))))))
+  (testing "Mops"
+    (is (= expected-concept-graph-expressions
+          (into #{}
+            (lazy-cat
+              (sut/get-concept-graph-expressions mops-kg :simple-heat-flow)
+              (sut/get-concept-graph-expressions mops-kg :simple-water-flow)))))))
 
 (def expected-match-hypotheses #{[:Water :Heat]
                                  [:Water :Coffee]
@@ -53,27 +54,27 @@
                                  [:pressure-Vial :temperature-Icecube]
                                  [:Vial :Icecube]})
 
-(t/deftest create-match-hypotheses-test
+(deftest create-match-hypotheses-test
   ;; Water flow is the base heat flow the target
-  (t/testing "SME"
-    (t/is (= expected-match-hypotheses
+  (testing "SME"
+    (is (= expected-match-hypotheses
             (sut/create-match-hypotheses kg :simple-water-flow :simple-heat-flow rules/literal-similarity))))
-  (t/testing "Mops"
-    (t/is (= expected-match-hypotheses
+  (testing "Mops"
+    (is (= expected-match-hypotheses
             (sut/create-match-hypotheses mops-kg :simple-water-flow :simple-heat-flow rules/literal-similarity)))))
 
-(t/deftest find-children-test
+(deftest find-children-test
   (let [expected-found-children1 #{}
         expected-found-children2 #{[:Beaker :Coffee] [:Water :Heat] [:Pipe :Bar] [:Vial :Icecube]}  ]
-    (t/testing "SME"
-      (t/is (= expected-found-children1
+    (testing "SME"
+      (is (= expected-found-children1
               (set (sut/find-children kg expected-match-hypotheses [:Beaker :Coffee]))))
-      (t/is (= expected-found-children2
+      (is (= expected-found-children2
               (set (sut/find-children kg expected-match-hypotheses [:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar])))))
-    (t/testing "Mops"
-      (t/is (= expected-found-children1
+    (testing "Mops"
+      (is (= expected-found-children1
               (set (sut/find-children mops-kg expected-match-hypotheses [:Beaker :Coffee]))))
-      (t/is (= expected-found-children2
+      (is (= expected-found-children2
               (set (sut/find-children mops-kg expected-match-hypotheses [:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar])))))))
 
 (def expected-found-roots #{[:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
@@ -81,12 +82,12 @@
                             [:greater-pressure-Beaker-pressure-Vial :greater-temperature-Coffee-temperature-Icecube]
                             [:liquid-Water :liquid-Coffee]
                             [:flat-top-Water :flat-top-Coffee]})
-(t/deftest find-roots-test
-  (t/testing "SME"
-    (t/is (= expected-found-roots
+(deftest find-roots-test
+  (testing "SME"
+    (is (= expected-found-roots
             (set (sut/find-roots kg expected-match-hypotheses)))))
-  (t/testing "Mops"
-    (t/is (= expected-found-roots
+  (testing "Mops"
+    (is (= expected-found-roots
             (set (sut/find-roots mops-kg expected-match-hypotheses))))))
 
 (def diameter-gmap #{[:greater-diameter-Beaker-diameter-Vial
@@ -119,22 +120,22 @@
                                       liquid-gmap
                                       diameter-gmap])
 
-(t/deftest split-into-mhs-sets-test
-  (t/testing "SME"
-    (t/is (= expected-computed-initial-gmaps
+(deftest split-into-mhs-sets-test
+  (testing "SME"
+    (is (= expected-computed-initial-gmaps
             (sut/split-into-mhs-sets kg expected-match-hypotheses))))
 
-  (t/testing "Mops"
-    (t/is (= expected-computed-initial-gmaps
+  (testing "Mops"
+    (is (= expected-computed-initial-gmaps
             (sut/split-into-mhs-sets mops-kg expected-match-hypotheses)))))
 
 (def expected-combined-gmaps [[pressure-gmap flow-gmap]
                               [flow-gmap diameter-gmap]
                               [flat-top-gmap liquid-gmap]])
 
-(t/deftest concistent-combs-of-mhs-sets-test
-  (t/testing "SME and Mops"
-    (t/is (= expected-combined-gmaps
+(deftest concistent-combs-of-mhs-sets-test
+  (testing "SME and Mops"
+    (is (= expected-combined-gmaps
             (sut/consistent-combs-of-mhs-sets expected-match-hypotheses expected-computed-initial-gmaps)))))
 
 (def expected-merged-gmaps
@@ -160,9 +161,9 @@
      [:liquid-Water :liquid-Coffee]
      [:flat-top-Water :flat-top-Coffee]}])
 
-(t/deftest merge-mhs-sets-test
-  (t/testing "SME"
-    (t/is (= expected-merged-gmaps
+(deftest merge-mhs-sets-test
+  (testing "SME"
+    (is (= expected-merged-gmaps
             (sut/merge-mhs-sets expected-combined-gmaps)))))
 
 (def expected-finalized-gmaps (map (fn [mhs score]
@@ -179,13 +180,13 @@
                                   :emap-matches 0
                                   :mapping      {:base :simple-water-flow :target :simple-heat-flow}}]))
 
-(t/deftest finalize-gmaps-tets
-  (t/testing "SME"
-    (t/is (= expected-finalized-gmaps
+(deftest finalize-gmaps-tets
+  (testing "SME"
+    (is (= expected-finalized-gmaps
             (sut/finalize-gmaps kg :simple-water-flow :simple-heat-flow expected-match-hypotheses expected-merged-gmaps))))
 
-  (t/testing "Mops"
-    (t/is (= expected-finalized-gmaps
+  (testing "Mops"
+    (is (= expected-finalized-gmaps
             (sut/finalize-gmaps mops-kg :simple-water-flow :simple-heat-flow expected-match-hypotheses expected-merged-gmaps)))))
 
 (def expected-generated-inferences [#{:cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe}
@@ -195,15 +196,15 @@
                                       :greater-pressure-Beaker-pressure-Vial}
                                     #{}])
 
-(t/deftest generate-inferences-test
-  (t/testing "SME"
-    (t/is (= expected-generated-inferences
+(deftest generate-inferences-test
+  (testing "SME"
+    (is (= expected-generated-inferences
             (->> expected-finalized-gmaps
               (sut/generate-inferences kg :simple-water-flow)
               (map :inferences)))))
 
-  (t/testing "Mops"
-    (t/is (= expected-generated-inferences
+  (testing "Mops"
+    (is (= expected-generated-inferences
             (->> expected-finalized-gmaps
               (sut/generate-inferences mops-kg :simple-water-flow)
               (map :inferences))))))
@@ -216,17 +217,41 @@
                                          :flow-Coffee-Icecube-Heat-Bar]}
                                       #{}])
 
-(t/deftest transfer-inferences-test
-  (t/testing "SME"
-    (t/is (= expected-transferred-inferences
-            (->> expected-generated-inferences
-              (map #(assoc %1 :inferences %2) expected-finalized-gmaps)
-              (sut/transfer-inferences kg)
-              (map :transferred))))))
+(deftest transfer-inferences-test
+  (testing "SME"
+    (is (= expected-transferred-inferences
+          (->> expected-generated-inferences
+            (map #(assoc %1 :inferences %2) expected-finalized-gmaps)
+            (sut/transfer-inferences kg)
+            (map :transferred)))))
 
-(t/deftest match-test
-  (t/testing "SME"
-    (t/is (= expected-finalized-gmaps
-            (sut/match kg :simple-water-flow :simple-heat-flow)))))
+  (testing "Mops"
+    (is (= expected-transferred-inferences
+          (->> expected-generated-inferences
+            (map #(assoc %1 :inferences %2) expected-finalized-gmaps)
+            (sut/transfer-inferences mops-kg)
+            (map :transferred))))))
+
+(deftest perform-inference-test
+  (testing "SME"
+    (is (= expected-transferred-inferences
+          (->> expected-finalized-gmaps
+            (sut/perform-inference kg :simple-water-flow)
+            (map :transferred)))))
+
+  (testing "Mops"
+    (is (= expected-transferred-inferences
+          (->> expected-finalized-gmaps
+            (sut/perform-inference mops-kg :simple-water-flow)
+            (map :transferred))))))
+
+(deftest match-test
+  (testing "SME"
+    (is (= expected-finalized-gmaps
+          (sut/match kg :simple-water-flow :simple-heat-flow))))
+
+  (testing "Mops"
+    (is (= expected-finalized-gmaps
+          (sut/match mops-kg :simple-water-flow :simple-heat-flow)))))
 
                                         ; LocalWords:  gmaps

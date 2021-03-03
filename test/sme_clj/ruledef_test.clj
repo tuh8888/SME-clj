@@ -1,5 +1,5 @@
 (ns sme-clj.ruledef-test
-  (:require [clojure.test :as t]
+  (:require [clojure.test :refer [testing deftest is]]
             [sme-clj.ruledef :as sut]
             [sme-clj.simple-water-heat :refer [kg mops-kg]]))
 
@@ -49,6 +49,7 @@
     [:flat-top-Water :flat-top-Water]
     [:flow-Coffee-Icecube-Heat-Bar :flow-Beaker-Vial-Water-Pipe]
     [:flow-Coffee-Icecube-Heat-Bar :flow-Coffee-Icecube-Heat-Bar]})
+
 
 (def expected-compatible-args-matches #{[:temperature-Icecube :temperature-Icecube]
                                         [:diameter-Beaker :diameter-Beaker]
@@ -103,8 +104,7 @@
 
 (def expected-commutative-args #{})
 
-(t/deftest literal-similarity-test
-
+(deftest literal-similarity-test
   (let [mhs              (for [b (keys kg)
                                t (keys kg)]
                            [b t])
@@ -114,24 +114,98 @@
                              (remove nil?)
                              set))
         wrapped-rule-lit (partial wrapped-rule sut/literal-similarity)]
-    (t/testing "Same functor"
-      (t/testing "SME"
-        (t/is (= expected-same-functor-matches
-                (wrapped-rule-lit :same-functor kg mhs))))
-      (t/testing "Mops"
-        (t/is (= expected-same-functor-matches
-                (wrapped-rule-lit :same-functor mops-kg mhs)))))
+    (testing "Same functor"
+      (testing "SME"
+        (is (= expected-same-functor-matches
+              (wrapped-rule-lit :same-functor kg mhs))))
+      (testing "Mops"
+        (is (= expected-same-functor-matches
+              (wrapped-rule-lit :same-functor mops-kg mhs)))))
 
-    (t/testing "Compatible args"
-      (t/testing "SME"
-        (t/is (= expected-compatible-args-matches
-                (wrapped-rule-lit :compatible-args kg mhs))))
-      (t/testing "Mops"
-        (t/is (= expected-compatible-args-matches
-                (wrapped-rule-lit :compatible-args mops-kg mhs)))))
+    (testing "Compatible args"
+      (testing "SME"
+        (is (= expected-compatible-args-matches
+              (wrapped-rule-lit :compatible-args kg mhs))))
+      (testing "Mops"
+        (is (= expected-compatible-args-matches
+              (wrapped-rule-lit :compatible-args mops-kg mhs)))))
 
-    (t/testing "Commutative args"
-      (t/testing "SME"
-        (t/is (= expected-commutative-args
-                (wrapped-rule-lit :commutative-args kg mhs))))
-      (t/testing "Mops"))))
+    (testing "Commutative args"
+      (testing "SME"
+        (is (= expected-commutative-args
+              (wrapped-rule-lit :commutative-args kg mhs))))
+      (testing "Mops"))))
+
+(def expected-analogy-same-functor-matches
+  #{[:diameter-Vial :diameter-Vial]
+    [:diameter-Vial :diameter-Beaker]
+    [:flow-Beaker-Vial-Water-Pipe :flow-Beaker-Vial-Water-Pipe]
+    [:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
+    [:diameter-Beaker :diameter-Vial]
+    [:diameter-Beaker :diameter-Beaker]
+    [:pressure-Vial :pressure-Vial]
+    [:pressure-Vial :pressure-Beaker]
+    [:cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe
+     :cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe]
+    [:greater-temperature-Coffee-temperature-Icecube
+     :greater-temperature-Coffee-temperature-Icecube]
+    [:greater-temperature-Coffee-temperature-Icecube
+     :greater-pressure-Beaker-pressure-Vial]
+    [:greater-temperature-Coffee-temperature-Icecube
+     :greater-diameter-Beaker-diameter-Vial]
+    [:flat-top-Coffee :flat-top-Coffee]
+    [:flat-top-Coffee :flat-top-Water]
+    [:greater-pressure-Beaker-pressure-Vial
+     :greater-temperature-Coffee-temperature-Icecube]
+    [:greater-pressure-Beaker-pressure-Vial
+     :greater-pressure-Beaker-pressure-Vial]
+    [:greater-pressure-Beaker-pressure-Vial
+     :greater-diameter-Beaker-diameter-Vial]
+    [:temperature-Coffee :temperature-Coffee]
+    [:temperature-Coffee :temperature-Icecube]
+    [:temperature-Icecube :temperature-Coffee]
+    [:temperature-Icecube :temperature-Icecube]
+    [:greater-diameter-Beaker-diameter-Vial
+     :greater-temperature-Coffee-temperature-Icecube]
+    [:greater-diameter-Beaker-diameter-Vial
+     :greater-pressure-Beaker-pressure-Vial]
+    [:greater-diameter-Beaker-diameter-Vial
+     :greater-diameter-Beaker-diameter-Vial]
+    [:pressure-Beaker :pressure-Vial]
+    [:pressure-Beaker :pressure-Beaker]
+    [:flat-top-Water :flat-top-Coffee]
+    [:flat-top-Water :flat-top-Water]
+    [:flow-Coffee-Icecube-Heat-Bar :flow-Beaker-Vial-Water-Pipe]
+    [:flow-Coffee-Icecube-Heat-Bar :flow-Coffee-Icecube-Heat-Bar]})
+
+(deftest analogy-test
+  (let [mhs              (for [b (keys kg)
+                               t (keys kg)]
+                           [b t])
+        wrapped-rule     (fn [rules rule-id kg mhs]
+                           (->> mhs
+                             (mapcat (partial sut/apply-rule kg (rules rule-id)))
+                             (remove nil?)
+                             set))
+        wrapped-rule-ana (partial wrapped-rule sut/analogy)]
+    (testing "Same functor"
+      (testing "SME"
+        (is (= expected-analogy-same-functor-matches
+              (wrapped-rule-ana :same-functor kg mhs))))
+      (testing "Mops"
+        (is (= expected-analogy-same-functor-matches
+              (wrapped-rule-ana :same-functor mops-kg mhs)))))
+
+    (testing "Compatible args"
+      (testing "SME"
+        (is (= expected-compatible-args-matches
+              (wrapped-rule-ana :compatible-args kg mhs))))
+      (testing "Mops"
+        (is (= expected-compatible-args-matches
+              (wrapped-rule-ana :compatible-args mops-kg mhs)))))
+
+    (testing "Commutative args"
+      (testing "SME"
+        (is (= expected-commutative-args
+              (wrapped-rule-ana :commutative-args kg mhs))))
+      (testing "Mops"))))

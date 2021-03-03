@@ -13,11 +13,10 @@
 
 (def rule-types #{:intern :filter})
 
-(defn make-rule [name type body]
-  {:name name
+(defn make-rule [id type body]
+  {:id id
    :type type
    :body body})
-
 
 (defmulti extract-common-role-fillers (comp type first vector))
 
@@ -36,50 +35,100 @@
                        (apply set/intersection))]
     (map (apply juxt ms) common-roles)))
 
+(defn ordered-functor?
+  [kg k]
+  (when-let [functor (types/expression-functor kg k)]
+    (types/ordered? kg functor)))
+
+(defn same-functor?
+  [kg & ks]
+  (->> ks
+    (map (partial types/expression-functor kg))
+    ((every-pred
+       (partial every? some?)
+       (partial apply =)))))
+
+(defn strict-entity?
+  [kg]
+  (every-pred (partial types/entity? kg) (complement #{::types/Entity})))
+
+(defn functor-function?
+  [kg]
+  (comp (partial types/type-function? kg) (partial types/expression-functor kg)))
+
 ;; As in SME, basic analogical matching rules, direct port
 (def literal-similarity
-  (vals-as-keys :name
+  (vals-as-keys :id
     [(make-rule :same-functor :filter
        (fn [kg mh]
-         [(when (let [functors (map (partial types/expression-functor kg) mh)]
-                  (and (every? identity functors)
-                    (apply = functors)))
+         [(when (apply same-functor? kg mh)
             mh)]))
 
      (make-rule :compatible-args :intern
        (fn [kg mh]
-         (when (every? #(when-let [functor (types/expression-functor kg %)]
-                          (types/ordered? kg functor))
-                 mh)
+         (when (every? (partial ordered-functor? kg) mh)
            (->> mh
              (map (partial types/expression-args kg))
              (apply extract-common-role-fillers kg)
-             (filter (fn [mh]
-                       ((some-fn
-                          (partial every? (every-pred (complement (partial types/expression? kg))
-                                      (complement #{::types/Entity})))
-                          (partial every? (comp (partial types/type-function? kg) (partial types/expression-functor kg))))
-                        mh)))))))
+             (filter (some-fn
+                       (partial every? (strict-entity? kg))
+                       (partial every? (functor-function? kg))))))))
 
      ;; this rule not tested much yet
      (make-rule :commutative-args :intern
-       (fn [kg [base target]]
-         (when (and
-                 (types/expression? kg base)
-                 (types/expression? kg target)
-                 (not (types/lookup kg base :functor :ordered?))
-                 (not (types/lookup kg target :functor :ordered?)))
-           (for [bchild (types/lookup kg base :args)
-                 tchild (types/lookup kg target :args)]
-             (when (or
-                     (not (or
-                            (types/expression? kg bchild)
-                            (types/expression? kg tchild)))
-                     (and
-                       (types/expression? kg bchild)
-                       (types/expression? kg tchild)
-                       (= ::types/Function (types/lookup kg bchild :functor :type))
-                       (= ::types/Function (types/lookup kg tchild :functor :type))))
-               (types/make-match-hypothesis bchild tchild))))))]))
+       (fn [kg [base target :as mh]]
+         (when (not-any? (partial ordered-functor? kg) mh)
+           (for [base   (types/expression-args kg base)
+                 target (types/expression-args kg target)
+                 :let   [mh [base target]]
+                 :when  ((some-fn
+                           (partial every? (strict-entity? kg))
+                           (partial every? (functor-function? kg)))
+                         mh)]
+             mh))))]))
+
+
+(defn attribute-functor?
+  [kg]
+  (comp (partial types/attribute? kg) (partial types/expression-functor kg)))
+
+(def analogy
+  (vals-as-keys :id
+    [(make-rule :same-functor :filter
+       (fn [kg mh]
+         [(when ((every-pred
+                   (partial apply same-functor? kg)
+                   (partial every? (complement (attribute-functor? kg))))
+                 mh)
+            mh)]))
+
+     (make-rule :compatible-args :intern
+       (fn [kg mh]
+         (when (every? (partial ordered-functor? kg) mh)
+           (->> mh
+             (map (partial types/expression-args kg))
+             (apply extract-common-role-fillers kg)
+             (filter (some-fn
+                       (partial every? (strict-entity? kg))
+                       (partial every? (functor-function? kg))
+                       (every-pred
+                         (partial every? (attribute-functor? kg))
+                         (partial apply same-functor? kg))))))))
+
+     ;; this rule not tested much yet
+     (make-rule :commutative-args :intern
+       (fn [kg [base target :as mh]]
+         (when (not-any? (partial ordered-functor? kg) mh)
+           (for [base   (types/expression-args kg base)
+                 target (types/expression-args kg target)
+                 :let   [mh [base target]]
+                 :when  ((some-fn
+                           (partial every? (strict-entity? kg))
+                           (partial every? (functor-function? kg))
+                           (every-pred
+                             (partial every? (attribute-functor? kg))
+                             (partial apply same-functor? kg)))
+                         mh)]
+             mh))))]))
 
                                         ; LocalWords:  mh
