@@ -61,7 +61,7 @@
   (vals-as-keys :id
     [(make-rule :same-functor :filter
        (fn [kg mh]
-         [(when (apply (partial same-functor? kg) mh)
+         [(when (apply same-functor? kg mh)
             mh)]))
 
      (make-rule :compatible-args :intern
@@ -76,14 +76,16 @@
 
      ;; this rule not tested much yet
      (make-rule :commutative-args :intern
-       (fn [kg mh]
+       (fn [kg [base target :as mh]]
          (when (not-any? (partial ordered-functor? kg) mh)
-           (->> mh
-             (map (partial types/expression-args kg))
-             (apply extract-common-role-fillers kg)
-             (filter (some-fn
-                       (partial not-any? (partial types/expression? kg))
-                       (partial every? (functor-function? kg))))))))]))
+           (for [base   (types/expression-args kg base)
+                 target (types/expression-args kg target)
+                 :let   [mh [base target]]
+                 :when  ((some-fn
+                           (partial not-any? (partial types/expression? kg))
+                           (partial every? (functor-function? kg)))
+                         mh)]
+             mh))))]))
 
 
 (defn attribute-function?
@@ -94,7 +96,7 @@
   (vals-as-keys :id
     [(make-rule :same-functor :filter
        (fn [kg [base _ :as mh]]
-         [(when (and (apply (partial same-functor? kg) mh)
+         [(when (and (apply same-functor? kg mh)
                   ((complement (attribute-function? kg)) base))
             mh)]))
 
@@ -109,23 +111,21 @@
                        (partial every? (functor-function? kg))
                        (fn [[base _ :as mh]]
                          (and ((attribute-function? kg) base)
-                           (apply (partial same-functor? kg) mh)))))))))
+                           (apply same-functor? kg mh)))))))))
 
      ;; this rule not tested much yet
      (make-rule :commutative-args :intern
-       (fn [kg [base target]]
+       (fn [kg [base target :as mh]]
          (when (not-any? (partial ordered-functor? kg) mh)
-           (for [bchild (types/lookup kg base :args)
-                 tchild (types/lookup kg target :args)]
-             (when (or
-                     (not (or
-                            (types/expression? kg bchild)
-                            (types/expression? kg tchild)))
-                     (and
-                       (types/expression? kg bchild)
-                       (types/expression? kg tchild)
-                       (= ::types/Function (types/lookup kg bchild :functor :type))
-                       (= ::types/Function (types/lookup kg tchild :functor :type))))
-               (types/make-match-hypothesis bchild tchild))))))]))
+           (for [base   (types/expression-args kg base)
+                 target (types/expression-args kg target)
+                 :let   [mh [base target]]
+                 :when  (or ((some-fn
+                               (partial every? (strict-entity? kg))
+                               (partial every? (functor-function? kg)))
+                             mh)
+                          (and ((attribute-function? kg) base)
+                            (apply same-functor? kg mh)))]
+             mh))))]))
 
                                         ; LocalWords:  mh
