@@ -64,14 +64,15 @@
     (reduce (partial apply types/add-mop-entity)
       m [[:mass ::types/Function nil ::types/Entity]
          [:charge ::types/Function nil ::types/Entity]
-         [:greater ::types/Relation nil ::types/Entity ::types/Entity]
          [:attracts ::types/Function nil ::types/Entity ::types/Entity]
          [:revolve-around ::types/Function nil ::types/Entity ::types/Entity]
          [:temperature ::types/Function nil ::types/Entity]
-         [:cause ::types/Relation nil ::types/Expression ::types/Expression]
-         [:and ::types/Relation {:ordered? false} ::types/Expression ::types/Expression]
          [:gravity ::types/Function nil ::types/Expression ::types/Expression]
          [:opposite-sign ::types/Function nil ::types/Expression ::types/Expression]
+
+         [:greater ::types/Relation nil ::types/Entity ::types/Entity]
+         [:cause ::types/Relation nil ::types/Expression ::types/Expression]
+         [:and ::types/Relation {:ordered? false} ::types/Expression ::types/Expression]
 
          [:Sun ::types/Entity nil]
          [:Planet ::types/Entity nil]
