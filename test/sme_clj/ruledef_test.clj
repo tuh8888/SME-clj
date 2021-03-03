@@ -1,5 +1,5 @@
 (ns sme-clj.ruledef-test
-  (:require [clojure.test :as t]
+  (:require [clojure.test :refer [testing deftest is]]
             [sme-clj.ruledef :as sut]
             [sme-clj.simple-water-heat :refer [kg mops-kg]]))
 
@@ -103,7 +103,7 @@
 
 (def expected-commutative-args #{})
 
-(t/deftest literal-similarity-test
+(deftest literal-similarity-test
 
   (let [mhs              (for [b (keys kg)
                                t (keys kg)]
@@ -114,24 +114,24 @@
                              (remove nil?)
                              set))
         wrapped-rule-lit (partial wrapped-rule sut/literal-similarity)]
-    (t/testing "Same functor"
-      (t/testing "SME"
-        (t/is (= expected-same-functor-matches
+    (testing "Same functor"
+      (testing "SME"
+        (is (= expected-same-functor-matches
                 (wrapped-rule-lit :same-functor kg mhs))))
-      (t/testing "Mops"
-        (t/is (= expected-same-functor-matches
+      (testing "Mops"
+        (is (= expected-same-functor-matches
                 (wrapped-rule-lit :same-functor mops-kg mhs)))))
 
-    (t/testing "Compatible args"
-      (t/testing "SME"
-        (t/is (= expected-compatible-args-matches
+    (testing "Compatible args"
+      (testing "SME"
+        (is (= expected-compatible-args-matches
                 (wrapped-rule-lit :compatible-args kg mhs))))
-      (t/testing "Mops"
-        (t/is (= expected-compatible-args-matches
+      (testing "Mops"
+        (is (= expected-compatible-args-matches
                 (wrapped-rule-lit :compatible-args mops-kg mhs)))))
 
-    (t/testing "Commutative args"
-      (t/testing "SME"
-        (t/is (= expected-commutative-args
+    (testing "Commutative args"
+      (testing "SME"
+        (is (= expected-commutative-args
                 (wrapped-rule-lit :commutative-args kg mhs))))
-      (t/testing "Mops"))))
+      (testing "Mops"))))
