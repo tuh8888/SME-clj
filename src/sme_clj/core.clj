@@ -425,7 +425,7 @@
 
 
   For example: (map :score (match b t)) -> seq of gmap scores."
-  ([kg rules base target]
+  ([kg base target rules]
    (let [all-mhs (create-match-hypotheses kg base target rules)]
      (->> all-mhs
        (split-into-mhs-sets kg)
@@ -433,4 +433,4 @@
        merge-mhs-sets
        (finalize-gmaps kg base target all-mhs))))
   ([kg base target]
-   (match kg rules/literal-similarity base target)))
+   (match kg base target rules/literal-similarity)))

@@ -3,7 +3,8 @@
             [sme-clj.core :as sut]
             [sme-clj.ruledef :as rules]
             [sme-clj.simple-water-heat :refer [kg mops-kg]]
-            [mops :as mops]))
+            [mops :as mops]
+            [sme-clj.typedef :as types]))
 
 (def expected-concept-graph-expressions
   #{:diameter-Vial
@@ -248,7 +249,9 @@
 (deftest match-test
   (testing "SME"
     (is (= expected-finalized-gmaps
-          (sut/match kg :simple-water-flow :simple-heat-flow))))
+          (sut/match kg :simple-water-flow :simple-heat-flow)))
+    (is (= expected-finalized-gmaps
+          (sut/match kg :simple-water-flow :simple-heat-flow rules/literal-similarity))))
 
   (testing "Mops"
     (is (= expected-finalized-gmaps
