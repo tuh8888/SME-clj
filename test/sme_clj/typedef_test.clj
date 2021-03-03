@@ -13,66 +13,78 @@
 
 (deftest make-concept-graph-test
   (testing "Vector definition -> SME"
-    (is (= {:id    :simple-water-flow
-            :graph {:diameter-Vial   {:id      :diameter-Vial
-                                      :type    ::sut/Expression
-                                      :functor :diameter
-                                      :args    [:Vial]}
-                    :flow-Beaker-Vial-Water-Pipe
-                    {:id      :flow-Beaker-Vial-Water-Pipe
-                     :type    ::sut/Expression
-                     :functor :flow
-                     :args    [:Beaker :Vial :Water :Pipe]}
-                    :diameter-Beaker {:id      :diameter-Beaker
-                                      :type    ::sut/Expression
-                                      :functor :diameter
-                                      :args    [:Beaker]}
-                    :clear-Beaker    {:id      :clear-Beaker
-                                      :type    ::sut/Expression
-                                      :functor :clear
-                                      :args    [:Beaker]}
-                    :pressure-Vial   {:id      :pressure-Vial
-                                      :type    ::sut/Expression
-                                      :functor :pressure
-                                      :args    [:Vial]}
-                    :cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe
-                    {:id
-                     :cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe
-                     :type    ::sut/Expression
-                     :functor :cause
-                     :args
-                     [:greater-pressure-Beaker-pressure-Vial
-                      :flow-Beaker-Vial-Water-Pipe]}
-                    :greater-pressure-Beaker-pressure-Vial
-                    {:id      :greater-pressure-Beaker-pressure-Vial
-                     :type    ::sut/Expression
-                     :functor :greater
-                     :args    [:pressure-Beaker :pressure-Vial]}
-                    :liquid-Water    {:id      :liquid-Water
-                                      :type    ::sut/Expression
-                                      :functor :liquid
-                                      :args    [:Water]}
-                    :greater-diameter-Beaker-diameter-Vial
-                    {:id      :greater-diameter-Beaker-diameter-Vial
-                     :type    ::sut/Expression
-                     :functor :greater
-                     :args    [:diameter-Beaker :diameter-Vial]}
-                    :pressure-Beaker {:id      :pressure-Beaker
-                                      :type    ::sut/Expression
-                                      :functor :pressure
-                                      :args    [:Beaker]}
-                    :flat-top-Water  {:id      :flat-top-Water
-                                      :type    ::sut/Expression
-                                      :functor :flat-top
-                                      :args    [:Water]}}
-            :spec  '([:cause
-                      [:greater [:pressure :Beaker] [:pressure :Vial]]
-                      [:flow :Beaker :Vial :Water :Pipe]]
-                     [:greater [:diameter :Beaker] [:diameter :Vial]]
-                     [:clear :Beaker]
-                     [:flat-top :Water]
-                     [:liquid :Water])}
-          (sut/add-concept-graph :simple-water-flow
+    (is (= {:diameter-Vial     {:id            :diameter-Vial
+                                :type          ::sut/Expression
+                                :functor       :diameter
+                                :args          [:Vial]
+                                :concept-graph :simple-water-flow}
+            :flow-Beaker-Vial-Water-Pipe
+            {:id            :flow-Beaker-Vial-Water-Pipe
+             :type          ::sut/Expression
+             :functor       :flow
+             :args          [:Beaker :Vial :Water :Pipe]
+             :concept-graph :simple-water-flow}
+            :diameter-Beaker   {:id            :diameter-Beaker
+                                :type          ::sut/Expression
+                                :functor       :diameter
+                                :args          [:Beaker]
+                                :concept-graph :simple-water-flow}
+            :clear-Beaker      {:id            :clear-Beaker
+                                :type          ::sut/Expression
+                                :functor       :clear
+                                :args          [:Beaker]
+                                :concept-graph :simple-water-flow}
+            :pressure-Vial     {:id            :pressure-Vial
+                                :type          ::sut/Expression
+                                :functor       :pressure
+                                :args          [:Vial]
+                                :concept-graph :simple-water-flow}
+            :cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe
+            {:id
+             :cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe
+             :type          ::sut/Expression
+             :functor       :cause
+             :args
+             [:greater-pressure-Beaker-pressure-Vial
+              :flow-Beaker-Vial-Water-Pipe]
+             :concept-graph :simple-water-flow}
+            :greater-pressure-Beaker-pressure-Vial
+            {:id            :greater-pressure-Beaker-pressure-Vial
+             :type          ::sut/Expression
+             :functor       :greater
+             :args          [:pressure-Beaker :pressure-Vial]
+             :concept-graph :simple-water-flow}
+            :liquid-Water      {:id            :liquid-Water
+                                :type          ::sut/Expression
+                                :functor       :liquid
+                                :args          [:Water]
+                                :concept-graph :simple-water-flow}
+            :greater-diameter-Beaker-diameter-Vial
+            {:id            :greater-diameter-Beaker-diameter-Vial
+             :type          ::sut/Expression
+             :functor       :greater
+             :args          [:diameter-Beaker :diameter-Vial]
+             :concept-graph :simple-water-flow}
+            :pressure-Beaker   {:id            :pressure-Beaker
+                                :type          ::sut/Expression
+                                :functor       :pressure
+                                :args          [:Beaker]
+                                :concept-graph :simple-water-flow}
+            :flat-top-Water    {:id            :flat-top-Water
+                                :type          ::sut/Expression
+                                :functor       :flat-top
+                                :args          [:Water]
+                                :concept-graph :simple-water-flow}
+            :simple-water-flow {:id   :simple-water-flow
+                                :type ::sut/ConceptGraph
+                                :spec '([:cause
+                                         [:greater [:pressure :Beaker] [:pressure :Vial]]
+                                         [:flow :Beaker :Vial :Water :Pipe]]
+                                        [:greater [:diameter :Beaker] [:diameter :Vial]]
+                                        [:clear :Beaker]
+                                        [:flat-top :Water]
+                                        [:liquid :Water])}}
+          (sut/add-concept-graph {} :simple-water-flow
             [:cause
              [:greater [:pressure :Beaker] [:pressure :Vial]]
              [:flow :Beaker :Vial :Water :Pipe]]

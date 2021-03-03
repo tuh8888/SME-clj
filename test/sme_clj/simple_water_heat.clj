@@ -65,7 +65,7 @@
              [:liquid :type ::types/Attribute]
              [:clear :type ::types/Attribute]])
           (-> m
-            (add-concept-graph :simple-water-flow
+            (types/add-concept-graph :simple-water-flow
               [:cause
                [:greater [:pressure :Beaker] [:pressure :Vial]]
                [:flow :Beaker :Vial :Water :Pipe]]
@@ -73,7 +73,7 @@
               [:clear :Beaker]
               [:flat-top :Water]
               [:liquid :Water])
-            (add-concept-graph :simple-heat-flow
+            (types/add-concept-graph :simple-heat-flow
               [:flow :Coffee :Icecube :Heat :Bar]
               [:greater [:temperature :Coffee] [:temperature :Icecube]]
               [:flat-top :Coffee]

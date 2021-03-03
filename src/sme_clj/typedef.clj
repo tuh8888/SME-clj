@@ -186,19 +186,24 @@
 (defmulti add-concept-graph (comp type first vector))
 
 (defmethod add-concept-graph :default
-  [id & expressions]
+  [m concept-graph-id & expressions]
   (let [e-map (atom [])]
     (letfn [(add-expr! [args]
               (let [id (combine-ids args)]
-                (swap! e-map conj (apply make-expression id args) )
+                (swap! e-map conj (assoc (apply make-expression id args)
+                                    :concept-graph concept-graph-id))
                 id))]
       ;; Doseq is used here instead of passing all expressions to postwalk to prevent the
       ;; entire set of expressions for the concept graph being counted as an expression.
       (doseq [expression expressions]
         (walk/postwalk #(cond->> % (coll? %) add-expr!) expression))
-      {:id    id
-       :graph (util/vals-as-keys :id @e-map)
-       :spec  expressions})))
+      (as-> m m
+        (reduce (fn [m {:keys [id] :as e}]
+                  (assoc m id e))
+          m @e-map)
+        (assoc m concept-graph-id {:id   concept-graph-id
+                                   :type ::ConceptGraph
+                                   :spec expressions})))))
 
 (defn args->slots
   [args]

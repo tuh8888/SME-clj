@@ -27,17 +27,17 @@
 (deftest get-concept-graph-expressions-test
   (testing "SME"
     (is (= expected-concept-graph-expressions
-            (into #{}
-              (lazy-cat
-                (sut/get-concept-graph-expressions kg :simple-water-flow)
-                (sut/get-concept-graph-expressions kg :simple-heat-flow))))))
+          (into #{}
+            (lazy-cat
+              (sut/get-concept-graph-expressions kg :simple-water-flow)
+              (sut/get-concept-graph-expressions kg :simple-heat-flow))))))
 
   (testing "Mops"
     (is (= expected-concept-graph-expressions
-            (into #{}
-              (lazy-cat
-                (sut/get-concept-graph-expressions mops-kg :simple-heat-flow)
-                (sut/get-concept-graph-expressions mops-kg :simple-water-flow)))))))
+          (into #{}
+            (lazy-cat
+              (sut/get-concept-graph-expressions mops-kg :simple-heat-flow)
+              (sut/get-concept-graph-expressions mops-kg :simple-water-flow)))))))
 
 (def expected-match-hypotheses #{[:Water :Heat]
                                  [:Water :Coffee]
