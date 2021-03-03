@@ -2,7 +2,8 @@
   (:require [clojure.data :as data]
             [clojure.test :refer [deftest is testing]]
             [mop-records :as mr]
-            [sme-clj.typedef :as sut]))
+            [sme-clj.typedef :as sut]
+            [sme-clj.typedef :as types]))
 
 (defn map-vals
   [f m]
@@ -71,7 +72,7 @@
                      [:clear :Beaker]
                      [:flat-top :Water]
                      [:liquid :Water])}
-          (sut/make-concept-graph :simple-water-flow
+          (sut/add-concept-graph :simple-water-flow
             [:cause
              [:greater [:pressure :Beaker] [:pressure :Vial]]
              [:flow :Beaker :Vial :Water :Pipe]]
@@ -176,7 +177,7 @@
                     :functor       #{:flat-top}
                     :concept-graph #{:simple-water-flow}}}}
           (-> (mr/make-mop-map)
-            (sut/make-concept-graph :simple-water-flow
+            (sut/add-concept-graph :simple-water-flow
               [:cause
                [:greater [:pressure :Beaker] [:pressure :Vial]]
                [:flow :Beaker :Vial :Water :Pipe]]
@@ -240,10 +241,25 @@
                     :names         #{}
                     :inst?         false}}}
           (-> (mr/make-mop-map)
-            (sut/make-concept-graph :simple-heat-flow
+            (sut/add-concept-graph :simple-heat-flow
               [:flow :Coffee :Icecube :Heat :Bar]
               [:greater [:temperature :Coffee] [:temperature :Icecube]]
               [:flat-top :Coffee]
               [:liquid :Coffee])
             (->> (into {}))
             (update :mops (partial map-vals (partial into {}))))))))
+
+(deftest add-entity-test
+  (testing "SME"
+    (is (= {:a {:id    :a
+                :type  ::sut/Entity
+                :slots nil}}
+          (types/add-entity {} [:a])))))
+
+(deftest add-predicate-test
+  (testing "SME"
+    (is (= {:greater {:id       :greater
+                      :type     ::sut/Relation
+                      :arity    3
+                      :ordered? true}}
+          (types/add-predicate {} [:greater :type ::types/Relation :arity 3])))))

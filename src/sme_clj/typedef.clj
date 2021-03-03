@@ -17,14 +17,14 @@
 
 (defn make-entity [id & slots]
   {:id    id
-   :type  :entity
+   :type  ::Entity
    :slots slots})
 
 (defn make-predicate [id & {:keys [type arity ordered?]
                             :or   {type ::Relation, arity 2, ordered? true}}]
   {:id id
    :type     type
-   :arity    (if (= type ::Relation) 1 arity)
+   :arity    (if (= type ::Relation) arity 1)
    :ordered? ordered?})
 
 (defn predicate? [{:keys [type]}] (#{::Function ::Attribute ::Relation} type))
@@ -40,6 +40,7 @@
 ;; An Expression's id is not guaranteed to be related to any implicit ordering
 ;; of the expressions within a graph, but in practice often is.
 
+(defmulti make-expression (comp type first vector))
 (defn make-expression [id functor & args]
   {:id      id
    :type    ::Expression
@@ -149,9 +150,23 @@
     (apply str)
     keyword))
 
-(defmulti make-concept-graph (comp type first vector))
+(defmulti add-entity (comp type first vector))
 
-(defmethod make-concept-graph :default
+(defmethod add-entity :default
+  [m args]
+  (let [{:keys [id] :as e} (apply make-entity args)]
+    (assoc m id e)))
+
+(defmulti add-predicate (comp type first vector))
+
+(defmethod add-predicate :default
+  [m args]
+  (let [{:keys [id] :as p} (apply make-predicate args)]
+    (assoc m id p)))
+
+(defmulti add-concept-graph (comp type first vector))
+
+(defmethod add-concept-graph :default
   [id & expressions]
   (let [e-map (atom [])]
     (letfn [(add-expr! [args]
@@ -166,32 +181,54 @@
        :graph (util/vals-as-keys :id @e-map)
        :spec  expressions})))
 
-(defn make-mop-expression
-  [id ])
+(defn args->slots
+  [args]
+  (->> args
+    (map-indexed (comp (juxt (comp keyword (partial str "e") inc first)
+                      second)
+                   vector))
+    (into {})))
 
-(defmethod make-concept-graph MopMap
+(defn add-mop-entity
+  [m id parent slots & args]
+  (mops/add-mop m (mops/->mop id (-> args
+                                   args->slots
+                                   (merge slots)
+                                   (assoc :parents #{parent})))))
+
+(defmulti initialize-kg (comp type first vector))
+
+(defmethod initialize-kg :default
+  [_]
+  {})
+
+(defmethod initialize-kg MopMap
+  [m]
+  (reduce (partial apply add-mop-entity)
+    m
+    [[::Expression :thing nil]
+     [::Entity :thing nil]
+     [::Functor ::Expression nil]
+     [::Relation ::Functor {:ordered? true}]
+     [::Attribute ::Functor nil]
+     [::Function ::Functor nil]]))
+
+(defmethod add-concept-graph MopMap
   [m concept-graph-id & expressions]
-  (let [e-map (atom [])]
-    (letfn [(add-expr! [args]
-              (let [id (combine-ids args)]
-                (swap! e-map conj (apply make-expression id args) )
+  (let [e-map (atom m)]
+    (letfn [(add-expr! [& args]
+              (let [[[functor & function-args :as all-e]] args
+                    id                                    (combine-ids all-e)]
+
+                (swap! e-map mops/add-mop (-> id
+                                            (mops/->mop (args->slots function-args))
+                                            (mops/add-slot :parents ::Expression)
+                                            (mops/add-slot :functor functor)
+                                            (mops/add-slot :concept-graph concept-graph-id)))
                 id))]
-      ;; Doseq is used here instead of passing all expressions to postwalk to prevent the
-      ;; entire set of expressions for the concept graph being counted as an expression.
       (doseq [expression expressions]
         (walk/postwalk #(cond->> % (coll? %) add-expr!) expression))
-      (reduce (fn [m {:keys [functor id args]}]
-                (let [mop (mops/->mop id (->> args
-                                           (map-indexed (comp (juxt (comp keyword (partial str "e") inc first)
-                                                             second)
-                                                          vector))
-                                           (into {})))]
-                  (-> m
-                    (mops/add-mop mop)
-                    (mops/add-slot-to-mop id :parents ::Expression)
-                    (mops/add-slot-to-mop id :functor functor)
-                    (mops/add-slot-to-mop id :concept-graph concept-graph-id))))
-        (mops/add-mop m (mops/->mop concept-graph-id nil)) @e-map))))
+      (mops/add-mop @e-map (mops/->mop concept-graph-id nil)))))
 
 ;;; MATCH HYPOTHESIS
 

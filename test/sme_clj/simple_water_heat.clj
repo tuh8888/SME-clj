@@ -29,7 +29,7 @@
 
 (defmethod add-concept-graph :default
   [kg k & expressions]
-  (let [concept-graph (apply types/make-concept-graph k expressions)]
+  (let [concept-graph (apply types/add-concept-graph k expressions)]
     (-> (merge-with (fn [v1 v2]
                       (throw (ex-info "Value already in kg"
                                {:v1 v1 :v2 v2})))
@@ -39,124 +39,78 @@
       (assoc k {:id k
                 :type :ConceptGraph
                 :spec (:spec concept-graph)}))))
-(def kg (-> {}
-          (merge (->> [[:Coffee]
-                       [:Icecube]
-                       [:Bar]
-                       [:Heat]
+(def kg (as-> (types/initialize-kg {}) m
+          (reduce (fn [m args]
+                    (types/add-entity m args))
+            m
+            [[:Coffee]
+             [:Icecube]
+             [:Bar]
+             [:Heat]
 
-                       [:Water]
-                       [:Beaker]
-                       [:Vial]
-                       [:Pipe]]
-                   (map (partial apply types/make-entity))
-                   (util/vals-as-keys :id)))
-          (merge (->> [[:flow :type ::types/Relation :arity 4]
-                       [:greater :type ::types/Relation :arity 2]
-                       [:cause :type ::types/Relation :arity 2]
-                       [:temperature :type ::types/Function]
-                       [:flat-top :type ::types/Function]
-                       [:pressure :type ::types/Function]
-                       [:diameter :type ::types/Function]
-                       [:liquid :type ::types/Attribute]
-                       [:clear :type ::types/Attribute]]
-                   (map (partial apply types/make-predicate))
-                   (util/vals-as-keys :id)))
-          (add-concept-graph :simple-water-flow
-            [:cause
-             [:greater [:pressure :Beaker] [:pressure :Vial]]
-             [:flow :Beaker :Vial :Water :Pipe]]
-            [:greater [:diameter :Beaker] [:diameter :Vial]]
-            [:clear :Beaker]
-            [:flat-top :Water]
-            [:liquid :Water])
-          (add-concept-graph :simple-heat-flow
-            [:flow :Coffee :Icecube :Heat :Bar]
-            [:greater [:temperature :Coffee] [:temperature :Icecube]]
-            [:flat-top :Coffee]
-            [:liquid :Coffee])))
+             [:Water]
+             [:Beaker]
+             [:Vial]
+             [:Pipe]])
+          (reduce (fn [m args]
+                    (types/add-predicate m args))
+            m
+            [[:flow :type ::types/Relation :arity 4]
+             [:greater :type ::types/Relation :arity 2]
+             [:cause :type ::types/Relation :arity 2]
+             [:temperature :type ::types/Function]
+             [:flat-top :type ::types/Function]
+             [:pressure :type ::types/Function]
+             [:diameter :type ::types/Function]
+             [:liquid :type ::types/Attribute]
+             [:clear :type ::types/Attribute]])
+          (-> m
+            (add-concept-graph :simple-water-flow
+              [:cause
+               [:greater [:pressure :Beaker] [:pressure :Vial]]
+               [:flow :Beaker :Vial :Water :Pipe]]
+              [:greater [:diameter :Beaker] [:diameter :Vial]]
+              [:clear :Beaker]
+              [:flat-top :Water]
+              [:liquid :Water])
+            (add-concept-graph :simple-heat-flow
+              [:flow :Coffee :Icecube :Heat :Bar]
+              [:greater [:temperature :Coffee] [:temperature :Icecube]]
+              [:flat-top :Coffee]
+              [:liquid :Coffee]))))
 
+(def mops-kg (-> (reduce (partial apply types/add-mop-entity)
+                   (types/initialize-kg (mr/make-mop-map))
+                   [[:cause ::types/Relation nil ::types/Expression ::types/Expression]
+                    [:greater ::types/Relation nil ::types/Expression ::types/Expression]
+                    [:flow ::types/Relation nil ::types/Entity ::types/Entity ::types/Entity ::types/Entity]
+                    [:pressure ::types/Function nil ::types/Entity]
+                    [:diameter ::types/Function nil ::types/Entity]
+                    [:clear ::types/Attribute nil ::types/Entity]
+                    [:temperature ::types/Function nil ::types/Entity]
+                    [:flat-top ::types/Function nil ::types/Entity]
+                    [:liquid ::types/Attribute nil ::types/Entity]
 
-(defn make-mop
-  [m id parent & [slots]]
-  (let [mop (mops/->mop id slots)]
-    (-> m
-      (mops/add-mop mop)
-      (mr/-add-slot-to-mop id :parents (into #{}
-                                         (cond-> parent
-                                           ((complement coll?) parent)
-                                           (vector parent)))))))
+                    [:Coffee ::types/Entity nil]
+                    [:Water ::types/Entity nil]
+                    [:Heat ::types/Entity nil]
+                    [:Pipe ::types/Entity nil]
+                    [:Vial ::types/Entity nil]
+                    [:Icecube ::types/Entity nil]
+                    [:Bar ::types/Entity nil]
+                    [:Beaker ::types/Entity nil]])
 
-
-(def mops-kg (-> (reduce (partial apply make-mop)
-                   (mr/make-mop-map)
-                   [[::types/Expression :thing]
-                    [::types/Entity :thing]
-                    [::types/Functor ::types/Expression]
-                    [::types/Relation ::types/Functor {:ordered? true}]
-                    [::types/Attribute ::types/Functor]
-                    [::types/Function ::types/Functor]
-                    [:cause ::types/Relation {:e1 ::types/Expression
-                                              :e2 ::types/Expression}]
-                    [:greater ::types/Relation {:e1 ::types/Expression
-                                                :e2 ::types/Expression}]
-                    [:flow ::types/Relation {:e1 ::types/Entity
-                                             :e2 ::types/Entity
-                                             :e3 ::types/Entity
-                                             :e4 ::types/Entity}]
-                    [:pressure ::types/Function {:e1 ::types/Entity}]
-                    [:diameter ::types/Function {:e1 ::types/Entity}]
-                    [:clear ::types/Attribute {:e1 ::types/Entity}]
-                    [:temperature ::types/Function {:e1 ::types/Entity}]
-                    [:flat-top ::types/Function {:e1 ::types/Entity}]
-                    [:liquid ::types/Attribute {:e1 ::types/Entity}]
-                    [:Coffee ::types/Entity]
-                    [:Water ::types/Entity]
-                    [:Heat ::types/Entity]
-                    [:Pipe ::types/Entity]
-                    [:Vial ::types/Entity]
-                    [:Icecube ::types/Entity]
-                    [:Bar ::types/Entity]
-                    [:Beaker ::types/Entity]])
-
-               (add-concept-graph :simple-water-flow
-                 [:flat-top [:e1 :Water]]
-                 [:liquid [:e1 :Water]]
+               (types/add-concept-graph :simple-water-flow
                  [:cause
-                  [:e1 :greater-pressure-Beaker-pressure-Vial]
-                  [:e2 :flow-Beaker-Vial-Water-Pipe]]
-                 [:greater
-                  [:e1 :pressure-Beaker]
-                  [:e2 :pressure-Vial]]
-                 [:greater
-                  [:e1 :diameter-Beaker]
-                  [:e2 :diameter-Vial]]
-                 [:clear [:e1 :Beaker]]
-                 [:diameter [:e1 :Beaker]]
-                 [:diameter [:e1 :Vial]]
-                 [:pressure [:e1 :Beaker]]
-                 [:pressure [:e1 :Vial]]
-                 [:flow
-                  [:e1 :Beaker]
-                  [:e2 :Vial]
-                  [:e3 :Water]
-                  [:e4 :Pipe]])
-
-               (add-concept-graph :simple-heat-flow
-                 [:flow
-                  [:e1 :Coffee]
-                  [:e2 :Icecube]
-                  [:e3 :Heat]
-                  [:e4 :Bar]]
-                 [:greater
-                  [:e1 :temperature-Coffee]
-                  [:e2 :temperature-Icecube]]
-                 [:temperature [:e1 :Coffee]]
-                 [:temperature [:e1 :Icecube]]
-                 [:flat-top [:e1 :Coffee]]
-                 [:liquid [:e1  :Coffee]])
+                  [:greater [:pressure :Beaker] [:pressure :Vial]]
+                  [:flow :Beaker :Vial :Water :Pipe]]
+                 [:greater [:diameter :Beaker] [:diameter :Vial]]
+                 [:clear :Beaker]
+                 [:flat-top :Water]
+                 [:liquid :Water])
+               (types/add-concept-graph :simple-heat-flow
+                 [:flow :Coffee :Icecube :Heat :Bar]
+                 [:greater [:temperature :Coffee] [:temperature :Icecube]]
+                 [:flat-top :Coffee]
+                 [:liquid :Coffee])
                mops/infer-hierarchy))
-
-(mops/all-abstrs mops-kg :greater-diameter-Beaker-diameter-Vial)
-(map (juxt identity (partial types/expression-functor mops-kg)) [:clear
-                                                           :greater-pressure-Beaker-pressure-Vial])
