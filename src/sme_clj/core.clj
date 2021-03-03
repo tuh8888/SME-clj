@@ -366,23 +366,26 @@
 
 (defn transfer-gmap-inferences
   "Attempt to transfer inferences to the target of the gmap."
-  [kg {:as   gmap,
+  [kg {:as   gmap
        :keys [inferences mhs]}]
   ;; This exception setup is ugly, but is a simple and efficient way of aborting
   ;; the whole inference transferring process for this gmap. Monads would
   ;; perhaps work as well (or CPS).
   (try
-    (let [pairs    (zipmap (map first mhs) (map second mhs))
+    (let [pairs    (into {} mhs)
           transfer (fn transfer [expr]
-                     (if-let [t (get pairs expr)]
-                       t
-                       (if (= :entity (types/lookup kg expr :type))
+                     (or
+                       (get pairs expr)
+                       (if (types/entity? kg expr)
                          (throw (RuntimeException.
                                   "cannot infer entities"))
-                         (cons (types/lookup kg expr :functor)
-                           (doall (map transfer (types/lookup kg expr :args)))))))]
-      (assoc gmap
-        :transferred (set (doall (map transfer inferences)))))
+                         (->> expr
+                           (types/expression-functor kg)
+                           (conj (->> expr
+                                   (types/expression-args kg)
+                                   (map second)
+                                   (map transfer)))))))]
+      (assoc gmap :transferred (set (map transfer inferences))))
     (catch RuntimeException _
       gmap)))
 

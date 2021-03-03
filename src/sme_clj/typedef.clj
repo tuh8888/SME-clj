@@ -52,6 +52,16 @@
             (get-in kg [k prop]))
     k props))
 
+(defmulti entity? (comp type first vector))
+
+(defmethod entity? :default
+  [kg k]
+  ((comp (partial = ::Entity) #(lookup kg % :type)) k))
+
+(defmethod entity? MopMap
+  [kg k]
+  (mops/abstr? kg k ::Entity))
+
 (defmulti expression? (comp type first vector))
 
 (defmethod expression? :default
@@ -83,7 +93,6 @@
 
 (defmethod expression-functor MopMap
   [kg k]
-  ;; TODO Perhaps I do need to place the functor in a special slot of the expression mop.
   (let [mop (mops/get-mop kg k)]
     (first (mops/filler mop :functor))))
 
