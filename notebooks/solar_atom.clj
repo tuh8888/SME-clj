@@ -38,8 +38,8 @@
       m [[:mass ::types/Function nil ::types/Entity]
          [:charge ::types/Function nil ::types/Entity]
          [:greater ::types/Relation nil ::types/Entity ::types/Entity]
-         [:attracts ::types/Relation nil ::types/Entity ::types/Entity]
-         [:revolve-around ::types/Relation nil ::types/Entity ::types/Entity]
+         [:attracts ::types/Function nil ::types/Entity ::types/Entity]
+         [:revolve-around ::types/Function nil ::types/Entity ::types/Entity]
          [:temperature ::types/Function nil ::types/Entity]
          [:cause ::types/Relation nil ::types/Expression ::types/Expression]
          [:and ::types/Relation {:ordered? false} ::types/Expression ::types/Expression]
@@ -66,15 +66,13 @@
           [:gravity mass-sun mass-planet]
           attracts]]))
     (apply types/add-concept-graph m :rutherford-atom
-      (let [mass-nucleus  [:mass :Nucleus]
-            mass-electron [:mass :Electron]]
-        [[:greater mass-nucleus mass-electron]
-         [:revolve-around :Electron :Nucleus]
-         [:cause
-          [:opposite-sign
-           [:charge :Nucleus]
-           [:charge :Electron]]
-          [:attracts :Nucleus :Electron]]]))
+      [[:greater [:mass :Nucleus] [:mass :Electron]]
+       [:revolve-around :Electron :Nucleus]
+       [:cause
+        [:opposite-sign
+         [:charge :Nucleus]
+         [:charge :Electron]]
+        [:attracts :Nucleus :Electron]]])
     (mops/infer-hierarchy m)))
 
 ;; Visualize the kg
