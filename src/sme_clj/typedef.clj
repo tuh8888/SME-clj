@@ -169,6 +169,14 @@
     (apply str)
     keyword))
 
+(defn args->slots
+  [args]
+  (->> args
+    (map-indexed (comp (juxt (comp keyword (partial str "e") inc first)
+                      second)
+                   vector))
+    (into {})))
+
 (defmulti add-entity (comp type first vector))
 
 (defmethod add-entity :default
@@ -176,6 +184,11 @@
   (let [{:keys [id] :as e} (apply make-entity args)]
     (assoc m id e)))
 
+(defmethod add-entity MopMap [m id parent slots & args]
+  (mops/add-mop m (mops/->mop id (-> args
+                                   args->slots
+                                   (merge slots)
+                                   (assoc :parents #{parent})))))
 (defmulti add-predicate (comp type first vector))
 
 (defmethod add-predicate :default
@@ -205,20 +218,6 @@
                                    :type ::ConceptGraph
                                    :spec expressions})))))
 
-(defn args->slots
-  [args]
-  (->> args
-    (map-indexed (comp (juxt (comp keyword (partial str "e") inc first)
-                      second)
-                   vector))
-    (into {})))
-
-(defn add-mop-entity
-  [m id parent slots & args]
-  (mops/add-mop m (mops/->mop id (-> args
-                                   args->slots
-                                   (merge slots)
-                                   (assoc :parents #{parent})))))
 
 (defmulti initialize-kg (comp type first vector))
 
@@ -228,7 +227,7 @@
 
 (defmethod initialize-kg MopMap
   [m]
-  (reduce (partial apply add-mop-entity)
+  (reduce (partial apply add-entity)
     m
     [[::Expression :thing nil]
      [::Entity :thing nil]

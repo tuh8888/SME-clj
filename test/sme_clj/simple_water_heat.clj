@@ -79,7 +79,7 @@
               [:flat-top :Coffee]
               [:liquid :Coffee]))))
 
-(def mops-kg (-> (reduce (partial apply types/add-mop-entity)
+(def mops-kg (-> (reduce (partial apply types/add-entity)
                    (types/initialize-kg (mr/make-mop-map))
                    [[:cause ::types/Relation nil ::types/Expression ::types/Expression]
                     [:greater ::types/Relation nil ::types/Expression ::types/Expression]

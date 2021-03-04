@@ -61,7 +61,7 @@
   (as-> (mr/make-mop-map) m
     (types/initialize-kg m)
 
-    (reduce (partial apply types/add-mop-entity)
+    (reduce (partial apply types/add-entity)
       m [[:mass ::types/Function nil ::types/Entity]
          [:charge ::types/Function nil ::types/Entity]
          [:attracts ::types/Function nil ::types/Entity ::types/Entity]
