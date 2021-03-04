@@ -338,9 +338,9 @@
 
 (defn generate-inferences
   "Appends :inferences to gmaps in given data, for a given base graph."
-  [kg base gmaps]
+  [kg gmaps]
   (->> gmaps
-    (map #(assoc % :inferences (gmap-inferences kg base (:mhs %))))))
+    (map #(assoc % :inferences (gmap-inferences kg (get-in % [:mapping :base]) (:mhs %))))))
 
 ;; On inference integration, recursive method:
 ;;
@@ -406,9 +406,9 @@
     :transferred  Inferences transferred to target, ready to be added into the
                   target's concept graph.
   "
-  [kg base gmaps]
+  [kg gmaps]
   (->> gmaps
-    (generate-inferences kg base)
+    (generate-inferences kg)
     (transfer-inferences kg)))
 
 (defn match

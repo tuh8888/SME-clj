@@ -201,13 +201,13 @@
   (testing "SME"
     (is (= expected-generated-inferences
             (->> expected-finalized-gmaps
-              (sut/generate-inferences kg :simple-water-flow)
+              (sut/generate-inferences kg)
               (map :inferences)))))
 
   (testing "Mops"
     (is (= expected-generated-inferences
             (->> expected-finalized-gmaps
-              (sut/generate-inferences mops-kg :simple-water-flow)
+              (sut/generate-inferences mops-kg)
               (map :inferences))))))
 
 (def expected-transferred-inferences [#{[:cause :greater-temperature-Coffee-temperature-Icecube :flow-Coffee-Icecube-Heat-Bar]}
@@ -237,13 +237,13 @@
   (testing "SME"
     (is (= expected-transferred-inferences
           (->> expected-finalized-gmaps
-            (sut/perform-inference kg :simple-water-flow)
+            (sut/perform-inference kg)
             (map :transferred)))))
 
   (testing "Mops"
     (is (= expected-transferred-inferences
           (->> expected-finalized-gmaps
-            (sut/perform-inference mops-kg :simple-water-flow)
+            (sut/perform-inference mops-kg)
             (map :transferred))))))
 
 (deftest match-test
