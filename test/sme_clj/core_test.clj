@@ -66,7 +66,10 @@
 
 (deftest find-children-test
   (let [expected-found-children1 #{}
-        expected-found-children2 #{[:Beaker :Coffee] [:Water :Heat] [:Pipe :Bar] [:Vial :Icecube]}  ]
+        expected-found-children2 #{[:Beaker :Coffee]
+                                   [:Water :Heat]
+                                   [:Pipe :Bar]
+                                   [:Vial :Icecube]}]
     (testing "SME"
       (is (= expected-found-children1
               (set (sut/find-children kg expected-match-hypotheses [:Beaker :Coffee]))))
