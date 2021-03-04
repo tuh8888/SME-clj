@@ -268,7 +268,7 @@
     (is (= {:a {:id    :a
                 :type  ::sut/Entity
                 :slots nil}}
-          (types/add-entity {} [:a])))))
+          (sut/add-entity {} [:a])))))
 
 (deftest add-predicate-test
   (testing "SME"
@@ -276,4 +276,4 @@
                       :type     ::sut/Relation
                       :arity    3
                       :ordered? true}}
-          (types/add-predicate {} [:greater :type ::types/Relation :arity 3])))))
+          (sut/add-predicate {} [:greater :type ::sut/Relation :arity 3])))))
