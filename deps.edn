@@ -1,7 +1,7 @@
-{:deps    {org.clojure/clojure            {:mvn/version "1.10.2-rc3"}
+{:aliases {:dev {:extra-paths ["test"]}}
+ :deps    {github-tuh8888/mops {:git/url "git@github.com:tuh8888/mops"
+                                :sha "4bfa373c0fc3af82b5b6a7c9a77a0323ad42b855"}
+           org.clojure/clojure {:mvn/version "1.10.2-rc3"}
            org.clojure/math.combinatorics {:mvn/version "0.1.6"}
-           github-tuh8888/mops            {:git/url "git@github.com:tuh8888/mops"
-                                           :sha     "815c89dbddf14b19fad052615170ad009136bfa5"}
-           ubergraph/ubergraph            {:mvn/version "0.8.1"}}
- :paths   ["src"]
- :aliases {:dev {:extra-paths ["test"]}}}
+           ubergraph/ubergraph {:mvn/version "0.8.1"}}
+ :paths   ["src"]}
