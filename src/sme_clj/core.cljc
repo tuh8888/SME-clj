@@ -262,12 +262,14 @@
                                                      args))]
     (map reduce-to-gm gmap-sets)))
 
-(letfn [(round [n] (.setScale (bigdec n) 2 BigDecimal/ROUND_HALF_UP))]
-  (defn emaps-equal?
-    "Special equals function for entities that rounds floating point numbers to
+(defn emaps-equal?
+  "Special equals function for entities that rounds floating point numbers to
    two decimals before comparing them, to avoid rounding errors affecting
    equality."
-    [a b]
+  [a b]
+  (letfn [(round [n]
+                 #?(:clj (.setScale (bigdec n) 2 BigDecimal/ROUND_HALF_UP)
+                    :cljs (.toFixed n 2)))]
     (and (= (keys a) (keys b))
          (every? true?
                  (map (fn [x y]
