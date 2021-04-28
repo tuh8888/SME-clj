@@ -1,8 +1,7 @@
 (ns sme-clj.simple-water-heat
   (:require [mops.records :as mr]
             [mops.core :as mops]
-            [sme-clj.typedef :as types]
-            [sme-clj.util :as util])
+            [sme-clj.typedef :as types])
   (:import mops.records.MopMap))
 
 (defn map-vals

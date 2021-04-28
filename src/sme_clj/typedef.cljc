@@ -5,9 +5,7 @@
             [clojure.test :refer [function?]]
             [clojure.walk :as walk]
             [mops.records]
-            [mops.core :as mops]
-            [sme-clj.util :as util]
-            [mops.records :as mr])
+            [mops.core :as mops])
   (:import [mops.records MopMap]))
 
 ;;; ENTITY AND PREDICATE
@@ -45,7 +43,6 @@
 ;; An Expression's id is not guaranteed to be related to any implicit ordering
 ;; of the expressions within a graph, but in practice often is.
 
-(defmulti make-expression (comp type first vector))
 (defn make-expression
   [id functor & args]
   {:id      id
