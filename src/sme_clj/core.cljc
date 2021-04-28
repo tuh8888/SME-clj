@@ -35,9 +35,11 @@
   (:require [clojure.math.combinatorics :as comb]
             [clojure.set :as set]
             [mops.core :as mops]
+            #?(:clj [mops.records]
+               :cljs [mops.records :refer [MopMap]])
             [sme-clj.ruledef :as rules]
             [sme-clj.typedef :as types])
-  (:import mops.records.MopMap))
+  (:import #?(:clj mops.records.MopMap)))
 
 ;;;;
 ;;;; GENERATING MATCH HYPOTHESES

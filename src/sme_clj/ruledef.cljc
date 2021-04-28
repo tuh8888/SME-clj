@@ -3,8 +3,10 @@
    similarity rules and macros for defining new rulesets."
   (:require [clojure.set :as set]
             [sme-clj.typedef :as types]
+            #?(:clj [mops.records]
+               :cljs [mops.records :refer [MopMap]])
             [sme-clj.util :refer [vals-as-keys]])
-  (:import mops.records.MopMap))
+  (:import #?(:clj mops.records.MopMap)))
 
 ;;; Rule definition helpers
 (defn apply-rule

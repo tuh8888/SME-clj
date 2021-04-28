@@ -4,9 +4,10 @@
   (:require [clojure.repl :refer [demunge]]
             [clojure.test :refer [function?]]
             [clojure.walk :as walk]
-            [mops.records]
+            #?(:clj [mops.records]
+               :cljs [mops.records :refer [MopMap]])
             [mops.core :as mops])
-  (:import [mops.records MopMap]))
+  (:import #?(:clj [mops.records MopMap])))
 
 ;;; ENTITY AND PREDICATE
 
