@@ -1,9 +1,7 @@
 (ns sme-clj.typedef
   "Data type definitions and protocols for SME, as well as facilities to create
    instances of types and manipulate them."
-  (:require [clojure.repl :refer [demunge]]
-            [clojure.test :refer [function?]]
-            [clojure.walk :as walk]
+  (:require [clojure.walk :as walk]
             #?(:clj [mops.records]
                :cljs [mops.records :refer [MopMap]])
             [mops.core :as mops])
@@ -139,9 +137,13 @@
 
 (defn- pretty-demunge
   [fn-object]
-  (if (function? fn-object)
-    (let [dem-fn (demunge (str fn-object))
-          pretty (last (re-find #"(.*?\/(.*?))[\-\-|@].*" dem-fn))]
+  (if (fn? fn-object)
+    (let [dem-fn (#?(:clj clojure.main/demunge
+                     :cljs demunge)
+                  (str fn-object))
+          pretty (last (re-find #?(:clj #"(.*?\/(.*?))[\-\-|@].*"
+                                   :cljs #"(.*?/(.*?))[--|@].*")
+                                dem-fn))]
       (if pretty pretty dem-fn))
     fn-object))
 
