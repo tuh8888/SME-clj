@@ -1,6 +1,6 @@
 {:aliases {:dev {:extra-paths ["test"]}}
  :deps    {github-tuh8888/mops {:git/url "git@github.com:tuh8888/mops"
-                                :sha "b2f60968d40d1a1b4227844595c434b142a1beb4"}
+                                :sha "373547dbbf296fa0da672f36ec894ca4028afc64"}
            org.clojure/clojure {:mvn/version "1.10.2-rc3"}
            org.clojure/math.combinatorics {:mvn/version "0.1.6"}
            ubergraph/ubergraph {:mvn/version "0.8.1"}}
