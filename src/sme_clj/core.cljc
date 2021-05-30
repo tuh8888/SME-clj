@@ -361,20 +361,22 @@
   ;; This exception setup is ugly, but is a simple and efficient way of aborting
   ;; the whole inference transferring process for this gmap. Monads would
   ;; perhaps work as well (or CPS).
-  (try
-    (let [pairs    (into {} mhs)
-          transfer (fn transfer [expr]
-                     (or (get pairs expr)
-                         (if (types/entity? kg expr)
-                           (throw (RuntimeException. "cannot infer entities"))
-                           (->> expr
-                                (types/expression-functor kg)
-                                (conj (->> expr
-                                           (types/expression-args kg)
-                                           (map second)
-                                           (map transfer)))))))]
-      (assoc gmap :transferred (set (map transfer inferences))))
-    (catch RuntimeException _ gmap)))
+  (try (let [pairs    (into {} mhs)
+             transfer (fn transfer [expr]
+                        (or (get pairs expr)
+                            (if (types/entity? kg expr)
+                              (throw (ex-info {} "cannot infer entities"))
+                              (->> expr
+                                   (types/expression-functor kg)
+                                   (conj (->> expr
+                                              (types/expression-args kg)
+                                              (map second)
+                                              (map transfer)))))))]
+         (assoc gmap :transferred (set (map transfer inferences))))
+       (catch #?(:cljs :default
+                 :clj Exception)
+         _
+         gmap)))
 
 (defn transfer-inferences
   [kg gmaps]
