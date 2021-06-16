@@ -1,46 +1,8 @@
 (ns sme-clj.simple-water-heat
   (:require [mops.records :as mr]
             [mops.core :as mops]
-            [sme-clj.typedef :as types])
-  (:import mops.records.MopMap))
+            [sme-clj.typedef :as types]))
 
-(defn map-vals
-  [f m]
-  (->> m
-       (map (juxt key (comp f val)))
-       (into {})))
-
-(defmulti add-concept-graph (comp type first vector))
-
-(defmethod add-concept-graph MopMap
-  [m k & expressions]
-  (reduce (fn [m [functor & slots]]
-            (let [id  (types/combine-ids (-> slots
-                                             (->> (map second))
-                                             (conj functor)))
-                  mop (mops/->mop id {} (into {} slots))]
-              (-> m
-                  (mops/add-mop mop)
-                  (mops/add-slot-to-mop id :parents ::types/Expression)
-                  (mops/add-slot-to-mop id :functor functor)
-                  (mops/add-slot-to-mop id :concept-graph k))))
-          (mops/add-mop m (mops/->mop k {} nil))
-          expressions))
-
-(defmethod add-concept-graph :default
-  [kg k & expressions]
-  (let [concept-graph (apply types/add-concept-graph k expressions)]
-    (-> (merge-with (fn [v1 v2]
-                      (throw (ex-info "Value already in kg"
-                                      {:v1 v1
-                                       :v2 v2})))
-                    kg
-                    (->> (:graph concept-graph)
-                         (map-vals #(assoc % :concept-graph k))))
-        (assoc k
-               {:id   k
-                :type :ConceptGraph
-                :spec (:spec concept-graph)}))))
 (def kg
   (as-> (types/initialize-kg {}) m
     (reduce (fn [m args] (types/add-entity m args))
