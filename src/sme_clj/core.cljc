@@ -237,14 +237,14 @@
                                      (recur (dec t)))))))]
       (f s))))
 
-(maximal-valid-subsets
- (fn [s]
-   (and (contains? s :a)
-        (or (not (contains? s :b))
-            (and (not (contains? s :c)) (not (contains? s :d))))))
- #{:a :b :c :d :e})
-[#{:a :c :d :e} #{:a :b :e}]
-(comb/combinations #{1 2 3 4} 3)
+(comment (maximal-valid-subsets
+          (fn [s]
+            (and (contains? s :a)
+                 (or (not (contains? s :b))
+                     (and (not (contains? s :c)) (not (contains? s :d))))))
+          #{:a :b :c :d :e})
+         ;; => [#{:a :c :d :e} #{:a :b :e}]
+         [])
 
 (defn consistent-combs-of-mhs-sets
   "Combine all gmaps in all maximal, consistent ways."
@@ -321,8 +321,6 @@
                         (map #(score-mh % 0))
                         (reduce + (count gm)))
      :emap-matches (count (matching-emaps kg gm))}))
-
-;;; Inference generation below. Not used in TCG model.
 
 (defn gmap-inferences
   "Generates maximal inferences for a given gmap, based on SME algorithm."
@@ -406,12 +404,6 @@
                      :target target-name}))))
 
 (defn perform-inference
-  "
-    :inferences   Maximal set of potential inferences.
-
-    :transferred  Inferences transferred to target, ready to be added into the
-                  target's concept graph.
-  "
   [kg gmaps]
   (->> gmaps
        (generate-inferences kg)
