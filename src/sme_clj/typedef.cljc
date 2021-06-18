@@ -8,17 +8,6 @@
   (:import #?(:clj [mops.records MopMap])))
 
 
-(defn make-predicate
-  [id
-   &
-   {:keys [type arity ordered?]
-    :or   {type     ::Relation
-           arity    2
-           ordered? true}}]
-  {:id       id
-   :type     type
-   :arity    (if (= type ::Relation) arity 1)
-   :ordered? ordered?})
 
 ;;; EXPRESSION
 
@@ -31,12 +20,6 @@
 ;; An Expression's id is not guaranteed to be related to any implicit ordering
 ;; of the expressions within a graph, but in practice often is.
 
-(defn make-expression
-  [id functor & args]
-  {:id      id
-   :type    ::Expression
-   :functor functor
-   :args    args})
 
 (defn lookup [kg k & props] (reduce (fn [k prop] (get-in kg [k prop])) k props))
 
@@ -180,20 +163,27 @@
 
 (defmethod add-entity MopMap
   [m id parent slots & args]
-  (mops/add-mop m
-                (mops/->mop id
-                            {}
-                            (-> args
-                                args->slots
-                                (merge slots)
-                                (assoc :parents #{parent})))))
+  (let [mop (mops/->mop id
+                        {}
+                        (-> args
+                            args->slots
+                            (merge slots)
+                            (assoc :parents #{parent})))]
+    (mops/add-mop m mop)))
 (defmulti add-predicate (comp type first vector))
 
 (defmethod add-predicate :default
-  [m args]
-  (let [{:keys [id]
-         :as   p}
-        (apply make-predicate args)]
+  [m
+   [id
+    &
+    {:keys [type arity ordered?]
+     :or   {type     ::Relation
+            arity    2
+            ordered? true}}]]
+  (let [p {:id       id
+           :type     type
+           :arity    (if (= type ::Relation) arity 1)
+           :ordered? ordered?}]
     (assoc m id p)))
 
 (defmulti add-concept-graph (comp type first vector))
@@ -201,10 +191,13 @@
 (defmethod add-concept-graph :default
   [m concept-graph-id & expressions]
   (let [e-map (atom [])]
-    (letfn [(add-expr! [args]
+    (letfn [(add-expr! [[functor & other-args :as args]]
                        (let [id (combine-ids args)]
                          (swap! e-map conj
-                           (assoc (apply make-expression id args)
+                           (assoc {:id      id
+                                   :type    ::Expression
+                                   :functor functor
+                                   :args    other-args}
                                   :concept-graph
                                   concept-graph-id))
                          id))]
