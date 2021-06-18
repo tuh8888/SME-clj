@@ -285,11 +285,13 @@
                  #?(:clj (.setScale (bigdec n) 2 BigDecimal/ROUND_HALF_UP)
                     :cljs (.toFixed n 2)))]
     (and (= (keys a) (keys b))
-         (keep
-          (fn [x y]
-            (if (and (number? x) (number? y)) (== (round x) (round y)) (= x y)))
-          (vals a)
-          (vals b)))))
+         (filter true?
+                 (map (fn [x y]
+                        (if (and (number? x) (number? y))
+                          (== (round x) (round y))
+                          (= x y)))
+                      (vals a)
+                      (vals b))))))
 
 
 (defn matching-emaps

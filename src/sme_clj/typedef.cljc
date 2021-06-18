@@ -1,7 +1,8 @@
 (ns sme-clj.typedef
   "Data type definitions and protocols for SME, as well as facilities to create
    instances of types and manipulate them."
-  (:require [sme-clj.util :as util]))
+  (:require [sme-clj.util :as util])
+  #?((:require-macros [sme-clj.util :as util])))
 
 (defmulti attribute? (comp type first vector))
 
