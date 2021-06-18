@@ -3,5 +3,6 @@
                                 :sha "373547dbbf296fa0da672f36ec894ca4028afc64"}
            org.clojure/clojure {:mvn/version "1.10.2-rc3"}
            org.clojure/math.combinatorics {:mvn/version "0.1.6"}
-           ubergraph/ubergraph {:mvn/version "0.8.1"}}
+           ubergraph/ubergraph {:mvn/version "0.8.1"}
+           com.taoensso/timbre {:mvn/version "5.1.2"}}
  :paths   ["src"]}

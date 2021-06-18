@@ -1,10 +1,13 @@
 (ns calcium-neuron
-  (:require [mops.records :as mr]
-            [mops.core :as mops]
+  (:require [mops.core :as mops]
+            [mops.records :as mr]
             [sme-clj.core :as sme]
             [sme-clj.ruledef :as rules]
             [sme-clj.typedef :as types]
+            [taoensso.timbre :as log]
             [ubergraph.core :as uber]))
+
+(log/set-level! :debug)
 
 (defn map-vals
   [f m]

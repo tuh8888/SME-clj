@@ -38,7 +38,8 @@
             #?(:clj [mops.records]
                :cljs [mops.records :refer [MopMap]])
             [sme-clj.ruledef :as rules]
-            [sme-clj.typedef :as types])
+            [sme-clj.typedef :as types]
+            [taoensso.timbre :as log])
   (:import #?(:clj mops.records.MopMap)))
 
 ;;;;
@@ -51,7 +52,7 @@
   "Apply :filter rules from a ruleset to the base and target expressions. Return
   distinct match hypotheses."
   [kg rules mhs]
-  (println "Applying filter rules")
+  (log/info "Applying filter rules")
   (let [new-mhs (->> rules
                      vals
                      (filter (comp (partial = :filter) :type))
@@ -61,7 +62,7 @@
                                (mapcat (partial rules/apply-rule kg rule) mhs)))
                      (remove nil?)
                      distinct)]
-    (println "Started with:" (count mhs) "Ended with:" (count new-mhs))
+    (log/trace "Started with:" (count mhs) "Ended with:" (count new-mhs))
     new-mhs))
 
 (defn apply-intern-rules
@@ -69,14 +70,14 @@
   and see if new MHs are created. For every new MH, also apply the :intern rules
   to it. Return the resulting set of MHs."
   [kg rules mhs]
-  (println "Applying intern rules")
+  (log/info "Applying intern rules")
   (let [rules (->> rules
                    vals
                    (filter (comp (partial = :intern) :type)))]
     (loop [mhs    mhs
            result (hash-set)]
       (when result
-        (println "Started with:" (count mhs) "Ended with:" (count result)))
+        (log/trace "Started with:" (count mhs) "Ended with:" (count result)))
       (let [[mh & rest-mhs] mhs]
         (if mh
           (let [result  (conj result mh)
@@ -110,7 +111,7 @@
   "Apply rules from a ruleset to base and target to generate match hypotheses
   for the graphs."
   [kg base target rules]
-  (println "Creating match hypotheses")
+  (log/info "Creating match hypotheses")
   (->> (for [b (get-concept-graph-expressions kg base)
              t (get-concept-graph-expressions kg target)]
          [b t])
@@ -133,7 +134,7 @@
   ([kg mhs mh]
    (let [emaps   (set (all-emaps kg mhs))
          no-good (set (find-no-good mhs mh))]
-     #_(println "E-maps:" emaps "No-good:" no-good)
+     #_(log/debug "E-maps:" emaps "No-good:" no-good)
      (empty? (set/intersection emaps no-good)))))
 
 (defn direct-children
@@ -185,12 +186,12 @@
   "Given match hypothesis information, builds a set of initial gmaps. Returns a
   map with the and the :gmaps set."
   [kg all-mhs]
-  (println "Splitting into mhs sets")
+  (log/info "Splitting into mhs sets")
   (let [mhs-sets (->> all-mhs
                       (find-roots kg)
                       (reduce (fn form-mhs-set [mhs-sets root]
                                 (let [children (all-children kg root)]
-                                  (println "Children:" root children)
+                                  (log/trace "Children:" root children)
                                   (if (consistent? kg children root)
                                     (conj mhs-sets children)
                                     (->> root
@@ -200,7 +201,7 @@
                                          (set/union mhs-sets)))))
                               #{})
                       vec)]
-    (println "MHS sets:" (count mhs-sets) (frequencies (map count mhs-sets)))
+    (log/trace "MHS sets:" (count mhs-sets) (frequencies (map count mhs-sets)))
     mhs-sets))
 
 (defn all-no-good [all-mhs mhs] (mapcat (partial find-no-good all-mhs) mhs))
@@ -235,7 +236,7 @@
 (defn maximal-valid-subsets
   [valid? s]
   (let [checked (atom #{})]
-    (println "Start" s)
+    (log/debug "Start" s)
     (letfn [(f [s]
                (loop [t (count s)]
                  (cond (zero? t) nil
@@ -244,7 +245,7 @@
                                                     (map set)
                                                     (remove @checked))
                                        combs   (group-by valid? combs-1)]
-                                   (println "Here" combs-1 @checked)
+                                   (log/debug "Here" combs-1 @checked)
                                    (swap! checked into combs-1)
                                    (if-let [valid-combs (seq (get combs true))]
                                      (->> (get combs false)
@@ -267,7 +268,7 @@
 (defn consistent-combs-of-mhs-sets
   "Combine all gmaps in all maximal, consistent ways."
   [all-mhs mhs]
-  (println "Finding consistent combinations of MHS sets")
+  (log/info "Finding consistent combinations of MHS sets")
   (let [consistent-sets (->> mhs
                              vec
                              (maximal-valid-subsets
@@ -281,17 +282,17 @@
                                        (some (partial strict-subset? mhs-a)
                                              consistent-sets)))
                              (map vec))]
-    (println "Combs of MHS sets:" (count combs-of-sets))
+    (log/trace "Combs of MHS sets:" (count combs-of-sets))
     combs-of-sets))
 
 (defn merge-mhs-sets
   "Given a collection of sets of gmaps, merges the gmaps in each set into a
   single gmap."
   [gmap-sets]
-  (println "Merging MHS sets")
+  (log/info "Merging MHS sets")
   (letfn [(reduce-to-gm [gm-set] (let [args (set (apply concat gm-set))] args))]
     (let [merged-sets (map reduce-to-gm gmap-sets)]
-      (println "Merged sets:" (count merged-sets))
+      (log/trace "Merged sets:" (count merged-sets))
       merged-sets)))
 
 (defn emaps-equal?
@@ -415,7 +416,7 @@
   "Computes additional information about the gmaps we have found and stores it
   in the gmaps."
   [kg base-name target-name mhs gmaps]
-  (println "Finalizing gmaps")
+  (log/info "Finalizing gmaps")
   (->> gmaps
        (map #(score-gmap kg mhs %)) ; scores
        (map #(assoc %
