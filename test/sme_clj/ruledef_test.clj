@@ -42,7 +42,6 @@
     [:flow-Coffee-Icecube-Heat-Bar :flow-Beaker-Vial-Water-Pipe]
     [:flow-Coffee-Icecube-Heat-Bar :flow-Coffee-Icecube-Heat-Bar]})
 
-
 (def expected-compatible-args-matches
   #{[:temperature-Icecube :temperature-Icecube]
     [:diameter-Beaker :diameter-Beaker] [:pressure-Beaker :diameter-Beaker]

@@ -38,7 +38,7 @@
   (let [{:keys [id]
          :as   e}
         {:id    id
-         :type  ::Entity
+         :type  ::types/Entity
          :slots slots}]
     (assoc m id e)))
 
@@ -49,10 +49,8 @@
     {:keys [type arity ordered?]
      :or   {type     ::types/Relation
             arity    2
-            ordered? true}
-     :as   args}]]
+            ordered? true}}]]
   (let [p {:id       id
-           :args     args
            :type     type
            :arity    (if (= type ::types/Relation) arity 1)
            :ordered? ordered?}]
