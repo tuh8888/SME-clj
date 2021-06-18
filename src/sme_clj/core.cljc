@@ -97,8 +97,10 @@
   (-> kg
       :mops
       (map (mops/mop-ids kg))
-      (->> (filter #(= #{concept-graph-name} (mops/filler % :concept-graph))))
-      (->> (map (comp :id meta)))))
+      (->> (filter (comp #{concept-graph-name}
+                         first
+                         #(mops/filler-value % :concept-graph)))
+           (map (comp :id meta)))))
 
 (defmethod get-concept-graph-expressions :default
   [kg concept-graph-name]
