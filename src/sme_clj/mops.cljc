@@ -91,3 +91,13 @@
                           (map set)
                           (apply set/intersection))]
     (map (apply juxt ms) common-roles)))
+
+(defmethod types/expressions MopMap
+  [kg concept-graph-name]
+  (-> kg
+      :mops
+      (map (mops/mop-ids kg))
+      (->> (filter (comp #{concept-graph-name}
+                         first
+                         #(mops/filler-value % :concept-graph)))
+           (map (comp :id meta)))))

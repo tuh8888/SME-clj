@@ -1,6 +1,7 @@
 (ns sme-clj.typedef
   "Data type definitions and protocols for SME, as well as facilities to create
-   instances of types and manipulate them.")
+   instances of types and manipulate them."
+  (:require [sme-clj.util :as util]))
 
 (defmulti attribute? (comp type first vector))
 
@@ -44,37 +45,20 @@
       (if pretty pretty dem-fn))
     fn-object))
 
-(defmacro cond-pred->
-  "Like cond-> but also threads initial expr through tests."
-  {:added "1.5"}
-  [expr & clauses]
-  (assert (even? (count clauses)))
-  (let [g     (gensym)
-        steps (map (fn [[test step]]
-                     `(if (-> ~g
-                              ~test)
-                        (-> ~g
-                            ~step)
-                        ~g))
-                   (partition 2 clauses))]
-    `(let [~g ~expr
-           ~@(interleave (repeat g) (butlast steps))]
-       ~(if (empty? steps) g (last steps)))))
-
 (defn combine-ids
   [ids]
   (->> ids
        (map (fn [id]
-              (cond-pred-> id
-                           coll?
-                           (-> (->> (mapv (comp keyword pretty-demunge)))
-                               combine-ids
-                               str
-                               (#(str "[" % "]"))
-                               (subs 1))
-                           ((complement keyword?))
-                           (-> keyword
-                               str))))
+              (util/cond-pred-> id
+                                coll?
+                                (-> (->> (mapv (comp keyword pretty-demunge)))
+                                    combine-ids
+                                    str
+                                    (#(str "[" % "]"))
+                                    (subs 1))
+                                ((complement keyword?))
+                                (-> keyword
+                                    str))))
        (map str)
        (map #(subs % 1))
        (interpose "-")
@@ -103,19 +87,25 @@
   (when-let [functor (expression-functor kg k)] (ordered? kg functor)))
 
 (defn same-functor?
-  [kg & ks]
+  [kg ks]
   (->> ks
        (map (partial expression-functor kg))
        ((every-pred (partial every? some?) (partial apply =)))))
 
 (defn strict-entity?
-  [kg]
-  (every-pred (partial entity? kg) (complement #{::Entity})))
+  [kg k]
+  ((every-pred (partial entity? kg) (complement #{::Entity})) k))
 
 (defn functor-function?
-  [kg]
-  (comp (partial type-function? kg) (partial expression-functor kg)))
+  [kg k]
+  (->> k
+       (expression-functor kg)
+       (type-function? kg)))
 
 (defn attribute-functor?
-  [kg]
-  (comp (partial attribute? kg) (partial expression-functor kg)))
+  [kg k]
+  (->> k
+       (expression-functor kg)
+       (attribute? kg)))
+
+(defmulti expressions (fn [kg _] (type kg)))

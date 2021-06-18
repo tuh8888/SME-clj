@@ -13,15 +13,15 @@
   [id type body]
   {:id   id
    :type type
-   :body body})
+   :body (case type
+           :filter (fn [kg mh] (when (body kg mh) [mh]))
+           body)})
 
 ;; As in SME, basic analogical matching rules, direct port
 (def literal-similarity
   (vals-as-keys
    :id
-   [(make-rule :same-functor
-               :filter
-               (fn [kg mh] (when (apply types/same-functor? kg mh) [mh])))
+   [(make-rule :same-functor :filter types/same-functor?)
     (make-rule
      :compatible-args
      :intern
@@ -30,9 +30,10 @@
          (->> mh
               (map (partial types/expression-args kg))
               (apply types/extract-common-role-fillers kg)
-              (filter (some-fn (partial every? (types/strict-entity? kg))
-                               (partial every?
-                                        (types/functor-function? kg))))))))
+              (filter
+               (some-fn (partial every? (partial types/strict-entity? kg))
+                        (partial every?
+                                 (partial types/functor-function? kg))))))))
     ;; this rule not tested much yet
     (make-rule
      :commutative-args
@@ -42,11 +43,12 @@
          (for [base   (types/expression-args kg base)
                target (types/expression-args kg target)
                :let   [mh [base target]]
-               :when  ((some-fn (partial every? (types/strict-entity? kg))
-                                (partial every? (types/functor-function? kg)))
+               :when  ((some-fn (partial every?
+                                         (partial types/strict-entity? kg))
+                                (partial every?
+                                         (partial types/functor-function? kg)))
                        mh)]
            mh))))]))
-
 
 (def analogy
   (vals-as-keys
@@ -55,11 +57,10 @@
      :same-functor
      :filter
      (fn [kg mh]
-       (when ((every-pred (partial apply types/same-functor? kg)
-                          (partial every?
-                                   (complement (types/attribute-functor? kg))))
-              mh)
-         [mh])))
+       ((every-pred
+         (partial types/same-functor? kg)
+         (partial every? (partial (complement types/attribute-functor?) kg)))
+        mh)))
     (make-rule
      :compatible-args
      :intern
@@ -68,11 +69,12 @@
          (->> mh
               (map (partial types/expression-args kg))
               (apply types/extract-common-role-fillers kg)
-              (filter (some-fn (partial every? (types/strict-entity? kg))
-                               (partial every? (types/functor-function? kg))
-                               (every-pred
-                                (partial every? (types/attribute-functor? kg))
-                                (partial apply types/same-functor? kg))))))))
+              (filter
+               (some-fn (partial every? (partial types/strict-entity? kg))
+                        (partial every? (partial types/functor-function? kg))
+                        (every-pred
+                         (partial every? (partial types/attribute-functor? kg))
+                         (partial types/same-functor? kg))))))))
     ;; this rule not tested much yet
     (make-rule
      :commutative-args
@@ -82,11 +84,13 @@
          (for [base   (types/expression-args kg base)
                target (types/expression-args kg target)
                :let   [mh [base target]]
-               :when  ((some-fn (partial every? (types/strict-entity? kg))
-                                (partial every? (types/functor-function? kg))
-                                (every-pred
-                                 (partial every? (types/attribute-functor? kg))
-                                 (partial apply types/same-functor? kg)))
+               :when  ((some-fn
+                        (partial every? (partial types/strict-entity? kg))
+                        (partial every? (partial types/functor-function? kg))
+                        (every-pred (partial every?
+                                             (partial types/attribute-functor?
+                                                      kg))
+                                    (partial types/same-functor? kg)))
                        mh)]
            mh))))]))
 

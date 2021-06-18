@@ -1,11 +1,11 @@
 (ns sme-clj.typedef-test
   (:require [clojure.test :refer [deftest is testing]]
             [mops.records :as mr]
-            [sme-clj.typedef :as sut]
             [sme-clj.mops]
             [sme-clj.predicate-calculus]
-            [taoensso.timbre :as log]
-            [mops.core :as mops]))
+            [sme-clj.simple-water-heat :refer [kg mops-kg]]
+            [sme-clj.typedef :as sut]
+            [taoensso.timbre :as log]))
 
 (deftest make-concept-graph-test
   (log/with-level
@@ -223,3 +223,26 @@
                       :arity    3
                       :ordered? true}}
            (sut/add-predicate {} [:greater :type ::sut/Relation :arity 3]))))))
+
+(def expected-concept-graph-expressions
+  #{:diameter-Vial :flow-Beaker-Vial-Water-Pipe :diameter-Beaker :clear-Beaker
+    :liquid-Coffee :pressure-Vial
+    :cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe
+    :greater-temperature-Coffee-temperature-Icecube :flat-top-Coffee
+    :greater-pressure-Beaker-pressure-Vial :temperature-Coffee :liquid-Water
+    :temperature-Icecube :greater-diameter-Beaker-diameter-Vial :pressure-Beaker
+    :flat-top-Water :flow-Coffee-Icecube-Heat-Bar})
+
+(deftest expressions-test
+  (log/with-level
+   :warn
+   (testing "Predicate calculus"
+    (is (= expected-concept-graph-expressions
+           (into #{}
+                 (lazy-cat (sut/expressions kg :simple-water-flow)
+                           (sut/expressions kg :simple-heat-flow))))))
+   (testing "Mops"
+    (is (= expected-concept-graph-expressions
+           (into #{}
+                 (lazy-cat (sut/expressions mops-kg :simple-heat-flow)
+                           (sut/expressions mops-kg :simple-water-flow))))))))

@@ -93,3 +93,10 @@
   (->> ms
        (map (partial map second))
        (apply map vector)))
+
+(defmethod types/expressions :default
+  [kg concept-graph-name]
+  (->> kg
+       vals
+       (filter (comp (partial = concept-graph-name) :concept-graph))
+       (map :id)))

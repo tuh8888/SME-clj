@@ -5,32 +5,6 @@
             [sme-clj.simple-water-heat :refer [kg mops-kg]]
             [taoensso.timbre :as log]))
 
-(def expected-concept-graph-expressions
-  #{:diameter-Vial :flow-Beaker-Vial-Water-Pipe :diameter-Beaker :clear-Beaker
-    :liquid-Coffee :pressure-Vial
-    :cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe
-    :greater-temperature-Coffee-temperature-Icecube :flat-top-Coffee
-    :greater-pressure-Beaker-pressure-Vial :temperature-Coffee :liquid-Water
-    :temperature-Icecube :greater-diameter-Beaker-diameter-Vial :pressure-Beaker
-    :flat-top-Water :flow-Coffee-Icecube-Heat-Bar})
-
-(deftest get-concept-graph-expressions-test
-  (log/with-level
-   :warn
-   (testing "Predicate calculus"
-    (is (= expected-concept-graph-expressions
-           (into #{}
-                 (lazy-cat
-                  (sut/get-concept-graph-expressions kg :simple-water-flow)
-                  (sut/get-concept-graph-expressions kg :simple-heat-flow))))))
-   (testing "Mops"
-    (is (= expected-concept-graph-expressions
-           (into #{}
-                 (lazy-cat
-                  (sut/get-concept-graph-expressions mops-kg :simple-heat-flow)
-                  (sut/get-concept-graph-expressions mops-kg
-                                                     :simple-water-flow))))))))
-
 (def expected-match-hypotheses
   #{[:Water :Heat] [:Water :Coffee] [:flat-top-Water :flat-top-Coffee]
     [:liquid-Water :liquid-Coffee]
@@ -88,6 +62,7 @@
     [:greater-pressure-Beaker-pressure-Vial
      :greater-temperature-Coffee-temperature-Icecube]
     [:liquid-Water :liquid-Coffee] [:flat-top-Water :flat-top-Coffee]})
+
 (deftest find-roots-test
   (log/with-level
    :warn

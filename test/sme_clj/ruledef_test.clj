@@ -2,7 +2,8 @@
   (:require [clojure.test :refer [testing deftest is]]
             [sme-clj.ruledef :as sut]
             [sme-clj.simple-water-heat :refer [kg mops-kg]]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [sme-clj.typedef :as types]))
 
 (def expected-same-functor-matches
   #{[:diameter-Vial :diameter-Vial] [:diameter-Vial :diameter-Beaker]
