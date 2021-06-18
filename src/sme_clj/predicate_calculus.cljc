@@ -33,17 +33,28 @@
 
 (defmethod types/ordered? :default [kg k] (lookup kg k :ordered?))
 
+(defmethod types/add-entity :default
+  [m id & slots]
+  (let [{:keys [id]
+         :as   e}
+        {:id    id
+         :type  ::Entity
+         :slots slots}]
+    (assoc m id e)))
+
 (defmethod types/add-predicate :default
   [m
    [id
     &
-    {:keys [p-type arity ordered?]
-     :or   {p-type   ::types/Relation
+    {:keys [type arity ordered?]
+     :or   {type     ::types/Relation
             arity    2
-            ordered? true}}]]
+            ordered? true}
+     :as   args}]]
   (let [p {:id       id
-           :type     p-type
-           :arity    (if (= p-type ::types/Relation) arity 1)
+           :args     args
+           :type     type
+           :arity    (if (= type ::types/Relation) arity 1)
            :ordered? ordered?}]
     (assoc m id p)))
 
@@ -79,3 +90,8 @@
                 :type ::types/ConceptGraph
                 :spec expressions})))))
 
+(defmethod types/extract-common-role-fillers :default
+  [_ & ms]
+  (->> ms
+       (map (partial map second))
+       (apply map vector)))

@@ -1,52 +1,20 @@
 (ns sme-clj.typedef
   "Data type definitions and protocols for SME, as well as facilities to create
-   instances of types and manipulate them."
-  (:require [clojure.walk :as walk]
-            #?(:clj [mops.records]
-               :cljs [mops.records :refer [MopMap]])
-            [mops.core :as mops])
-  (:import #?(:clj [mops.records MopMap])))
-
-
-
-;;; EXPRESSION
-
-;; Originally expressions were simply seqs, with as first element the
-;; functor. However, this meant two relations with the same predicate and same
-;; entities were equal as per value equality. Though this problem is not
-;; detrimental in every situation, they are sufficiently common to change the
-;; representation to a uniquely identifiable one including a unique id.
-;;
-;; An Expression's id is not guaranteed to be related to any implicit ordering
-;; of the expressions within a graph, but in practice often is.
-
+   instances of types and manipulate them.")
 
 (defmulti attribute? (comp type first vector))
 
-
-
 (defmulti entity? (comp type first vector))
-
-
 
 (defmulti expression? (comp type first vector))
 
-
-
 (defmulti expression-args (comp type first vector))
-
-
 
 (defmulti expression-functor (comp type first vector))
 
-
-
 (defmulti type-function? (comp type first vector))
 
-
-
 (defmulti ordered? (comp type first vector))
-
 
 (defn ancestor?
   "Returns true if a given expression is an ancestor of one of the expressions
@@ -63,8 +31,6 @@
   (tree-seq (partial expression? kg)
             (comp (partial map second) (partial expression-args kg))
             expr))
-
-;;; CONCEPT GRAPH
 
 (defn- pretty-demunge
   [fn-object]
@@ -124,17 +90,32 @@
 
 (defmulti add-entity (comp type first vector))
 
-(defmethod add-entity :default
-  [m id & slots]
-  (let [{:keys [id]
-         :as   e}
-        {:id    id
-         :type  ::Entity
-         :slots slots}]
-    (assoc m id e)))
-
 (defmulti add-predicate (comp type first vector))
 
 (defmulti add-concept-graph (comp type first vector))
 
 (defmulti initialize-kg (comp type first vector))
+
+(defmulti extract-common-role-fillers (comp type first vector))
+
+(defn ordered-functor?
+  [kg k]
+  (when-let [functor (expression-functor kg k)] (ordered? kg functor)))
+
+(defn same-functor?
+  [kg & ks]
+  (->> ks
+       (map (partial expression-functor kg))
+       ((every-pred (partial every? some?) (partial apply =)))))
+
+(defn strict-entity?
+  [kg]
+  (every-pred (partial entity? kg) (complement #{::Entity})))
+
+(defn functor-function?
+  [kg]
+  (comp (partial type-function? kg) (partial expression-functor kg)))
+
+(defn attribute-functor?
+  [kg]
+  (comp (partial attribute? kg) (partial expression-functor kg)))

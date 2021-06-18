@@ -1,7 +1,7 @@
 {:aliases {:dev {:extra-paths ["test"]}}
  :deps    {com.taoensso/timbre {:mvn/version "5.1.2"}
            github-tuh8888/mops {:git/url "git@github.com:tuh8888/mops"
-                                :sha "9446be4b1c24f58c49692ac9d620c43a810001f4"}
+                                :sha "12169757535eeb0239436d8e7a6c5b95dd37e3e7"}
            org.clojure/clojure {:mvn/version "1.10.2-rc3"}
            org.clojure/math.combinatorics {:mvn/version "0.1.6"}
            ubergraph/ubergraph {:mvn/version "0.8.1"}}

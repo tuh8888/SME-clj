@@ -5,7 +5,8 @@
             #?(:clj [mops.records]
                :cljs [mops.records :refer [MopMap]])
             [mops.core :as mops]
-            [sme-clj.typedef :as types])
+            [sme-clj.typedef :as types]
+            [clojure.set :as set])
   (:import #?(:clj [mops.records MopMap])))
 
 (defmethod types/attribute? MopMap [kg k] (mops/abstr? kg k ::types/Attribute))
@@ -22,13 +23,13 @@
     (let [mop (mops/get-mop kg k)]
       (->> mop
            mops/roles
-           (remove [:concept-graph :functor])
-           (map (partial mops/slot mop))
-           (map (juxt first (comp first second)))))))
+           (remove #{:concept-graph :functor :parents})
+           (map (juxt (comp first (partial mops/slot mop))
+                      (comp first (partial mops/filler-value mop))))))))
 
 (defmethod types/expression-functor MopMap
   [kg k]
-  (let [mop (mops/get-mop kg k)] (first (mops/filler mop :functor))))
+  (let [mop (mops/get-mop kg k)] (first (mops/filler-value mop :functor))))
 
 (defmethod types/type-function? MopMap
   [kg k]
@@ -40,12 +41,13 @@
 
 (defmethod types/add-entity MopMap
   [m id parent slots & args]
-  (let [mop (mops/->mop id
-                        {}
-                        (-> args
-                            types/args->slots
-                            (merge slots)
-                            (assoc :parents #{parent})))]
+  (let [mop (mops/add-slot (mops/->mop id
+                                       {}
+                                       (-> args
+                                           types/args->slots
+                                           (merge slots)))
+                           :parents
+                           parent)]
     (mops/add-mop m mop)))
 
 (defmethod types/add-concept-graph MopMap
@@ -80,3 +82,12 @@
            [::types/Relation ::types/Functor {:ordered? true}]
            [::types/Attribute ::types/Functor nil]
            [::types/Function ::types/Functor nil]]))
+
+(defmethod types/extract-common-role-fillers MopMap
+  [_ & ms]
+  (let [ms           (map (partial into {}) ms)
+        common-roles (->> ms
+                          (map keys)
+                          (map set)
+                          (apply set/intersection))]
+    (map (apply juxt ms) common-roles)))
