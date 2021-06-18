@@ -16,8 +16,9 @@
   [m & {:keys [include-abstrs?]}]
   (reduce
    (fn [g
-        [source {:keys [concept-graph]
-                 :as   mop}]]
+        [source
+         {:keys [concept-graph]
+          :as   mop}]]
      (reduce
       (fn [g [role targets]]
         (reduce (fn [g target]
@@ -26,14 +27,11 @@
                 targets))
       (uber/add-nodes-with-attrs
        g
-       [source {:color (cond (#{#{:solar-system}} concept-graph)
-                        :blue
-                        (#{#{:rutherford-atom}} concept-graph)
-                        :red
-                        (nil? concept-graph)
-                        :black
-                        :else
-                        :purple)}])
+       [source
+        {:color (cond (#{#{:solar-system}} concept-graph)    :blue
+                      (#{#{:rutherford-atom}} concept-graph) :red
+                      (nil? concept-graph)                   :black
+                      :else                                  :purple)}])
       (dissoc mop
               :id
               :inst?         :names
@@ -86,17 +84,25 @@
        ::types/Expression]
       [:greater ::types/Relation nil ::types/Entity ::types/Entity]
       [:cause ::types/Relation nil ::types/Expression ::types/Expression]
-      [:and ::types/Relation {:ordered? false} ::types/Expression
-       ::types/Expression] [:Sun ::types/Entity nil]
-      [:Planet ::types/Entity nil] [:Nucleus ::types/Entity nil]
-      [:Electron ::types/Entity nil]])
+      [:and
+       ::types/Relation
+       {:ordered? false}
+       ::types/Expression
+       ::types/Expression]])
+    (reduce (partial apply types/add-entity)
+            m
+            [[:Sun ::types/Entity nil]
+             [:Planet ::types/Entity nil]
+             [:Nucleus ::types/Entity nil]
+             [:Electron ::types/Entity nil]])
     (apply types/add-concept-graph
            m
            :solar-system
            (let [attracts    [:attracts :Sun :Planet]
                  mass-sun    [:mass :Sun]
                  mass-planet [:mass :Planet]]
-             [[:cause [:and [:greater mass-sun mass-planet] attracts]
+             [[:cause
+               [:and [:greater mass-sun mass-planet] attracts]
                [:revolve-around :Planet :Sun]]
               [:greater [:temperature :Sun] [:temperature :Planet]]
               [:cause [:gravity mass-sun mass-planet] attracts]]))
@@ -105,16 +111,20 @@
            :rutherford-atom
            [[:greater [:mass :Nucleus] [:mass :Electron]]
             [:revolve-around :Electron :Nucleus]
-            [:cause [:opposite-sign [:charge :Nucleus] [:charge :Electron]]
+            [:cause
+             [:opposite-sign [:charge :Nucleus] [:charge :Electron]]
              [:attracts :Nucleus :Electron]]])
     (mops/infer-hierarchy m)))
 
 ;; Visualize the kg
 (visualize-analogy kg)
 
-(def inferences
+(def gmaps
   (->> rules/analogy
-       (sme/match kg :solar-system :rutherford-atom)
+       (sme/match kg :solar-system :rutherford-atom)))
+
+(def inferences
+  (->> gmaps
        (sme/perform-inference kg)
        (sort-by :score)
        (reverse)
