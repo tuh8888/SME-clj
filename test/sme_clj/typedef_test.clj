@@ -2,13 +2,10 @@
   (:require [clojure.test :refer [deftest is testing]]
             [mops.records :as mr]
             [sme-clj.typedef :as sut]
-            [taoensso.timbre :as log]))
-
-(defn map-vals
-  [f m]
-  (->> m
-       (map (juxt key (comp f val)))
-       (into {})))
+            [sme-clj.mops]
+            [sme-clj.predicate-calculus]
+            [taoensso.timbre :as log]
+            [mops.core :as mops]))
 
 (deftest make-concept-graph-test
   (log/with-level
@@ -100,60 +97,60 @@
      (=
       {:ids {}
        :mops
-       {:diameter-Vial {:e1            #{:Vial}
-                        :parents       #{::sut/Expression}
-                        :functor       #{:diameter}
-                        :concept-graph #{:simple-water-flow}}
-        :flow-Beaker-Vial-Water-Pipe {:e1            #{:Beaker}
-                                      :concept-graph #{:simple-water-flow}
-                                      :e2            #{:Vial}
-                                      :e3            #{:Water}
-                                      :e4            #{:Pipe}
-                                      :parents       #{::sut/Expression}
-                                      :functor       #{:flow}}
-        :simple-water-flow {:parents #{::sut/ConceptGraph}}
-        :diameter-Beaker {:e1            #{:Beaker}
-                          :parents       #{::sut/Expression}
-                          :functor       #{:diameter}
-                          :concept-graph #{:simple-water-flow}}
-        :clear-Beaker {:e1            #{:Beaker}
-                       :parents       #{::sut/Expression}
-                       :functor       #{:clear}
-                       :concept-graph #{:simple-water-flow}}
-        :pressure-Vial {:e1            #{:Vial}
-                        :parents       #{::sut/Expression}
-                        :functor       #{:pressure}
-                        :concept-graph #{:simple-water-flow}}
+       {:diameter-Vial {:e1            {:Vial {}}
+                        :parents       {::sut/Expression {}}
+                        :functor       {:diameter {}}
+                        :concept-graph {:simple-water-flow {}}}
+        :flow-Beaker-Vial-Water-Pipe {:e1            {:Beaker {}}
+                                      :concept-graph {:simple-water-flow {}}
+                                      :e2            {:Vial {}}
+                                      :e3            {:Water {}}
+                                      :e4            {:Pipe {}}
+                                      :parents       {::sut/Expression {}}
+                                      :functor       {:flow {}}}
+        :simple-water-flow {:parents {::sut/ConceptGraph {}}}
+        :diameter-Beaker {:e1            {:Beaker {}}
+                          :parents       {::sut/Expression {}}
+                          :functor       {:diameter {}}
+                          :concept-graph {:simple-water-flow {}}}
+        :clear-Beaker {:e1            {:Beaker {}}
+                       :parents       {::sut/Expression {}}
+                       :functor       {:clear {}}
+                       :concept-graph {:simple-water-flow {}}}
+        :pressure-Vial {:e1            {:Vial {}}
+                        :parents       {::sut/Expression {}}
+                        :functor       {:pressure {}}
+                        :concept-graph {:simple-water-flow {}}}
         :cause-greater-pressure-Beaker-pressure-Vial-flow-Beaker-Vial-Water-Pipe
-        {:e1            #{:greater-pressure-Beaker-pressure-Vial}
-         :e2            #{:flow-Beaker-Vial-Water-Pipe}
-         :parents       #{::sut/Expression}
-         :functor       #{:cause}
-         :concept-graph #{:simple-water-flow}}
-        :greater-pressure-Beaker-pressure-Vial {:e1 #{:pressure-Beaker}
-                                                :e2 #{:pressure-Vial}
-                                                :parents #{::sut/Expression}
-                                                :functor #{:greater}
+        {:e1            {:greater-pressure-Beaker-pressure-Vial {}}
+         :e2            {:flow-Beaker-Vial-Water-Pipe {}}
+         :parents       {::sut/Expression {}}
+         :functor       {:cause {}}
+         :concept-graph {:simple-water-flow {}}}
+        :greater-pressure-Beaker-pressure-Vial {:e1 {:pressure-Beaker {}}
+                                                :e2 {:pressure-Vial {}}
+                                                :parents {::sut/Expression {}}
+                                                :functor {:greater {}}
                                                 :concept-graph
-                                                #{:simple-water-flow}}
-        :liquid-Water {:e1            #{:Water}
-                       :parents       #{::sut/Expression}
-                       :functor       #{:liquid}
-                       :concept-graph #{:simple-water-flow}}
-        :greater-diameter-Beaker-diameter-Vial {:e1 #{:diameter-Beaker}
-                                                :e2 #{:diameter-Vial}
-                                                :parents #{::sut/Expression}
-                                                :functor #{:greater}
+                                                {:simple-water-flow {}}}
+        :liquid-Water {:e1            {:Water {}}
+                       :parents       {::sut/Expression {}}
+                       :functor       {:liquid {}}
+                       :concept-graph {:simple-water-flow {}}}
+        :greater-diameter-Beaker-diameter-Vial {:e1 {:diameter-Beaker {}}
+                                                :e2 {:diameter-Vial {}}
+                                                :parents {::sut/Expression {}}
+                                                :functor {:greater {}}
                                                 :concept-graph
-                                                #{:simple-water-flow}}
-        :pressure-Beaker {:e1            #{:Beaker}
-                          :parents       #{::sut/Expression}
-                          :functor       #{:pressure}
-                          :concept-graph #{:simple-water-flow}}
-        :flat-top-Water {:e1            #{:Water}
-                         :parents       #{::sut/Expression}
-                         :functor       #{:flat-top}
-                         :concept-graph #{:simple-water-flow}}}}
+                                                {:simple-water-flow {}}}
+        :pressure-Beaker {:e1            {:Beaker {}}
+                          :parents       {::sut/Expression {}}
+                          :functor       {:pressure {}}
+                          :concept-graph {:simple-water-flow {}}}
+        :flat-top-Water {:e1            {:Water {}}
+                         :parents       {::sut/Expression {}}
+                         :functor       {:flat-top {}}
+                         :concept-graph {:simple-water-flow {}}}}}
       (->
         (mr/make-mop-map)
         (sut/add-concept-graph :simple-water-flow
@@ -164,49 +161,50 @@
                                [:clear :Beaker]
                                [:flat-top :Water]
                                [:liquid :Water])
-        (->> (into {}))
-        (update :mops (partial map-vals (partial into {}))))))
-    (is (= {:ids  {}
-            :mops {:simple-heat-flow {:parents #{::sut/ConceptGraph}}
-                   :liquid-Coffee {:e1            #{:Coffee}
-                                   :parents       #{::sut/Expression}
-                                   :functor       #{:liquid}
-                                   :concept-graph #{:simple-heat-flow}}
-                   :greater-temperature-Coffee-temperature-Icecube
-                   {:e1            #{:temperature-Coffee}
-                    :e2            #{:temperature-Icecube}
-                    :parents       #{::sut/Expression}
-                    :functor       #{:greater}
-                    :concept-graph #{:simple-heat-flow}}
-                   :flat-top-Coffee {:e1            #{:Coffee}
-                                     :parents       #{::sut/Expression}
-                                     :functor       #{:flat-top}
-                                     :concept-graph #{:simple-heat-flow}}
-                   :temperature-Coffee {:e1            #{:Coffee}
-                                        :parents       #{::sut/Expression}
-                                        :functor       #{:temperature}
-                                        :concept-graph #{:simple-heat-flow}}
-                   :temperature-Icecube {:e1            #{:Icecube}
-                                         :parents       #{::sut/Expression}
-                                         :functor       #{:temperature}
-                                         :concept-graph #{:simple-heat-flow}}
-                   :flow-Coffee-Icecube-Heat-Bar {:e1 #{:Coffee}
-                                                  :concept-graph
-                                                  #{:simple-heat-flow}
-                                                  :e2 #{:Icecube}
-                                                  :e3 #{:Heat}
-                                                  :e4 #{:Bar}
-                                                  :parents #{::sut/Expression}
-                                                  :functor #{:flow}}}}
-           (-> (mr/make-mop-map)
-               (sut/add-concept-graph
-                :simple-heat-flow
-                [:flow :Coffee :Icecube :Heat :Bar]
-                [:greater [:temperature :Coffee] [:temperature :Icecube]]
-                [:flat-top :Coffee]
-                [:liquid :Coffee])
-               (->> (into {}))
-               (update :mops (partial map-vals (partial into {})))))))))
+        mr/remove-mopiness)))
+    (is
+     (=
+      {:ids  {}
+       :mops {:simple-heat-flow {:parents {::sut/ConceptGraph {}}}
+              :liquid-Coffee {:e1            {:Coffee {}}
+                              :parents       {::sut/Expression {}}
+                              :functor       {:liquid {}}
+                              :concept-graph {:simple-heat-flow {}}}
+              :greater-temperature-Coffee-temperature-Icecube
+              {:e1            {:temperature-Coffee {}}
+               :e2            {:temperature-Icecube {}}
+               :parents       {::sut/Expression {}}
+               :functor       {:greater {}}
+               :concept-graph {:simple-heat-flow {}}}
+              :flat-top-Coffee {:e1            {:Coffee {}}
+                                :parents       {::sut/Expression {}}
+                                :functor       {:flat-top {}}
+                                :concept-graph {:simple-heat-flow {}}}
+              :temperature-Coffee {:e1            {:Coffee {}}
+                                   :parents       {::sut/Expression {}}
+                                   :functor       {:temperature {}}
+                                   :concept-graph {:simple-heat-flow {}}}
+              :temperature-Icecube {:e1            {:Icecube {}}
+                                    :parents       {::sut/Expression {}}
+                                    :functor       {:temperature {}}
+                                    :concept-graph {:simple-heat-flow {}}}
+              :flow-Coffee-Icecube-Heat-Bar {:e1            {:Coffee {}}
+                                             :concept-graph {:simple-heat-flow
+                                                             {}}
+                                             :e2            {:Icecube {}}
+                                             :e3            {:Heat {}}
+                                             :e4            {:Bar {}}
+                                             :parents       {::sut/Expression
+                                                             {}}
+                                             :functor       {:flow {}}}}}
+      (-> (mr/make-mop-map)
+          (sut/add-concept-graph
+           :simple-heat-flow
+           [:flow :Coffee :Icecube :Heat :Bar]
+           [:greater [:temperature :Coffee] [:temperature :Icecube]]
+           [:flat-top :Coffee]
+           [:liquid :Coffee])
+          mr/remove-mopiness))))))
 
 (deftest add-entity-test
   (log/with-level :warn

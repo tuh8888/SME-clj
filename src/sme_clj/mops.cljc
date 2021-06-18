@@ -22,7 +22,7 @@
     (let [mop (mops/get-mop kg k)]
       (->> mop
            mops/roles
-           (remove (into mops/reserved-roles [:concept-graph :functor]))
+           (remove [:concept-graph :functor])
            (map (partial mops/slot mop))
            (map (juxt first (comp first second)))))))
 
@@ -65,9 +65,10 @@
                id))]
       (doseq [expression expressions]
         (walk/postwalk #(cond->> % (coll? %) add-expr!) expression))
-      (mops/add-mop
-       @e-map
-       (mops/->mop concept-graph-id {} {:parents #{::types/ConceptGraph}})))))
+      (mops/add-mop @e-map
+                    (-> concept-graph-id
+                        (mops/->mop {} {})
+                        (mops/add-slot :parents ::types/ConceptGraph))))))
 
 (defmethod types/initialize-kg MopMap
   [m]
