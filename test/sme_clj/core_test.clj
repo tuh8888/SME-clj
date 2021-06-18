@@ -60,25 +60,19 @@
         expected-found-children2 #{[:Beaker :Coffee] [:Water :Heat] [:Pipe :Bar]
                                    [:Vial :Icecube]}]
     (testing "SME"
-     (is
-      (= expected-found-children1
-         (set
-          (sut/find-children kg expected-match-hypotheses [:Beaker :Coffee]))))
+     (is (= expected-found-children1
+            (set (sut/direct-children kg [:Beaker :Coffee]))))
      (is (= expected-found-children2
-            (set (sut/find-children kg
-                                    expected-match-hypotheses
-                                    [:flow-Beaker-Vial-Water-Pipe
-                                     :flow-Coffee-Icecube-Heat-Bar])))))
+            (set (sut/direct-children kg
+                                      [:flow-Beaker-Vial-Water-Pipe
+                                       :flow-Coffee-Icecube-Heat-Bar])))))
     (testing "Mops"
      (is (= expected-found-children1
-            (set (sut/find-children mops-kg
-                                    expected-match-hypotheses
-                                    [:Beaker :Coffee]))))
+            (set (sut/direct-children mops-kg [:Beaker :Coffee]))))
      (is (= expected-found-children2
-            (set (sut/find-children mops-kg
-                                    expected-match-hypotheses
-                                    [:flow-Beaker-Vial-Water-Pipe
-                                     :flow-Coffee-Icecube-Heat-Bar])))))))
+            (set (sut/direct-children mops-kg
+                                      [:flow-Beaker-Vial-Water-Pipe
+                                       :flow-Coffee-Icecube-Heat-Bar])))))))
 
 (def expected-found-roots
   #{[:flow-Beaker-Vial-Water-Pipe :flow-Coffee-Icecube-Heat-Bar]
@@ -127,7 +121,8 @@
           (sut/split-into-mhs-sets mops-kg expected-match-hypotheses)))))
 
 (def expected-combined-gmaps
-  [[pressure-gmap flow-gmap] [flow-gmap diameter-gmap]
+  [[pressure-gmap flow-gmap]
+   [flow-gmap diameter-gmap]
    [flat-top-gmap liquid-gmap]])
 
 (deftest concistent-combs-of-mhs-sets-test
@@ -211,8 +206,10 @@
       :flow-Coffee-Icecube-Heat-Bar]}
    #{[:greater [:pressure :Coffee] [:pressure :Icecube]] [:pressure :Icecube]
      [:pressure :Coffee]
-     [:cause [:greater [:pressure :Coffee] [:pressure :Icecube]]
-      :flow-Coffee-Icecube-Heat-Bar]} #{}])
+     [:cause
+      [:greater [:pressure :Coffee] [:pressure :Icecube]]
+      :flow-Coffee-Icecube-Heat-Bar]}
+   #{}])
 
 (deftest transfer-inferences-test
   (testing "SME"

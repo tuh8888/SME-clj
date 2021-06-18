@@ -73,15 +73,16 @@
                        :functor       :flat-top
                        :args          [:Water]
                        :concept-graph :simple-water-flow}
-      :simple-water-flow
-      {:id   :simple-water-flow
-       :type ::sut/ConceptGraph
-       :spec '([:cause [:greater [:pressure :Beaker] [:pressure :Vial]]
-                [:flow :Beaker :Vial :Water :Pipe]]
-               [:greater [:diameter :Beaker] [:diameter :Vial]]
-               [:clear :Beaker]
-               [:flat-top :Water]
-               [:liquid :Water])}}
+      :simple-water-flow {:id :simple-water-flow
+                          :type ::sut/ConceptGraph
+                          :spec
+                          '([:cause
+                             [:greater [:pressure :Beaker] [:pressure :Vial]]
+                             [:flow :Beaker :Vial :Water :Pipe]]
+                            [:greater [:diameter :Beaker] [:diameter :Vial]]
+                            [:clear :Beaker]
+                            [:flat-top :Water]
+                            [:liquid :Water])}}
      (sut/add-concept-graph {}
                             :simple-water-flow
                             [:cause
@@ -150,17 +151,18 @@
                         :parents       #{::sut/Expression}
                         :functor       #{:flat-top}
                         :concept-graph #{:simple-water-flow}}}}
-     (-> (mr/make-mop-map)
-         (sut/add-concept-graph
-          :simple-water-flow
-          [:cause [:greater [:pressure :Beaker] [:pressure :Vial]]
-           [:flow :Beaker :Vial :Water :Pipe]]
-          [:greater [:diameter :Beaker] [:diameter :Vial]]
-          [:clear :Beaker]
-          [:flat-top :Water]
-          [:liquid :Water])
-         (->> (into {}))
-         (update :mops (partial map-vals (partial into {}))))))
+     (->
+       (mr/make-mop-map)
+       (sut/add-concept-graph :simple-water-flow
+                              [:cause
+                               [:greater [:pressure :Beaker] [:pressure :Vial]]
+                               [:flow :Beaker :Vial :Water :Pipe]]
+                              [:greater [:diameter :Beaker] [:diameter :Vial]]
+                              [:clear :Beaker]
+                              [:flat-top :Water]
+                              [:liquid :Water])
+       (->> (into {}))
+       (update :mops (partial map-vals (partial into {}))))))
    (is (= {:ids  {}
            :mops {:simple-heat-flow {:parents #{::sut/ConceptGraph}}
                   :liquid-Coffee {:e1            #{:Coffee}
@@ -194,12 +196,12 @@
                                                  :parents #{::sut/Expression}
                                                  :functor #{:flow}}}}
           (-> (mr/make-mop-map)
-              (sut/add-concept-graph :simple-heat-flow
-                                     [:flow :Coffee :Icecube :Heat :Bar]
-                                     [:greater [:temperature :Coffee]
-                                      [:temperature :Icecube]]
-                                     [:flat-top :Coffee]
-                                     [:liquid :Coffee])
+              (sut/add-concept-graph
+               :simple-heat-flow
+               [:flow :Coffee :Icecube :Heat :Bar]
+               [:greater [:temperature :Coffee] [:temperature :Icecube]]
+               [:flat-top :Coffee]
+               [:liquid :Coffee])
               (->> (into {}))
               (update :mops (partial map-vals (partial into {}))))))))
 
