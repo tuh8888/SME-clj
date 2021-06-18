@@ -7,16 +7,6 @@
             [mops.core :as mops])
   (:import #?(:clj [mops.records MopMap])))
 
-;;; ENTITY AND PREDICATE
-
-;; This base Entity is primarily here for testing mapping mechanics. Real
-;; concept graphs will have specialised data types with value slots.
-
-(defn make-entity
-  [id & slots]
-  {:id    id
-   :type  ::Entity
-   :slots slots})
 
 (defn make-predicate
   [id
@@ -149,15 +139,21 @@
   [ids]
   (->>
    ids
-   (map (fn [id]
-          (cond-> id
-            (coll? id)          ((comp #(str "[" % "]")
-                                       #(subs % 1)
-                                       str
-                                       combine-ids
-                                       (partial mapv
-                                                (comp keyword pretty-demunge))))
-            (not (keyword? id)) ((comp keyword str)))))
+   (map
+    (fn [id]
+      (cond-> id
+        (coll? id)          ((comp #(str "[" % "]")
+                                   #(subs % 1)
+                                   str
+                                   combine-ids
+                                   (partial mapv (comp keyword pretty-demunge)))
+                             (-> (->> (mapv (comp keyword pretty-demunge)))
+                                 combine-ids
+                                 str
+                                 (#(str "[" % "]"))
+                                 (subs 1)))
+        (not (keyword? id)) (-> keyword
+                                str))))
    (map str)
    (map #(subs % 1))
    (interpose "-")
@@ -174,10 +170,12 @@
 (defmulti add-entity (comp type first vector))
 
 (defmethod add-entity :default
-  [m args]
+  [m id & slots]
   (let [{:keys [id]
          :as   e}
-        (apply make-entity args)]
+        {:id    id
+         :type  ::Entity
+         :slots slots}]
     (assoc m id e)))
 
 (defmethod add-entity MopMap
@@ -230,21 +228,6 @@
                 :spec expressions})))))
 
 
-(defmulti initialize-kg (comp type first vector))
-
-(defmethod initialize-kg :default [_] {})
-
-(defmethod initialize-kg MopMap
-  [m]
-  (reduce (partial apply add-entity)
-          m
-          [[::Expression :thing nil]
-           [::Entity :thing nil]
-           [::Functor ::Expression nil]
-           [::Relation ::Functor {:ordered? true}]
-           [::Attribute ::Functor nil]
-           [::Function ::Functor nil]]))
-
 (defmethod add-concept-graph MopMap
   [m concept-graph-id & expressions]
   (let [e-map (atom m)]
@@ -264,3 +247,19 @@
       (mops/add-mop
        @e-map
        (mops/->mop concept-graph-id {} {:parents #{::ConceptGraph}})))))
+
+(defmulti initialize-kg (comp type first vector))
+
+(defmethod initialize-kg :default [_] {})
+
+(defmethod initialize-kg MopMap
+  [m]
+  (reduce (partial apply add-entity)
+          m
+          [[::Expression :thing nil]
+           [::Entity :thing nil]
+           [::Functor ::Expression nil]
+           [::Relation ::Functor {:ordered? true}]
+           [::Attribute ::Functor nil]
+           [::Function ::Functor nil]]))
+

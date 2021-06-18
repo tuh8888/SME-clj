@@ -210,7 +210,7 @@
    (is (= {:a {:id    :a
                :type  ::sut/Entity
                :slots nil}}
-          (sut/add-entity {} [:a])))))
+          (sut/add-entity {} :a)))))
 
 (deftest add-predicate-test
   (testing "SME"
