@@ -1,4 +1,4 @@
-(ns sme-clj.util "Utility/helper functions" (:include-macros sme-clj.util))
+(ns sme-clj.util #?(:cljs (:include-macros sme-clj.util)))
 
 (defn vals-as-keys [k m] (zipmap (map k m) m))
 
