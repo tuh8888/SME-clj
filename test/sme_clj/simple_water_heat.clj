@@ -43,7 +43,12 @@
        (types/initialize-kg (mr/make-mop-map))
        [[:cause ::types/Relation nil ::types/Expression ::types/Expression]
         [:greater ::types/Relation nil ::types/Expression ::types/Expression]
-        [:flow ::types/Relation nil ::types/Entity ::types/Entity ::types/Entity
+        [:flow
+         ::types/Relation
+         {:ordered? {false {}}}
+         ::types/Entity
+         ::types/Entity
+         ::types/Entity
          ::types/Entity]
         [:pressure ::types/Function nil ::types/Entity]
         [:diameter ::types/Function nil ::types/Entity]
