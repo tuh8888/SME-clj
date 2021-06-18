@@ -13,7 +13,7 @@
 (deftest make-concept-graph-test
   (log/with-level
    :warn
-   (testing "Vector definition -> SME"
+   (testing "Vector definition -> Predicate calculus"
     (is
      (=
       {:diameter-Vial {:id            :diameter-Vial
@@ -210,7 +210,7 @@
 
 (deftest add-entity-test
   (log/with-level :warn
-                  (testing "SME"
+                  (testing "Predicate calculus"
                    (is (= {:a {:id    :a
                                :type  ::sut/Entity
                                :slots nil}}
@@ -219,7 +219,7 @@
 (deftest add-predicate-test
   (log/with-level
    :warn
-   (testing "SME"
+   (testing "Predicate calculus"
     (is (= {:greater {:id       :greater
                       :type     ::sut/Relation
                       :arity    3

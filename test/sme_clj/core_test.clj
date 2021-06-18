@@ -17,7 +17,7 @@
 (deftest get-concept-graph-expressions-test
   (log/with-level
    :warn
-   (testing "SME"
+   (testing "Predicate calculus"
     (is (= expected-concept-graph-expressions
            (into #{}
                  (lazy-cat
@@ -47,7 +47,7 @@
   (log/with-level
    :warn
    ;; Water flow is the base heat flow the target
-   (testing "SME"
+   (testing "Predicate calculus"
     (is (= expected-match-hypotheses
            (sut/create-match-hypotheses kg
                                         :simple-water-flow
@@ -66,7 +66,7 @@
    (let [expected-found-children1 #{}
          expected-found-children2 #{[:Beaker :Coffee] [:Water :Heat]
                                     [:Pipe :Bar] [:Vial :Icecube]}]
-     (testing "SME"
+     (testing "Predicate calculus"
       (is (= expected-found-children1
              (set (sut/direct-children kg [:Beaker :Coffee]))))
       (is (= expected-found-children2
@@ -91,7 +91,7 @@
 (deftest find-roots-test
   (log/with-level
    :warn
-   (testing "SME"
+   (testing "Predicate calculus"
     (is (= expected-found-roots
            (set (sut/find-roots kg expected-match-hypotheses)))))
    (testing "Mops"
@@ -124,7 +124,7 @@
 (deftest split-into-mhs-sets-test
   (log/with-level
    :warn
-   (testing "SME"
+   (testing "Predicate calculus"
     (is (= expected-computed-initial-gmaps
            (sut/split-into-mhs-sets kg expected-match-hypotheses))))
    (testing "Mops"
@@ -138,7 +138,7 @@
 
 (deftest concistent-combs-of-mhs-sets-test
   (log/with-level :warn
-                  (testing "SME and Mops"
+                  (testing "Predicate calculus and Mops"
                    (is (= expected-combined-gmaps
                           (sut/consistent-combs-of-mhs-sets
                            expected-match-hypotheses
@@ -162,7 +162,7 @@
 
 (deftest merge-mhs-sets-test
   (log/with-level :warn
-                  (testing "SME"
+                  (testing "Predicate calculus"
                    (is (= expected-merged-gmaps
                           (sut/merge-mhs-sets expected-combined-gmaps))))))
 
@@ -184,7 +184,7 @@
 
 (deftest finalize-gmaps-tets
   (log/with-level :warn
-                  (testing "SME"
+                  (testing "Predicate calculus"
                    (is (= expected-finalized-gmaps
                           (sut/finalize-gmaps kg
                                               :simple-water-flow
@@ -207,7 +207,7 @@
 
 (deftest generate-inferences-test
   (log/with-level :warn
-                  (testing "SME"
+                  (testing "Predicate calculus"
                    (is (= expected-generated-inferences
                           (->> expected-finalized-gmaps
                                (sut/generate-inferences kg)
@@ -231,7 +231,7 @@
 (deftest transfer-inferences-test
   (log/with-level
    :warn
-   (testing "SME"
+   (testing "Predicate calculus"
     (is (= expected-transferred-inferences
            (->> expected-generated-inferences
                 (map #(assoc %1 :inferences %2) expected-finalized-gmaps)
@@ -246,7 +246,7 @@
 
 (deftest perform-inference-test
   (log/with-level :warn
-                  (testing "SME"
+                  (testing "Predicate calculus"
                    (is (= expected-transferred-inferences
                           (->> expected-finalized-gmaps
                                (sut/perform-inference kg)
@@ -260,7 +260,7 @@
 (deftest match-test
   (log/with-level
    :warn
-   (testing "SME"
+   (testing "Predicate calculus"
     (is (= expected-finalized-gmaps
            (sut/match kg :simple-water-flow :simple-heat-flow)))
     (is (= expected-finalized-gmaps

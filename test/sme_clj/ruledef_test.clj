@@ -78,21 +78,21 @@
                                  set))
          wrapped-rule-lit (partial wrapped-rule sut/literal-similarity)]
      (testing "Same functor"
-      (testing "SME"
+      (testing "Predicate calculus"
        (is (= expected-same-functor-matches
               (wrapped-rule-lit :same-functor kg mhs))))
       (testing "Mops"
        (is (= expected-same-functor-matches
               (wrapped-rule-lit :same-functor mops-kg mhs)))))
      (testing "Compatible args"
-      (testing "SME"
+      (testing "Predicate calculus"
        (is (= expected-compatible-args-matches
               (wrapped-rule-lit :compatible-args kg mhs))))
       (testing "Mops"
        (is (= expected-compatible-args-matches
               (wrapped-rule-lit :compatible-args mops-kg mhs)))))
      (testing "Commutative args"
-      (testing "SME"
+      (testing "Predicate calculus"
        (is (= expected-commutative-args
               (wrapped-rule-lit :commutative-args kg mhs))))
       (testing "Mops")))))
@@ -146,21 +146,21 @@
                                  set))
          wrapped-rule-ana (partial wrapped-rule sut/analogy)]
      (testing "Same functor"
-      (testing "SME"
+      (testing "Predicate calculus"
        (is (= expected-analogy-same-functor-matches
               (wrapped-rule-ana :same-functor kg mhs))))
       (testing "Mops"
        (is (= expected-analogy-same-functor-matches
               (wrapped-rule-ana :same-functor mops-kg mhs)))))
      (testing "Compatible args"
-      (testing "SME"
+      (testing "Predicate calculus"
        (is (= expected-compatible-args-matches
               (wrapped-rule-ana :compatible-args kg mhs))))
       (testing "Mops"
        (is (= expected-compatible-args-matches
               (wrapped-rule-ana :compatible-args mops-kg mhs)))))
      (testing "Commutative args"
-      (testing "SME"
+      (testing "Predicate calculus"
        (is (= expected-commutative-args
               (wrapped-rule-ana :commutative-args kg mhs))))
       (testing "Mops")))))
