@@ -19,7 +19,8 @@
    :slots slots})
 
 (defn make-predicate
-  [id &
+  [id
+   &
    {:keys [type arity ordered?]
     :or   {type     ::Relation
            arity    2
@@ -28,8 +29,6 @@
    :type     type
    :arity    (if (= type ::Relation) arity 1)
    :ordered? ordered?})
-
-(defn predicate? [{:keys [type]}] (#{::Function ::Attribute ::Relation} type))
 
 ;;; EXPRESSION
 
@@ -115,7 +114,6 @@
   (when (mops/get-mop kg k) (mops/inherit-filler kg k :ordered?)))
 
 (defmethod ordered? :default [kg k] (lookup kg k :ordered?))
-
 
 (defn ancestor?
   "Returns true if a given expression is an ancestor of one of the expressions
@@ -219,8 +217,9 @@
       (doseq [expression expressions]
         (walk/postwalk #(cond->> % (coll? %) add-expr!) expression))
       (as-> m m
-        (reduce (fn [m {:keys [id]
-                        :as   e}]
+        (reduce (fn [m
+                     {:keys [id]
+                      :as   e}]
                   (assoc m id e))
                 m
                 @e-map)
@@ -239,9 +238,12 @@
   [m]
   (reduce (partial apply add-entity)
           m
-          [[::Expression :thing nil] [::Entity :thing nil]
-           [::Functor ::Expression nil] [::Relation ::Functor {:ordered? true}]
-           [::Attribute ::Functor nil] [::Function ::Functor nil]]))
+          [[::Expression :thing nil]
+           [::Entity :thing nil]
+           [::Functor ::Expression nil]
+           [::Relation ::Functor {:ordered? true}]
+           [::Attribute ::Functor nil]
+           [::Function ::Functor nil]]))
 
 (defmethod add-concept-graph MopMap
   [m concept-graph-id & expressions]
@@ -262,29 +264,3 @@
       (mops/add-mop
        @e-map
        (mops/->mop concept-graph-id {} {:parents #{::ConceptGraph}})))))
-
-;;; GMAP
-
-(defn matched-goal [gmap] (get-in gmap [:mapping 0]))
-
-(defn matched-goals
-  "Returns the set of distinct goals that are mapped in the given collection of
-  gmaps."
-  [gmaps]
-  (->> gmaps
-       (map matched-goal)
-       set))
-
-(defn filter-predicates
-  "Returns a seq of relations for which the root predicate matches the given
-  predicate."
-  [predicate coll]
-  (filter #(= predicate (:functor %)) coll))
-
-(defn some-predicate
-  "Returns the first relation for which the root predicate matches the given
-  predicate, or nil if none is found."
-  [predicate coll]
-  (->> coll
-       (map :functor)
-       (some #{predicate})))

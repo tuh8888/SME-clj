@@ -9,10 +9,7 @@
   (:import #?(:clj mops.records.MopMap)))
 
 ;;; Rule definition helpers
-(defn apply-rule
-  [kg {:keys [body]}
-    mh]
-  (body kg mh))
+(defn apply-rule [kg {:keys [body]} mh] (body kg mh))
 
 (def rule-types #{:intern :filter})
 
@@ -65,7 +62,7 @@
    :id
    [(make-rule :same-functor
                :filter
-               (fn [kg mh] [(when (apply same-functor? kg mh) mh)]))
+               (fn [kg mh] (when (apply same-functor? kg mh) [mh])))
     (make-rule
      :compatible-args
      :intern
@@ -98,14 +95,14 @@
 (def analogy
   (vals-as-keys
    :id
-   [(make-rule :same-functor
-               :filter
-               (fn [kg mh]
-                 [(when ((every-pred
-                          (partial apply same-functor? kg)
+   [(make-rule
+     :same-functor
+     :filter
+     (fn [kg mh]
+       (when ((every-pred (partial apply same-functor? kg)
                           (partial every? (complement (attribute-functor? kg))))
-                         mh)
-                    mh)]))
+              mh)
+         [mh])))
     (make-rule
      :compatible-args
      :intern
