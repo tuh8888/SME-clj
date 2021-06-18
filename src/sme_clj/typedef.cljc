@@ -21,72 +21,32 @@
 ;; of the expressions within a graph, but in practice often is.
 
 
-(defn lookup [kg k & props] (reduce (fn [k prop] (get-in kg [k prop])) k props))
-
 (defmulti attribute? (comp type first vector))
 
-(defmethod attribute? :default
-  [kg k]
-  ((comp (partial = ::Attribute) #(lookup kg % :type)) k))
 
-(defmethod attribute? MopMap [kg k] (mops/abstr? kg k ::Attribute))
 
 (defmulti entity? (comp type first vector))
 
-(defmethod entity? :default
-  [kg k]
-  ((comp (partial = ::Entity) #(lookup kg % :type)) k))
 
-(defmethod entity? MopMap [kg k] (mops/abstr? kg k ::Entity))
 
 (defmulti expression? (comp type first vector))
 
-(defmethod expression? :default
-  [kg k]
-  ((comp (partial = ::Expression) #(lookup kg % :type)) k))
 
-(defmethod expression? MopMap [kg k] (mops/abstr? kg k ::Expression))
 
 (defmulti expression-args (comp type first vector))
 
-(defmethod expression-args :default
-  [kg k]
-  (when (expression? kg k) (map (partial vector :arg) (lookup kg k :args))))
 
-(defmethod expression-args MopMap
-  [kg k]
-  (when (expression? kg k)
-    (let [mop (mops/get-mop kg k)]
-      (->> mop
-           mops/roles
-           (remove (into mops/reserved-roles [:concept-graph :functor]))
-           (map (partial mops/slot mop))
-           (map (juxt first (comp first second)))))))
 
 (defmulti expression-functor (comp type first vector))
 
-(defmethod expression-functor MopMap
-  [kg k]
-  (let [mop (mops/get-mop kg k)] (first (mops/filler mop :functor))))
 
-(defmethod expression-functor :default
-  [kg k]
-  (when (expression? kg k) (lookup kg k :functor)))
 
 (defmulti type-function? (comp type first vector))
 
-(defmethod type-function? MopMap [kg k] (mops/abstr? kg k ::Function))
 
-
-(defmethod type-function? :default [kg k] (= ::Function (lookup kg k :type)))
 
 (defmulti ordered? (comp type first vector))
 
-(defmethod ordered? MopMap
-  [kg k]
-  (when (mops/get-mop kg k) (mops/inherit-filler kg k :ordered?)))
-
-(defmethod ordered? :default [kg k] (lookup kg k :ordered?))
 
 (defn ancestor?
   "Returns true if a given expression is an ancestor of one of the expressions
@@ -118,30 +78,42 @@
       (if pretty pretty dem-fn))
     fn-object))
 
+(defmacro cond-pred->
+  "Like cond-> but also threads initial expr through tests."
+  {:added "1.5"}
+  [expr & clauses]
+  (assert (even? (count clauses)))
+  (let [g     (gensym)
+        steps (map (fn [[test step]]
+                     `(if (-> ~g
+                              ~test)
+                        (-> ~g
+                            ~step)
+                        ~g))
+                   (partition 2 clauses))]
+    `(let [~g ~expr
+           ~@(interleave (repeat g) (butlast steps))]
+       ~(if (empty? steps) g (last steps)))))
+
 (defn combine-ids
   [ids]
-  (->>
-   ids
-   (map
-    (fn [id]
-      (cond-> id
-        (coll? id)          ((comp #(str "[" % "]")
-                                   #(subs % 1)
-                                   str
-                                   combine-ids
-                                   (partial mapv (comp keyword pretty-demunge)))
-                             (-> (->> (mapv (comp keyword pretty-demunge)))
-                                 combine-ids
-                                 str
-                                 (#(str "[" % "]"))
-                                 (subs 1)))
-        (not (keyword? id)) (-> keyword
-                                str))))
-   (map str)
-   (map #(subs % 1))
-   (interpose "-")
-   (apply str)
-   keyword))
+  (->> ids
+       (map (fn [id]
+              (cond-pred-> id
+                           coll?
+                           (-> (->> (mapv (comp keyword pretty-demunge)))
+                               combine-ids
+                               str
+                               (#(str "[" % "]"))
+                               (subs 1))
+                           ((complement keyword?))
+                           (-> keyword
+                               str))))
+       (map str)
+       (map #(subs % 1))
+       (interpose "-")
+       (apply str)
+       keyword))
 
 (defn args->slots
   [args]
@@ -161,98 +133,8 @@
          :slots slots}]
     (assoc m id e)))
 
-(defmethod add-entity MopMap
-  [m id parent slots & args]
-  (let [mop (mops/->mop id
-                        {}
-                        (-> args
-                            args->slots
-                            (merge slots)
-                            (assoc :parents #{parent})))]
-    (mops/add-mop m mop)))
 (defmulti add-predicate (comp type first vector))
-
-(defmethod add-predicate :default
-  [m
-   [id
-    &
-    {:keys [type arity ordered?]
-     :or   {type     ::Relation
-            arity    2
-            ordered? true}}]]
-  (let [p {:id       id
-           :type     type
-           :arity    (if (= type ::Relation) arity 1)
-           :ordered? ordered?}]
-    (assoc m id p)))
 
 (defmulti add-concept-graph (comp type first vector))
 
-(defmethod add-concept-graph :default
-  [m concept-graph-id & expressions]
-  (let [e-map (atom [])]
-    (letfn [(add-expr! [[functor & other-args :as args]]
-                       (let [id (combine-ids args)]
-                         (swap! e-map conj
-                           (assoc {:id      id
-                                   :type    ::Expression
-                                   :functor functor
-                                   :args    other-args}
-                                  :concept-graph
-                                  concept-graph-id))
-                         id))]
-      ;; Doseq is used here instead of passing all expressions to postwalk to
-      ;; prevent the
-      ;; entire set of expressions for the concept graph being counted as an
-      ;; expression.
-      (doseq [expression expressions]
-        (walk/postwalk #(cond->> % (coll? %) add-expr!) expression))
-      (as-> m m
-        (reduce (fn [m
-                     {:keys [id]
-                      :as   e}]
-                  (assoc m id e))
-                m
-                @e-map)
-        (assoc m
-               concept-graph-id
-               {:id   concept-graph-id
-                :type ::ConceptGraph
-                :spec expressions})))))
-
-
-(defmethod add-concept-graph MopMap
-  [m concept-graph-id & expressions]
-  (let [e-map (atom m)]
-    (letfn [(add-expr!
-             [& args]
-             (let [[[functor & function-args :as all-e]] args
-                   id                                    (combine-ids all-e)]
-               (swap! e-map mops/add-mop
-                 (-> id
-                     (mops/->mop {} (args->slots function-args))
-                     (mops/add-slot :parents ::Expression)
-                     (mops/add-slot :functor functor)
-                     (mops/add-slot :concept-graph concept-graph-id)))
-               id))]
-      (doseq [expression expressions]
-        (walk/postwalk #(cond->> % (coll? %) add-expr!) expression))
-      (mops/add-mop
-       @e-map
-       (mops/->mop concept-graph-id {} {:parents #{::ConceptGraph}})))))
-
 (defmulti initialize-kg (comp type first vector))
-
-(defmethod initialize-kg :default [_] {})
-
-(defmethod initialize-kg MopMap
-  [m]
-  (reduce (partial apply add-entity)
-          m
-          [[::Expression :thing nil]
-           [::Entity :thing nil]
-           [::Functor ::Expression nil]
-           [::Relation ::Functor {:ordered? true}]
-           [::Attribute ::Functor nil]
-           [::Function ::Functor nil]]))
-
